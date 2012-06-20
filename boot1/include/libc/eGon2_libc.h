@@ -67,4 +67,5 @@ extern  void   wlibc_mmu_disable( void );
 extern  void   wlibc_int_enable( void );
 extern  void   wlibc_int_disable( void );
 
+
 #endif  /* _eGon2_common_H_ */

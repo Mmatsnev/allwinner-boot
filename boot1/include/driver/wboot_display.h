@@ -1,7 +1,6 @@
 #ifndef __WBOOT_DISPLAY_H__
 #define __WBOOT_DISPLAY_H__
 
-
 typedef struct {__u8  alpha;__u8 red;__u8 green; __u8 blue; }__disp_color_t;
 typedef struct {__s32 x; __s32 y; __u32 width; __u32 height;}__disp_rect_t;
 typedef struct {__u32 width;__u32 height;                   }__disp_rectsz_t;
@@ -586,11 +585,9 @@ typedef enum tag_DISP_CMD
     DISP_CMD_SET_BRIGHT = 0x12,
     DISP_CMD_SET_CONTRAST = 0x13,
     DISP_CMD_SET_SATURATION = 0x14,
-    DISP_CMD_SET_HUE=0x23,
     DISP_CMD_GET_BRIGHT = 0x16,
     DISP_CMD_GET_CONTRAST = 0x17,
     DISP_CMD_GET_SATURATION = 0x18,
-    DISP_CMD_GET_HUE=0x24,
     DISP_CMD_ENHANCE_ON = 0x1a,
     DISP_CMD_ENHANCE_OFF = 0x1b,
     DISP_CMD_GET_ENHANCE_EN = 0x1c,

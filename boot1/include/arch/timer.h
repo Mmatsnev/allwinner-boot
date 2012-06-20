@@ -34,8 +34,5 @@
 #define WATCHDOG_REG_CTRL       bTMRC_CTL(0x90)
 #define WATCHDOG_REG_MODE       bTMRC_CTL(0x94)
 
-
-
-
 #endif  /* _TMRC_H_ */
 

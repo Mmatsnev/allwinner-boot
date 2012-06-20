@@ -181,11 +181,12 @@ __s32 check_power_status(void)
 		__u32 bat_show_hd = NULL;
 		int   i, j;
 		int   bat_full_status = 0;
+		int   key_status;
 
 		//当前可以确定是火牛开机，但是是否开机还不确定，需要确认电池是否存在
 		//当电池不存在即开机，电池存在则关机
-		power_int_reg();
-		usb_detect_enter();
+//		power_int_reg();
+//		usb_detect_enter();
 		bat_show_hd = ShowBatteryCharge_init(0);
 
 		wBoot_timer_delay(1500);
@@ -196,8 +197,8 @@ __s32 check_power_status(void)
 		{
 			__inf("no battery exist\n");
 			ShowBatteryCharge_exit(bat_show_hd);
-			power_int_rel();
-			usb_detect_exit();
+//			power_int_rel();
+//			usb_detect_exit();
 
 			return 0;
 		}
@@ -216,24 +217,39 @@ __s32 check_power_status(void)
 			show_battery_full(&bat_full_status);
 			for(i =0;i<12;i++)
 			{
-				if(power_ops_int_status & 0x02)	//短按
+				key_status = wBoot_power_get_key();
+				if(key_status > 0)
 				{
-					power_ops_int_status &= ~0x02;
-					j = 0;
-					__inf("short key\n");
-				}
-				else if(power_ops_int_status & 0x01)	//长按
-				{
-					wlibc_int_disable();
-					power_int_rel();
-					usb_detect_exit();
-					power_ops_int_status &= ~0x01;
-					wlibc_int_enable();
-					power_int_reg();
-					__inf("long key\n");
+					if(key_status & 0x02)	//短按
+					{
+						i = 0;
+					}
+					else if(key_status & 0x01) //长按
+					{
+						ShowBatteryCharge_exit(bat_show_hd);
 
-					return 0;
+						return 0;
+					}
 				}
+//				if(power_ops_int_status & 0x02)	//短按
+//				{
+//					power_ops_int_status &= ~0x02;
+//					j = 0;
+//					__inf("short key\n");
+//				}
+//				else if(power_ops_int_status & 0x01)	//长按
+//				{
+//					ShowBatteryCharge_exit(bat_show_hd);
+//					wlibc_int_disable();
+//					power_int_rel();
+//					usb_detect_exit();
+//					power_ops_int_status &= ~0x01;
+//					wlibc_int_enable();
+//					power_int_reg();
+//					__inf("long key\n");
+//
+//					return 0;
+//				}
 				wBoot_timer_delay(250);
 			}
 		}
@@ -247,26 +263,40 @@ __s32 check_power_status(void)
 				for(i=this_bat_cal;i<110;i+=10)
 				{
 					ShowBatteryCharge_rate(bat_show_hd, i);
-					wBoot_timer_delay(one_delay);
-					if(power_ops_int_status & 0x02)	//短按
+					key_status = wBoot_power_get_key();
+					if(key_status > 0)
 					{
-						power_ops_int_status &= ~0x02;
-						j = 0;
-						__inf("short key\n");
-					}
-					else if(power_ops_int_status & 0x01)	//长按
-					{
-						ShowBatteryCharge_exit(bat_show_hd);
-						wlibc_int_disable();
-						power_int_rel();
-						usb_detect_exit();
-						power_ops_int_status &= ~0x01;
-						wlibc_int_enable();
-						power_int_reg();
-						__inf("long key\n");
+						if(key_status & 0x02)	//短按
+						{
+							j = 0;
+						}
+						else if(key_status & 0x01) //长按
+						{
+							ShowBatteryCharge_exit(bat_show_hd);
 
-						return 0;
+							return 0;
+						}
 					}
+					wBoot_timer_delay(one_delay);
+//					if(power_ops_int_status & 0x02)	//短按
+//					{
+//						power_ops_int_status &= ~0x02;
+//						j = 0;
+//						__inf("short key\n");
+//					}
+//					else if(power_ops_int_status & 0x01)	//长按
+//					{
+//						ShowBatteryCharge_exit(bat_show_hd);
+//						wlibc_int_disable();
+//						power_int_rel();
+//						usb_detect_exit();
+//						power_ops_int_status &= ~0x01;
+//						wlibc_int_enable();
+//						power_int_reg();
+//						__inf("long key\n");
+//
+//						return 0;
+//					}
 				}
 			}
 			ShowBatteryCharge_rate(bat_show_hd, this_bat_cal);
@@ -291,24 +321,24 @@ __s32 check_power_status(void)
 		do
 		{
 			__inf("enter standby\n");
-			if(power_ops_int_status & 0x04)
+//			if(power_ops_int_status & 0x04)
+//			{
+//				status = 8;
+//				power_ops_int_status &= ~0x04;
+//			}
+//			else
 			{
-				status = 8;
-				power_ops_int_status &= ~0x04;
-			}
-			else
-			{
-				wlibc_int_disable();
-				power_int_rel();
-				usb_detect_exit();
-				wlibc_int_enable();
+//				wlibc_int_disable();
+//				power_int_rel();
+//				usb_detect_exit();
+//				wlibc_int_enable();
 				De_CloseLayer(board_res.layer_hd);
 				status = wBoot_standby();
 				__inf("exit standby by %d\n", status);
 
-				wlibc_int_disable();
+//				wlibc_int_disable();
 				bat_cal = wBoot_power_get_cal();
-				wlibc_int_enable();
+//				wlibc_int_enable();
 				__inf("current bat_cal = %d\n", bat_cal);
 				if(bat_cal > this_bat_cal)
 				{
@@ -323,7 +353,7 @@ __s32 check_power_status(void)
 			{
 				case 2:		//短按power按键导致唤醒
 				{
-					power_int_reg();
+					//power_int_reg();
 					De_OpenLayer(board_res.layer_hd);
 					if(this_bat_cal == 100)
 					{
@@ -335,25 +365,39 @@ __s32 check_power_status(void)
 						show_battery_full(&bat_full_status);
 						for(i =0;i<12;i++)
 						{
-							if(power_ops_int_status & 0x02)	//短按
+							key_status = wBoot_power_get_key();
+							if(key_status > 0)
 							{
-								power_ops_int_status &= ~0x02;
-								i = 0;
-								__msg("short key\n");
-							}
-							else if(power_ops_int_status & 0x01)	//长按
-							{
-								ShowBatteryCharge_exit(bat_show_hd);
-								wlibc_int_disable();
-								power_int_rel();
-								usb_detect_exit();
-								power_ops_int_status &= ~0x01;
-								wlibc_int_enable();
-								power_int_reg();
-								__inf("long key\n");
+								if(key_status & 0x02)	//短按
+								{
+									j = 0;
+								}
+								else if(key_status & 0x01) //长按
+								{
+									ShowBatteryCharge_exit(bat_show_hd);
 
-								return 0;
+									return 0;
+								}
 							}
+//							if(power_ops_int_status & 0x02)	//短按
+//							{
+//								power_ops_int_status &= ~0x02;
+//								j = 0;
+//								__inf("short key\n");
+//							}
+//							else if(power_ops_int_status & 0x01)	//长按
+//							{
+//								ShowBatteryCharge_exit(bat_show_hd);
+//								wlibc_int_disable();
+//								power_int_rel();
+//								usb_detect_exit();
+//								power_ops_int_status &= ~0x01;
+//								wlibc_int_enable();
+//								power_int_reg();
+//								__inf("long key\n");
+//
+//								return 0;
+//							}
 							wBoot_timer_delay(250);
 						}
 					}
@@ -367,26 +411,40 @@ __s32 check_power_status(void)
 							for(i=this_bat_cal;i<110;i+=10)
 							{
 								ShowBatteryCharge_rate(bat_show_hd, i);
-								wBoot_timer_delay(one_delay);
-								if(power_ops_int_status & 0x02)	//短按
+								key_status = wBoot_power_get_key();
+								if(key_status > 0)
 								{
-									power_ops_int_status &= ~0x02;
-									j = 0;
-									__msg("short key\n");
-								}
-								else if(power_ops_int_status & 0x01)	//长按
-								{
-									ShowBatteryCharge_exit(bat_show_hd);
-									wlibc_int_disable();
-									power_int_rel();
-									usb_detect_exit();
-									power_ops_int_status &= ~0x01;
-									wlibc_int_enable();
-									power_int_reg();
-									__inf("long key\n");
+									if(key_status & 0x02)	//短按
+									{
+										j = 0;
+									}
+									else if(key_status & 0x01) //长按
+									{
+										ShowBatteryCharge_exit(bat_show_hd);
 
-									return 0;
+										return 0;
+									}
 								}
+								wBoot_timer_delay(one_delay);
+//								if(power_ops_int_status & 0x02)	//短按
+//								{
+//									power_ops_int_status &= ~0x02;
+//									j = 0;
+//									__inf("short key\n");
+//								}
+//								else if(power_ops_int_status & 0x01)	//长按
+//								{
+//									ShowBatteryCharge_exit(bat_show_hd);
+//									wlibc_int_disable();
+//									power_int_rel();
+//									usb_detect_exit();
+//									power_ops_int_status &= ~0x01;
+//									wlibc_int_enable();
+//									power_int_reg();
+//									__inf("long key\n");
+//
+//									return 0;
+//								}
 							}
 						}
 						ShowBatteryCharge_rate(bat_show_hd, this_bat_cal);
@@ -398,7 +456,7 @@ __s32 check_power_status(void)
 				case 3:		//长按电源按键之后，关闭电池图标，进入系统
 				{
 					ShowBatteryCharge_exit(bat_show_hd);
-					power_int_reg();
+//					power_int_reg();
 
 					return 0;
 				}
@@ -410,7 +468,7 @@ __s32 check_power_status(void)
 				case 6:
 				case 7:
 				{
-					power_int_reg();
+//					power_int_reg();
 					if((status != 4) && (status != 5))
 					{
 						De_OpenLayer(board_res.layer_hd);
@@ -431,14 +489,14 @@ __s32 check_power_status(void)
 				}
 				case 8:		//standby过程中检测到vbus接入
 				{
-					usb_detect_enter();
-					wBoot_timer_delay(600);
-					usb_detect_exit();
+//					usb_detect_enter();
+//					wBoot_timer_delay(600);
+//					usb_detect_exit();
 				}
 				break;
 				case 9:		//standby过程中检测到vbus移除，同时存在普通dc
 				{
-					power_set_usbpc();
+//					power_set_usbpc();
 				}
 				break;
 

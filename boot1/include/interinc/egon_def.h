@@ -47,7 +47,7 @@
 #define EGON2_RESET_BASE                0xFFFF0000
 
 
-#define EGON2_MMU_BASE                  0x20000
+#define EGON2_MMU_BASE                  0x8000
 #define EGON2_REGS_BASE				    0x01c00000
 #define EGON2_REGS_SIZE					0x02000000
 

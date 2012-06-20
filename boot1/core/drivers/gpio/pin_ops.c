@@ -159,7 +159,14 @@ __hdle eGon2_GPIO_Request(user_gpio_set_t *gpio_list, __u32 group_count_max)  //
 	    tmp_sys_gpio_data->user_gpio_status.drv_level = tmp_user_gpio_data->drv_level;
 	    tmp_sys_gpio_data->user_gpio_status.data      = tmp_user_gpio_data->data;
 
-
+	    if(port == 0xffff)	//电源按键
+	    {
+	    	if(eGon2_power_set_gpio(port_num, tmp_user_gpio_data->mul_sel, tmp_user_gpio_data->data))
+	    	{
+	    		return (__hdle)0;
+	    	}
+	    	continue;
+	    }
         port_num_func = (port_num >> 3);
         port_num_pull = (port_num >> 4);
 
@@ -329,6 +336,12 @@ __s32 eGon2_GPIO_Release(__hdle p_handler, __s32 if_release_to_default_status)
 
         port_num_func = (port_num >> 3);
 
+        if(port == 0xffff)	//电源按键
+        {
+        	eGon2_power_set_gpio(port, -1, -1);
+        	continue;
+        }
+
         if(tmp_group_func_addr)                             //必须检查寄存器变量是否被赋值
         {
             if((pre_port_num_func != port_num_func) || (port != pre_port)) //如果发现当前引脚的端口不一致，或者所在的pull寄存器不一致
@@ -444,6 +457,14 @@ __s32  eGon2_GPIO_Get_All_PIN_Status(__hdle p_handler, user_gpio_set_t *gpio_sta
             script_gpio->port_num  = port_num;                 //读出port_num数据
             strcpy(script_gpio->gpio_name, tmp_sys_gpio_data->gpio_name);
 
+			if(port == 0xffff)		//如果是电源芯片
+			{
+				script_gpio->pull 		= -1;
+				script_gpio->drv_level 	= -1;
+				eGon2_power_get_gpio(port, &script_gpio->mul_sel, &script_gpio->data);
+				continue;
+			}
+
             port_num_func = (port_num >> 3);
             port_num_pull = (port_num >> 4);
 
@@ -555,6 +576,15 @@ __s32  eGon2_GPIO_Get_One_PIN_Status(__hdle p_handler, user_gpio_set_t *gpio_sta
             port_num_func = (port_num >> 3);
             port_num_pull = (port_num >> 4);
 
+            if(port == 0xffff)		//如果是电源芯片
+			{
+				gpio_status->pull 		= -1;
+				gpio_status->drv_level 	= -1;
+				eGon2_power_get_gpio(port_num, &gpio_status->mul_sel, &gpio_status->data);
+
+				break;
+			}
+
             tmp_val1 = (port_num - (port_num_func<<3)<<2);
             tmp_val2 = (port_num - (port_num_pull<<4)<<1);
             gpio_status->mul_sel   = (PIO_REG_CFG_VALUE(port, port_num_func)>>tmp_val1) & 0x07;       //从硬件中读出功能寄存器
@@ -650,6 +680,13 @@ __s32  eGon2_GPIO_Set_One_PIN_Status(__hdle p_handler, user_gpio_set_t *gpio_sta
             script_gpio.data      = tmp_sys_gpio_data->user_gpio_status.data;
         }
 
+        if(port == 0xffff)		//如果是电源芯片
+		{
+			eGon2_power_set_gpio(port_num, script_gpio.mul_sel, script_gpio.data);
+
+			break;
+		}
+
         if(script_gpio.mul_sel >= 0)
         {
         	tmp_addr = PIO_REG_CFG(port, port_num_func);
@@ -697,7 +734,22 @@ __s32  eGon2_GPIO_Set_One_PIN_Status(__hdle p_handler, user_gpio_set_t *gpio_sta
 
     return EGON2_OK;
 }
-
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 __s32  eGon2_GPIO_Set_One_PIN_IO_Status(__hdle p_handler, __u32 if_set_to_output_status, const char *gpio_name)
 {
     char               *tmp_buf;                                        //转换成char类型
@@ -749,6 +801,11 @@ __s32  eGon2_GPIO_Set_One_PIN_IO_Status(__hdle p_handler, __u32 if_set_to_output
     port_num = user_gpio_set->port_num;
     port_num_func = port_num >> 3;
 
+	if(port == 0xffff)		//如果是电源芯片
+	{
+		return EGON2_OK;
+	}
+
     tmp_group_func_addr = PIO_REG_CFG(port, port_num_func);
     reg_val = *tmp_group_func_addr;
     reg_val &= ~(0x07 << ((port_num - (port_num_func<<3)<<2)));
@@ -757,6 +814,23 @@ __s32  eGon2_GPIO_Set_One_PIN_IO_Status(__hdle p_handler, __u32 if_set_to_output
 
     return EGON2_OK;
 }
+
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 __s32  eGon2_GPIO_Set_One_PIN_Pull(__hdle p_handler, __u32 set_pull_status, const char *gpio_name)
 {
     char               *tmp_buf;                                        //转换成char类型
@@ -807,6 +881,11 @@ __s32  eGon2_GPIO_Set_One_PIN_Pull(__hdle p_handler, __u32 set_pull_status, cons
     port_num = user_gpio_set->port_num;
     port_num_pull = port_num >> 4;
 
+	if(port == 0xffff)		//如果是电源芯片
+	{
+		return EGON2_OK;
+	}
+
     tmp_group_func_addr = PIO_REG_PULL(port, port_num_pull);
     reg_val = *tmp_group_func_addr;
     reg_val &= ~(0x03 << ((port_num - (port_num_pull<<4)<<1)));
@@ -815,6 +894,23 @@ __s32  eGon2_GPIO_Set_One_PIN_Pull(__hdle p_handler, __u32 set_pull_status, cons
 
     return EGON2_OK;
 }
+
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 __s32  eGon2_GPIO_Set_One_PIN_driver_level(__hdle p_handler, __u32 set_driver_level, const char *gpio_name)
 {
     char               *tmp_buf;                                        //转换成char类型
@@ -866,6 +962,11 @@ __s32  eGon2_GPIO_Set_One_PIN_driver_level(__hdle p_handler, __u32 set_driver_le
     port_num = user_gpio_set->port_num;
     port_num_dlevel = port_num >> 4;
 
+	if(port == 0xffff)		//如果是电源芯片
+	{
+		return EGON2_OK;
+	}
+
     tmp_group_func_addr = PIO_REG_DLEVEL(port, port_num_dlevel);
     reg_val = *tmp_group_func_addr;
     reg_val &= ~(0x03 << ((port_num - (port_num_dlevel<<4)<<1)));
@@ -874,6 +975,23 @@ __s32  eGon2_GPIO_Set_One_PIN_driver_level(__hdle p_handler, __u32 set_driver_le
 
     return EGON2_OK;
 }
+
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 __s32  eGon2_GPIO_Read_One_PIN_Value(__hdle p_handler, const char *gpio_name)
 {
     char               *tmp_buf;                                        //转换成char类型
@@ -920,17 +1038,51 @@ __s32  eGon2_GPIO_Read_One_PIN_Value(__hdle p_handler, const char *gpio_name)
     port_num = user_gpio_set->port_num;
     port_num_func = port_num >> 3;
 
-    reg_val  = PIO_REG_CFG_VALUE(port, port_num_func);
-    func_val = (reg_val >> (port_num - (port_num_func<<3)<<2)) & 0x07;
-    if(func_val == 0)
-    {
-        reg_val = (PIO_REG_DATA_VALUE(port) >> port_num) & 0x01;
+	if(port == 0xffff)
+	{
+		int ret;
 
-        return reg_val;
+		ret = eGon2_power_read_gpio(port_num);
+    	if(ret >= 0)
+    	{
+    		return ret;
+    	}
+    	else
+    	{
+    		return EGON2_FAIL;
+    	}
+	}
+    else
+    {
+    	reg_val  = PIO_REG_CFG_VALUE(port, port_num_func);
+    	func_val = (reg_val >> (port_num - (port_num_func<<3)<<2)) & 0x07;
+    	if(func_val == 0)
+    	{
+        	reg_val = (PIO_REG_DATA_VALUE(port) >> port_num) & 0x01;
+
+        	return reg_val;
+    	}
     }
 
     return EGON2_FAIL;
 }
+
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 __s32  eGon2_GPIO_Write_One_PIN_Value(__hdle p_handler, __u32 value_to_gpio, const char *gpio_name)
 {
     char               *tmp_buf;                                        //转换成char类型
@@ -982,18 +1134,35 @@ __s32  eGon2_GPIO_Write_One_PIN_Value(__hdle p_handler, __u32 value_to_gpio, con
     port_num = user_gpio_set->port_num;
     port_num_func = port_num >> 3;
 
-    reg_val  = PIO_REG_CFG_VALUE(port, port_num_func);
-    func_val = (reg_val >> (port_num - (port_num_func<<3)<<2)) & 0x07;
-    if(func_val == 1)
-    {
-        tmp_group_data_addr = PIO_REG_DATA(port);
-        reg_val = *tmp_group_data_addr;
-        reg_val &= ~(1 << port_num);
-        reg_val |=  (value_to_gpio << port_num);
-        *tmp_group_data_addr = reg_val;
+	if(port == 0xffff)
+	{
+		int ret;
 
-        return EGON2_OK;
-    }
+		ret = eGon2_power_write_gpio(port_num, value_to_gpio);
+		if(ret >= 0)
+		{
+			return EGON2_OK;
+		}
+		else
+    	{
+    		return EGON2_FAIL;
+    	}
+	}
+	else
+	{
+		reg_val  = PIO_REG_CFG_VALUE(port, port_num_func);
+	    func_val = (reg_val >> (port_num - (port_num_func<<3)<<2)) & 0x07;
+	    if(func_val == 1)
+	    {
+	        tmp_group_data_addr = PIO_REG_DATA(port);
+	        reg_val = *tmp_group_data_addr;
+	        reg_val &= ~(1 << port_num);
+	        reg_val |=  (value_to_gpio << port_num);
+	        *tmp_group_data_addr = reg_val;
+
+	        return EGON2_OK;
+	    }
+	}
 
     return EGON2_FAIL;
 }

@@ -95,8 +95,7 @@ int BootMain(int argc, char **argv)
 	   			break;
 	   	}
 	}
-	*(volatile unsigned int *)(0x1c20C00 + 0x118) = 0;
-	*(volatile unsigned int *)(0x1c20C00 + 0x11C) = 3;
+
 	//数据初始化
 	memset(&board_res, 0, sizeof(boot_hardware_res));
     //申请内存，填充第一个启动脚本

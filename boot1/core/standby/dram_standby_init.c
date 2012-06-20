@@ -38,32 +38,15 @@
 */
 void mctl_ddr3_reset(void)
 {
-    __u32 reg_val;
+	__u32 reg_val;
 
-    mctl_write_w(TIMER_CPU_CFG_REG, 0);
-    reg_val = mctl_read_w(TIMER_CPU_CFG_REG);
-    reg_val >>=6;
-    reg_val &=0x3;
-    if(reg_val == 0)
-    {
-        reg_val = mctl_read_w(SDR_CR);
-        reg_val &= ~(0x1<<12);
-        mctl_write_w(SDR_CR, reg_val);
-        standby_delay(0x100);
-        reg_val = mctl_read_w(SDR_CR);
-        reg_val |= (0x1<<12);
-        mctl_write_w(SDR_CR, reg_val);
-    }
-    else
-    {
-        reg_val = mctl_read_w(SDR_CR);
-        reg_val |= (0x1<<12);
-        mctl_write_w(SDR_CR, reg_val);
-        standby_delay(0x100);
-        reg_val = mctl_read_w(SDR_CR);
-        reg_val &= ~(0x1<<12);
-        mctl_write_w(SDR_CR, reg_val);
-    }
+	reg_val = mctl_read_w(SDR_CR);
+	reg_val &= ~(0x1<<12);
+	mctl_write_w(SDR_CR, reg_val);
+	standby_delay(0x100);
+	reg_val = mctl_read_w(SDR_CR);
+	reg_val |= (0x1<<12);
+	mctl_write_w(SDR_CR, reg_val);
 }
 
 void mctl_set_drive(void)
@@ -110,22 +93,32 @@ void mctl_enable_dll0(void)
 void mctl_enable_dllx(void)
 {
     __u32 i = 0;
+    __u32 reg_val;
+    __u32 dll_num;
 
-    for(i=1; i<5; i++)
+	reg_val = mctl_read_w(SDR_DCR);
+	reg_val >>=6;
+	reg_val &= 0x7;
+	if(reg_val == 3)
+		dll_num = 5;
+	else
+		dll_num = 3;
+
+    for(i=1; i<dll_num; i++)
     {
         mctl_write_w(SDR_DLLCR0+(i<<2), mctl_read_w(SDR_DLLCR0+(i<<2)) & ~0x40000000 | 0x80000000);
     }
 
 	standby_delay(0x100);
 
-    for(i=1; i<5; i++)
+    for(i=1; i<dll_num; i++)
     {
         mctl_write_w(SDR_DLLCR0+(i<<2), mctl_read_w(SDR_DLLCR0+(i<<2)) & ~0xC0000000);
     }
 
 	standby_delay(0x1000);
 
-    for(i=1; i<5; i++)
+    for(i=1; i<dll_num; i++)
     {
         mctl_write_w(SDR_DLLCR0+(i<<2), mctl_read_w(SDR_DLLCR0+(i<<2)) & ~0x80000000 | 0x40000000);
     }
@@ -166,16 +159,15 @@ void mctl_disable_dll(void)
 void mctl_configure_hostport(void)
 {
     __u32 i;
-	__u32 hpcr_value[32] =
-	{
-		0x00000301,0x00000301,0x00000301,0x00000301,
-		0x00000301,0x00000301,0x0,       0x0,
-		0x0,       0x0,       0x0,       0x0,
-		0x0,       0x0,       0x0,       0x0,
-		0x00001031,0x00001031,0x00000735,0x00001035,
-		0x00001035,0x00000731,0x00001031,0x00000735,
-		0x00001035,0x00001031,0x00000731,0x00001035,
-		0x00001031,0x00000301,0x00000301,0x00000731,
+	__u32 hpcr_value[32] = {
+			0x0,0x0,0x0,0x0,
+			0x0,0x0,0x0,0x0,
+			0x0,0x0,0x0,0x0,
+			0x0,0x0,0x0,0x0,
+			0x00001031,0x00001031,0x00000735,0x00001035,
+			0x00001035,0x00000731,0x00001031,0x0,
+			0x00000301,0x00000301,0x00000301,0x00000301,
+			0x00000301,0x00000301,0x00000301,0x0
 	};
 
     for(i=0; i<32; i++)
@@ -270,14 +262,14 @@ void DRAMC_clock_output_en(__u32 on)
 {
     __u32 reg_val;
 
-    reg_val = mctl_read_w(DRAM_CCM_SDRAM_CLK_REG);
+    reg_val = mctl_read_w(SDR_CR);
 
     if(on)
-        reg_val |= 0x1<<15;
+        reg_val |= 0x1<<16;
     else
-        reg_val &= ~(0x1<<15);
+        reg_val &= ~(0x1<<16);
 
-    mctl_write_w(DRAM_CCM_SDRAM_CLK_REG, reg_val);
+    mctl_write_w(SDR_CR, reg_val);
 }
 
 __s32 dram_scan_readpipe(void)

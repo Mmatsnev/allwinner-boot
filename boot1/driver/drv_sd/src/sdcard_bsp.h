@@ -115,9 +115,8 @@ typedef struct {
             card_err_sum    :1,     //transfer error flag
             own             :1;     //des owner:1-idma owns it, 0-host owns it
 
-    __u32   data_buf1_sz    :13,
-            data_buf2_sz    :13,
-                            :6;
+    __u32   data_buf1_sz    :16,
+            data_buf2_sz    :16;
     __u32   buf_addr_ptr1;
     __u32   buf_addr_ptr2;
 

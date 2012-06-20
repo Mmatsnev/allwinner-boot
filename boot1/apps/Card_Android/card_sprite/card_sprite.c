@@ -216,14 +216,16 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
     imgitemhd = NULL;
     //检查MBR的合法性
     mbr_count = ((MBR *)tmp_mbr_buf)->copy;
+    __inf("mbr_count = %d\n", mbr_count);
     for(i=0;i<mbr_count;i++)
     {
     	tmp_mbr_cfg = (MBR *)(tmp_mbr_buf + i * sizeof(MBR));
 		crc = calc_crc32((void *)&tmp_mbr_cfg->version, sizeof(MBR) - 4);
+		__inf("count crc=%x, source crc=%x\n", crc, tmp_mbr_cfg->crc32);
 		if(crc != tmp_mbr_cfg->crc32)
 		{
-			sprite_wrn("sprite update warning: check mbr %d part correct fail\n", i);
-			sprite_wrn("now fix it automatically\n");
+			__wrn("sprite update warning: check mbr %d part correct fail\n", i);
+			__wrn("now fix it automatically\n");
 			//自动修正CRC
 			tmp_mbr_cfg->crc32 = crc;
 		}

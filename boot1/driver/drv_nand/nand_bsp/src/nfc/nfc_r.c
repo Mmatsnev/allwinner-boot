@@ -578,8 +578,10 @@ __s32 NFC_SelectChip( __u32 chip)
     cfg = NFC_READ_REG(NFC_REG_CTL);
     cfg &= ( (~NFC_CE_SEL) & 0xffffffff);
     cfg |= ((chip & 0x7) << 24);
+#if 0
     if(((read_retry_mode == 0)||(read_retry_mode == 1))&&(read_retry_cycle))
         cfg |= (0x1<<6);
+#endif    
     NFC_WRITE_REG(NFC_REG_CTL,cfg);
     
     if((cfg>>18)&0x3) //ddr nand
@@ -620,6 +622,7 @@ __s32 NFC_SelectRb( __u32 rb)
 
 __s32 NFC_DeSelectChip( __u32 chip)
 {
+#if 0    
     __u32 cfg;
 
     if(((read_retry_mode == 0)||(read_retry_mode == 1))&&(read_retry_cycle))
@@ -628,7 +631,7 @@ __s32 NFC_DeSelectChip( __u32 chip)
         cfg &= (~(0x1<<6));
         NFC_WRITE_REG(NFC_REG_CTL,cfg);    
     }
-
+#endif
 	return 0;
 }
 

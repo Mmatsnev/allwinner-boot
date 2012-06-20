@@ -257,7 +257,7 @@ __s32 SDC_SendCmd(SDC_CMD_T *cmd, void*response)
 
 * Notes		  : none
 ********************************************************************************/
-#define SDXC_DES_NUM_SHIFT            (13)  //8192 == 1<<13;
+#define SDXC_DES_NUM_SHIFT            (16)
 #define SDXC_DES_BUFFER_MAX_LEN       (1 << SDXC_DES_NUM_SHIFT)
 
 //static __u32 printk = 0;
@@ -596,7 +596,7 @@ __s32 SDC_WriteData(SDC_CMD_T *cmd, void *buf, __u32 byte_cnt, __u32 card_no)
 	}
 
 	/*wait data transfer over*/
-	timeout = 0x7ffff;
+	timeout = 0x600*byte_cnt;
 	while((timeout--)&&(!(sd_reg->sd_reg_rintsts & (0x1<<3))));
 	sd_reg->sd_reg_rintsts = 0x1<<3;
 	if(timeout < 0)

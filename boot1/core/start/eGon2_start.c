@@ -25,6 +25,8 @@
 static void  print_version(void);
 static __s32 reserved_init(void);
 static __s32 reserved_exit(void);
+static void timer_ver_set(void);
+static void eGon2_storage_type_set(void);
 /*******************************************************************************
 *函数名称: eGon2_start
 *函数原型：void Boot1_C_part( void )
@@ -156,6 +158,7 @@ void eGon2_start( void )
 	{
 		eGon2_printf("unable to open script file, check it carefully\n");
 	}
+	timer_ver_set();
 	eGon2_printf("script finish\n");
 #if SYS_STORAGE_MEDIA_TYPE == SYS_STORAGE_MEDIA_NAND
 //	eGon2_dynamic();
@@ -175,12 +178,10 @@ void eGon2_start( void )
 	eGon2_config_charge_current(0);
 	//设置nand参数到脚本中
 	eGon2_printf("power finish\n");
-//	{
-//		while((*(int *)(0x40000000)) != 0x55);
-//	}
 #if SYS_STORAGE_MEDIA_TYPE == SYS_STORAGE_MEDIA_NAND
 	eGon2_block_ratio();
 #endif
+	eGon2_storage_type_set();
 	if(force_to_card0 == 1)
 	{
 		eGon2_force_to_debug();
@@ -257,6 +258,94 @@ static __s32 reserved_init(void)
 static __s32 reserved_exit(void)
 {
     return 0;
+}
+static void eGon2_storage_type_set(void)
+{
+	boot_file_head_t  *bfh;
+	int  type;
+
+	bfh = (boot_file_head_t *)BOOT1_BASE;
+	type = bfh->eGON_vsn[2];
+
+	if(!eGon2_script_parser_patch("target", "storage_type", type))
+	{
+		eGon2_printf("storage_type=%d\n", type);
+	}
+
+	return ;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+static void timer_ver_set(void)
+{
+	__u32 timer_ver;
+	int   ret1, ret2;
+	int   x_length, y_length;
+
+	*(volatile __u32 *)(0x1c20000 + 0x60) |= 1<<5;
+	*(volatile __u32 *)(0x1c20000 + 0x9C) |= 1U<<31;
+	timer_ver = ((*(volatile __u32 *)(0x1c15000)) >>16) & 0x07;
+	*(volatile __u32 *)(0x1c20000 + 0x9C) = 0;
+	*(volatile __u32 *)(0x1c20000 + 0x60) &= ~(1<<5);
+
+	x_length = y_length = 0;
+	if(timer_ver == 1)
+	{
+		ret1 = eGon2_script_parser_fetch("lcd0_para", "lcd_x", &x_length, 1);
+		ret2 = eGon2_script_parser_fetch("lcd0_para", "lcd_y", &y_length, 1);
+		if(!ret1)
+		{
+			if(!ret2)
+			{
+				if(x_length * y_length > 800 * 600)
+				{
+					if(x_length > y_length)
+					{
+						eGon2_script_parser_patch("lcd0_para", "lcd_x", 800);
+						eGon2_script_parser_patch("lcd0_para", "lcd_y", 600);
+					}
+					else
+					{
+						eGon2_script_parser_patch("lcd0_para", "lcd_x", 600);
+						eGon2_script_parser_patch("lcd0_para", "lcd_y", 800);
+					}
+				}
+			}
+			else
+			{
+				if(x_length > 800)
+				{
+					eGon2_script_parser_patch("lcd0_para", "lcd_x", 800);
+				}
+			}
+		}
+		else
+		{
+			if(!ret2)
+			{
+				if(y_length > 800)
+				{
+					eGon2_script_parser_patch("lcd0_para", "lcd_y", 800);
+				}
+			}
+		}
+	}
+
+	return ;
 }
 
 

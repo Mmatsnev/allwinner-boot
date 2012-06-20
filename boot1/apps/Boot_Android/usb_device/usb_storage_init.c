@@ -576,7 +576,9 @@ __u32 usb_detect_enter(void)
 		}
 		wBoot_InsINT_Func(awxx_usb[0].irq_no, (int *)usb_detect_irq_handler, 0);
 		wBoot_EnableInt(awxx_usb[0].irq_no);
+
 		usb_init(&awxx_usb[0]);
+
 		usb_soft_connect(&awxx_usb[0]);
 	}
 

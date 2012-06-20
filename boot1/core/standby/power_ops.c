@@ -25,11 +25,115 @@
 
 
 extern  __u32 PMU_type;
-
 extern  __u32 trans_dcdc2_user_set;
-
 static  __u32 power_step_level;
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 
+static __s32 _axp_clr_status(void)
+{
+	__u8  reg_addr1,value1;
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER0;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER1;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER2;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER3;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER4;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER5;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER6;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER7;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER8;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER9;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER10;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	reg_addr1 = BOOT_POWER20_DATA_BUFFER11;
+	value1 = 0x00;
+	if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
+	{
+		return -1;
+	}
+
+	return ;
+}
 /*
 ************************************************************************************************************
 *
@@ -142,86 +246,15 @@ __s32 eGon2_power_init(void *power_para)
 
     //Evan add 20120610
 	reg_addr1 = 0xB8;
-	//value = 0x80;
 	if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr1, &value1))
 	{
     	return -1;
 	}
 	if(!(value1 & 0x80))
 	{
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER0;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER1;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER2;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER3;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER4;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER5;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER6;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER7;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER8;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER9;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER10;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
-		reg_addr1 = BOOT_POWER20_DATA_BUFFER10;
-		value1 = 0x00;
-		if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr1, &value1))
-		{
-    		return -1;
-		}
+		_axp_clr_status();
 	}
+
     //使能库仑计
 	eGon2_power_enable_coulomb();
     //检测电压，决定是否开机
@@ -247,12 +280,31 @@ __s32 eGon2_power_init(void *power_para)
 			eGon2_printf("bat_cou=%x\n", bat_cou);
 			if(dcin_exist)
 			{
-				power_step_level = 3;
+				if(bat_vol > 3900)
+				{
+					_axp_clr_status();
+					power_step_level = 2;
+					eGon2_printf("dcin_exist\n");
+				}
+				else
+				{
+					power_step_level = 3;
+				}
 			}
 			else
 			{
-				power_step_level = 1;
+				if(bat_vol > 3800)
+				{
+					power_step_level = 2;
+					_axp_clr_status();
+					eGon2_printf("bat_vol > 3800\n");
+				}
+				else
+				{
+					power_step_level = 1;
+				}
 			}
+			eGon2_printf("power_step_level =%x, bat_vol = %x\n", power_step_level,bat_vol);
 		}
 		else															//其中一个条件不满足，就可以开机
 		{
@@ -949,4 +1001,343 @@ __s32 eGon2_config_charge_current(int start_time)
 
 	return -1;
 }
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+__s32 eGon2_power_set_gpio(int gpio_num, int io_status, int output_value)
+{
+	__u8  reg_addr, value;
 
+	if(io_status < 0)
+	{
+		return -1;
+	}
+	if(PMU_type == PMU_TYPE_AXP209)
+	{
+		if((gpio_num >= 0) && (gpio_num < 3))
+		{
+			if(!gpio_num)
+			{
+				reg_addr = BOOT_POWER20_GPIO0_CTL;
+			}
+			else
+			{
+				reg_addr = BOOT_POWER20_GPIO1_CTL + gpio_num - 1;
+			}
+			if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+			value &= ~0x07;
+			if(io_status == 0)//input
+			{
+				value |= 0x02;
+			}
+			else if(output_value == 1)//output high
+			{
+				value |= 0x01;
+			}
+			//else output low
+			if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+		}
+		else if(gpio_num == 3)
+		{
+			reg_addr = BOOT_POWER20_GPIO3_CTL;
+			if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+			value &= ~0x06;
+			if(io_status == 0)	//input
+			{
+				value |= 0x04;
+			}
+			else if(output_value == 1)	//output high
+			{
+				value |= 0x02;
+			}
+			//else output low
+			if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+__s32 eGon2_power_write_gpio(int gpio_num, int output_value)
+{
+	__u8  reg_addr, value;
+	__u8  value0;
+
+	if(PMU_type == PMU_TYPE_AXP209)
+	{
+		if((gpio_num >= 0) && (gpio_num < 3))
+		{
+			if(!gpio_num)
+			{
+				reg_addr = BOOT_POWER20_GPIO0_CTL;
+			}
+			else
+			{
+				reg_addr = BOOT_POWER20_GPIO1_CTL + gpio_num - 1;
+			}
+			if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+			value0 = value & 0x06;
+			if(value0 == 0)	//处于output状态
+			{
+				value &= ~0x01;
+				value |= output_value & 0x01;
+			}
+			else
+			{
+				return -1;
+			}
+			if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+		}
+		else if(gpio_num == 3)
+		{
+			reg_addr = BOOT_POWER20_GPIO3_CTL;
+			if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+			value0 = value & 0x04;
+			if(value0 == 0)	//input
+			{
+				value &= ~0x02;
+				value |= (output_value & 0x01)<<1;
+			}
+			else
+			{
+				return -1;
+			}
+			if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+__s32 eGon2_power_get_gpio(int gpio_num, int *io_status, int *output_value)
+{
+	__u8  reg_addr, value;
+
+	if(PMU_type == PMU_TYPE_AXP209)
+	{
+		if((gpio_num >= 0) && (gpio_num < 3))
+		{
+			if(!gpio_num)
+			{
+				reg_addr = BOOT_POWER20_GPIO0_CTL;
+			}
+			else
+			{
+				reg_addr = BOOT_POWER20_GPIO1_CTL + gpio_num - 1;
+			}
+			if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+			value &= 0x07;
+			if(value == 0)
+			{
+				*io_status = 1;
+				*output_value = 0;
+			}
+			else if(value == 1)
+			{
+				*io_status = 1;
+				*output_value = 1;
+			}
+			else if(value == 2)
+			{
+				*io_status = 0;
+				*output_value = -1;
+			}
+			else
+			{
+				*io_status = -1;
+				*output_value = -1;
+			}
+		}
+		else if(gpio_num == 3)
+		{
+			reg_addr = BOOT_POWER20_GPIO3_CTL;
+			if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+			value &= 0x07;
+			if((value & 0x04) == 0)
+			{
+				*io_status = 1;
+				if((value & 0x02) == 0)
+				{
+					*output_value = 0;
+				}
+				else
+				{
+					*output_value = 1;
+				}
+			}
+			else if((value & 0x04) == 1)
+			{
+				*io_status = 0;
+				*output_value = value & 0x01;
+			}
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+__s32 eGon2_power_read_gpio(int gpio_num)
+{
+	__u8  reg_addr, value;
+
+	if(PMU_type == PMU_TYPE_AXP209)
+	{
+		if((gpio_num >= 0) && (gpio_num < 3))
+		{
+			if(!gpio_num)
+			{
+				reg_addr = BOOT_POWER20_GPIO0_CTL;
+			}
+			else
+			{
+				reg_addr = BOOT_POWER20_GPIO1_CTL + gpio_num - 1;
+			}
+			if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+			value &= 0x07;
+			if(value == 0x02)
+			{
+				reg_addr = BOOT_POWER20_GPIO012_SIGNAL;
+				if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+				{
+				    return -1;
+				}
+				value = (value>>4) & 0x07;
+
+				return (value>>gpio_num) & 0x01;
+			}
+		}
+		else if(gpio_num == 3)
+		{
+			reg_addr = BOOT_POWER20_GPIO3_CTL;
+			if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+			{
+			    return -1;
+			}
+			if((value & 0x04) == 1)
+			{
+				return value & 0x01;
+			}
+		}
+		else
+		{
+			return -1;
+		}
+	}
+
+	return -1;
+}

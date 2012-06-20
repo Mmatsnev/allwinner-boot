@@ -7,6 +7,17 @@
 #include "include.h"
 #include "sw_uart.h"
 
+
+sw_uart_t serial_ports[8] = {
+	(sw_uart_t)CFG_SW_SERIAL_COM0,
+	(sw_uart_t)CFG_SW_SERIAL_COM1,
+	(sw_uart_t)CFG_SW_SERIAL_COM2,
+	(sw_uart_t)CFG_SW_SERIAL_COM3,
+	(sw_uart_t)CFG_SW_SERIAL_COM4,
+	(sw_uart_t)CFG_SW_SERIAL_COM5,
+	(sw_uart_t)CFG_SW_SERIAL_COM6,
+	(sw_uart_t)CFG_SW_SERIAL_COM7
+};
 /*
 ************************************************************************************************************
 *

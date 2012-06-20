@@ -34,18 +34,8 @@
 
 #define   SERIAL_PORT    serial_ports[serial_index]
 
-static sw_uart_t serial_ports[8] = {
-	(sw_uart_t)CFG_SW_SERIAL_COM0,
-	(sw_uart_t)CFG_SW_SERIAL_COM1,
-	(sw_uart_t)CFG_SW_SERIAL_COM2,
-	(sw_uart_t)CFG_SW_SERIAL_COM3,
-	(sw_uart_t)CFG_SW_SERIAL_COM4,
-	(sw_uart_t)CFG_SW_SERIAL_COM5,
-	(sw_uart_t)CFG_SW_SERIAL_COM6,
-	(sw_uart_t)CFG_SW_SERIAL_COM7
-};
-
-static int serial_index = 0;
+static  int  serial_index = 0;
+extern  sw_uart_t serial_ports[8];
 
 void eFG_printf( const char * str, ...);
 /*

@@ -28,9 +28,8 @@ static int eGon2_standby_detect(void);
 static int eGon2_mod_enter_standby(void);
 static int eGon2_mod_exit_standby(void);
 
-static int standby_flag = 0;
+//static int standby_flag = 0;
 static int status;
-
 /*
 ************************************************************************************************************
 *
@@ -52,16 +51,15 @@ int eGon2_standby_mode(void)
 	__u32 dcin_exist, battery_exist;
 	__s32 key_status;
 
-	status = -1;
 	//检查是否有按键按下
 	key_status = eGon2_power_get_key();
 	if(key_status & 0x01)			//长按键的情况下，不管电源是否移除，直接进入系统
 	{
 		//退出所有的驱动模块
-		if(standby_flag)
-		{
-			eGon2_mod_exit_standby();
-		}
+//		if(standby_flag)
+//		{
+//			eGon2_mod_exit_standby();
+//		}
 		return 3;
 	}
 	//检查外部电源是否存在
@@ -71,10 +69,10 @@ int eGon2_standby_mode(void)
 	if(!dcin_exist)							//外部电源移除
 	{
 		//退出所有的驱动模块
-		if(standby_flag)
-		{
-			eGon2_mod_exit_standby();
-		}
+//		if(standby_flag)
+//		{
+//			eGon2_mod_exit_standby();
+//		}
 		return 6;
 	}
 //	charge_status = eGon2_power_battery_charge_status();		//充电完成
@@ -90,18 +88,19 @@ int eGon2_standby_mode(void)
 	if(key_status & 0x02)			//当外部电源存在，继续standby
 	{
 		//退出所有的驱动模块
-		if(standby_flag)
-		{
-			eGon2_mod_exit_standby();
-		}
+//		if(standby_flag)
+//		{
+//			eGon2_mod_exit_standby();
+//		}
 		return 2;
 	}
+	status = -1;
 	//保存原来的SP
 	eGon2_store_sp();
 	//设置新的SP，存放在SRAM中
 	eGon2_set_sp();
 
-	if(!standby_flag)
+//	if(!standby_flag)
 	{
 		eGon2_mod_enter_standby();
 	}
@@ -117,15 +116,16 @@ int eGon2_standby_mode(void)
 	//发现需要唤醒，退出standby
 	eGon2_exit_standby();
 	//退出模块的standby
-	if((status != 8) && (status != 9))
-	{
-		eGon2_mod_exit_standby();
-		standby_flag = 0;
-	}
-	else
-	{
-		standby_flag = 1;
-	}
+	eGon2_mod_exit_standby();
+//	if((status != 8) && (status != 9))
+//	{
+//		eGon2_mod_exit_standby();
+//		standby_flag = 0;
+//	}
+//	else
+//	{
+//		standby_flag = 1;
+//	}
 	eGon2_restore_sp();
 
 	return status;
@@ -291,14 +291,14 @@ static int eGon2_standby_detect(void)
 //	{
 //		return 5;
 //	}
-	if(power_int_status[0] & 0x08)			//usb火牛接入
-	{
-		return 8;
-	}
-	if(power_int_status[0] & 0x04)			//usb火牛移除
-	{
-		return 9;
-	}
+//	if(power_int_status[0] & 0x08)			//usb火牛接入
+//	{
+//		return 8;
+//	}
+//	if(power_int_status[0] & 0x04)			//usb火牛移除
+//	{
+//		return 9;
+//	}
 
 	//还原到32K
 	standby_clock_divsetto0();
