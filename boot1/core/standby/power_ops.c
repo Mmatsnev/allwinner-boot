@@ -270,19 +270,23 @@ __s32 eGon2_power_init(void *power_para)
 	}
     reg_addr1 = BOOT_POWER20_DATA_BUFFER1;										//读之前的比分比记录
     BOOT_TWI_Read(AXP20_ADDR, &reg_addr1, &value1);
+	if(!core_para->vol_threshold)
+	{
+		core_para->vol_threshold = 3600;
+	}
 	if(value1 & 0x80)																	//检测标志位
 	{
 		int bat_cou;
 		int bat_value;
 
 		bat_value = value1 & 0x7f;
-		bat_cou = ABS(Get_Bat_Coulomb_Count());
+		bat_cou = Get_Bat_Coulomb_Count();
 		if((bat_value <= 0) && bat_cou < 30)     //比例小于5%同时库仑计值小于6，则不开机
 		{
 			eGon2_printf("bat_cou=%x\n", bat_cou);
 			if(dcin_exist)
 			{
-				if(bat_vol > 3900)
+				if(bat_vol > (core_para->vol_threshold+100))
 				{
 					_axp_clr_status();
 					power_step_level = 2;
@@ -295,11 +299,11 @@ __s32 eGon2_power_init(void *power_para)
 			}
 			else
 			{
-				if(bat_vol > 3800)
+				if(bat_vol > core_para->vol_threshold)
 				{
 					power_step_level = 2;
 					_axp_clr_status();
-					eGon2_printf("bat_vol > 3800\n");
+					eGon2_printf("bat_vol > core_para->vol_threshold\n");
 				}
 				else
 				{
@@ -321,10 +325,6 @@ __s32 eGon2_power_init(void *power_para)
 		}
 		else
 		{
-			if(!core_para->vol_threshold)
-			{
-				core_para->vol_threshold = 3600;
-			}
 			if(bat_vol >= core_para->vol_threshold)
 			{
 				power_step_level = 2;

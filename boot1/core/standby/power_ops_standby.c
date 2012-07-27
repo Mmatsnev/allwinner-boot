@@ -213,7 +213,7 @@ __s32 eGon2_power_set_dcdc3(int set_vol)
 			if((vol_value >= 700) && (vol_value <= 3500))
 			{
 				reg_value &= 0x80;
-				reg_value = ((vol_value - 700)/25);
+				reg_value |= ((vol_value - 700)/25);
 				if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr, &reg_value))
 				{
 					eGon2_printf("boot power:unable to set dcdc3\n");
@@ -290,7 +290,7 @@ __s32 eGon2_power_set_ldo2(int set_vol)
 			if((vol_value >= 1800) && (vol_value <= 3300))
 			{
 				reg_value &= 0x0f;
-				reg_value = (((vol_value - 1800)/100) << 4);
+				reg_value |= (((vol_value - 1800)/100) << 4);
 				if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr, &reg_value))
 				{
 					eGon2_printf("boot power:unable to set ldo2\n");
@@ -367,7 +367,7 @@ __s32 eGon2_power_set_ldo3(int set_vol)
 			if((vol_value >= 700) && (vol_value <= 3500))
 			{
 				reg_value &= 0x80;
-				reg_value = ((vol_value - 700)/25);
+				reg_value |= ((vol_value - 700)/25);
 				if(BOOT_TWI_Write(AXP20_ADDR, &reg_addr, &reg_value))
 				{
 					eGon2_printf("boot power:unable to set ldo3\n");
@@ -657,18 +657,13 @@ __s32 eGon2_power_battery_charge_status(void)
         {
             return -1;
         }
-        charge_status = (value & 0x04);
-        value = charge_status;
-        if(charge_status)
-        {
-        	BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value);
-	    }
+        charge_status = (value >> 2) & 0x01;
 
 		return charge_status;
     }
     else
     {
-        return -1;
+        return 0;
     }
 }
 /*
@@ -878,6 +873,11 @@ __s32 eGon2_power_axp_rest_cal(void)
 
 	if(power_standby_pmu_type == PMU_TYPE_AXP209)
 	{
+		if(eGon2_power_battery_charge_status() == 1)
+		{
+			eGon2_printf("not charge anymore\n");
+			return 100;
+		}
 		reg_addr = BOOT_POWER20_DATA_BUFFER1;
     	if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value1))
     	{
@@ -1027,6 +1027,10 @@ __s32 eGon2_power_int_query(__u8 *int_status)
 //    }
 	for(i=0;i<5;i++)
 	{
+		if(i ==1)
+		{
+			i =i +1;
+		}
 		reg_addr = BOOT_POWER20_INTSTS1 + i;
     	if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, int_status + i))
     	{
