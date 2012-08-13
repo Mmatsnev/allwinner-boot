@@ -40,7 +40,6 @@ extern __s32 pwm_get_para(__u32 channel, __pwm_info_t * pwm_info);
 #define mdelay LCD_delay_ms
 #define udelay LCD_delay_us
 #define printk __inf
-#define pr_err __wrn
 #define gpio_request OSAL_GPIO_Request
 #define gpio_request_ex OSAL_GPIO_Request_Ex
 #define gpio_release OSAL_GPIO_Release
@@ -51,7 +50,7 @@ extern __s32 pwm_get_para(__u32 channel, __pwm_info_t * pwm_info);
 #define gpio_set_one_pin_pull OSAL_GPIO_DevSetONEPIN_PULL_STATUS
 #define gpio_read_one_pin_value OSAL_GPIO_DevREAD_ONEPIN_DATA
 #define gpio_write_one_pin_value OSAL_GPIO_DevWRITE_ONEPIN_DATA
-#define script_parser_fetch OSAL_Script_FetchParser_Data
+
 
 #define BIT0		  0x00000001  
 #define BIT1		  0x00000002  

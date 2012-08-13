@@ -206,10 +206,6 @@ __s32 check_power_status(void)
 		this_bat_cal = wBoot_power_get_cal();
 		wlibc_int_enable();
 		__inf("base bat_cal = %d\n", this_bat_cal);
-		if(this_bat_cal > 95)
-		{
-			this_bat_cal = 100;
-		}
 		if(this_bat_cal == 100)
 		{
 			ShowBatteryCharge_exit(bat_show_hd);
@@ -343,10 +339,6 @@ __s32 check_power_status(void)
 				if(bat_cal > this_bat_cal)
 				{
 					this_bat_cal = bat_cal;
-					if(this_bat_cal > 95)
-					{
-						this_bat_cal = 100;
-					}
 				}
 			}
 			switch(status)

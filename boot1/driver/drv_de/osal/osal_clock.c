@@ -60,34 +60,6 @@ __u32 OSAL_CCMU_GetSrcFreq(__u32 nSclkNo)
     {
         value = sys_get_wvalue(0x01c20030)&0x7f;
     }
-    else if(nSclkNo == AW_SYS_CLK_PLL5P)
-    {
-        __u32 reg,N,K,P;
-
-        reg = sys_get_wvalue(0x01c20020);
-        N = (reg & (0x1f<<8))>>8;
-        K = ((reg & (0x3<<4))>>4) + 1;
-        P = (reg & (0x3<<16))>>16;
-        if(P==0)
-        {
-            P = 1;
-        }
-        else if(P==1)
-        {
-            P = 2;
-        }
-        else if(P==2)
-        {
-            P = 4;
-        }
-        else
-        {
-            P = 8;
-        }
-
-        value = (24 * N * K)/P;
-    }
-
     return value * 3000000;
 }
 
@@ -138,7 +110,7 @@ __s32 OSAL_CCMU_SetMclkSrc(__hdle hMclk, __u32 nSclkNo)
         {
             clk_src = 1;
         }
-        else if(nSclkNo == AW_SYS_CLK_PLL5P)
+        else if(nSclkNo == AW_SYS_CLK_PLL5)
         {
             clk_src = 2;
         }

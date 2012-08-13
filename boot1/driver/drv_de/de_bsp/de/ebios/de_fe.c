@@ -3,21 +3,12 @@
 //
 //  File name   :        de_scal_bsp.c
 //
-//  Description :  display engine scaler base functions implement for aw1623
+//  Description :  display engine scaler base functions implement for aw1625
 //     
 //  History       :
-//                 2011/05/03      zchmin       v1.0    Initial version
-//                 2011/05/13      vito         v1.1    added vpp function
-//                 2011/05/25      zchmin       v1.2    redefine 3d inmode
-//                 2011/07/01      zchmin       v1.3    modify set scal coef error
-//                 2011/07/14      zchmin       v1.4    added input/output rg swap
-//                 2011/08/04      zchmin       v1.5    added divisor no-zero limited
-//                 2011/09/28      zchmin       v1.6    added 3D interleaved input format support
-//                 2011/10/10      zchmin	    v1.7    clear 3d line_interleaved flag when config 2D src
-//                                                      correct 3D interleaved format address error
-//                 2011/10/19      zchmin       v1.8    correct out_type->fmt == DE_SCAL_INYUV420
-//                 2012/01/04      zchmin       v1.9    correct negative shifter 
-//		  2012/02/16     vito		 v1.95  add DE_SCAL_Set_Scaling_Coef_for_video() for video playback.
+//                 2011/09/09      zchmin       v1.0    Initial version
+//                 2011/10/19      zchmin       v1.1    correct out_type->fmt == DE_SCAL_INYUV420
+//                 2012/01/04      zchmin       v1.2    correct negative shifter
 //******************************************************************************
 
 
@@ -692,236 +683,24 @@ __s32 DE_SCAL_Set_Scaling_Coef(__u8 sel, __scal_scan_mod_t *in_scan, __scal_src_
     
     //compute the fir coeficient address for each channel in horizontal and vertical direction
     ch0v_fir_coef_addr = (ch0v_fir_coef_ofst<<7);
-    ch0h_fir_coef_addr = ((al1_size)<<7) + (ch0h_fir_coef_ofst<<8);
+    ch0h_fir_coef_addr = (ch0h_fir_coef_ofst<<7);
     ch1v_fir_coef_addr = (ch1v_fir_coef_ofst<<7);
-    ch1h_fir_coef_addr = ((al1_size)<<7) + (ch1h_fir_coef_ofst<<8);
+    ch1h_fir_coef_addr = (ch1h_fir_coef_ofst<<7);
 
+	//added for aw1625, wait ceof access
+	scal_dev[sel]->frm_ctrl.bits.coef_access_ctrl= 1; 
+	while(scal_dev[sel]->status.bits.coef_access_status == 0)
+	{
+	}
     for(i=0; i<32; i++)
     {
-	    scal_dev[sel]->ch0_horzcoef0[i].dwval = fir_tab[(ch0h_fir_coef_addr>>2) + 2*i];
-		scal_dev[sel]->ch0_horzcoef1[i].dwval = fir_tab[(ch0h_fir_coef_addr>>2) + 2*i + 1];
+	    scal_dev[sel]->ch0_horzcoef0[i].dwval = fir_tab[(ch0h_fir_coef_addr>>2) + i];
         scal_dev[sel]->ch0_vertcoef[i].dwval  = fir_tab[(ch0v_fir_coef_addr>>2) + i];
-		scal_dev[sel]->ch1_horzcoef0[i].dwval = fir_tab[(ch1h_fir_coef_addr>>2) + 2*i];
-		scal_dev[sel]->ch1_horzcoef1[i].dwval = fir_tab[(ch1h_fir_coef_addr>>2) + 2*i + 1];
+		scal_dev[sel]->ch1_horzcoef0[i].dwval = fir_tab[(ch1h_fir_coef_addr>>2) + i];
         scal_dev[sel]->ch1_vertcoef[i].dwval  = fir_tab[(ch1v_fir_coef_addr>>2) + i];
     }
 
-    scal_dev[sel]->frm_ctrl.bits.coef_rdy_en = 0x1;
-      
-    return 0;
-}
-
-//*********************************************************************************************
-// function         : DE_SCAL_Set_Scaling_Coef_for_video(__u8 sel, __scal_scan_mod_t *in_scan, __scal_src_size_t *in_size,
-//                                             __scal_src_type_t *in_type, __scal_scan_mod_t *out_scan, 
-//                                             __scal_out_size_t *out_size, __scal_out_type_t *out_type, __u8 smth_mode)
-// description      : set scaler scaling filter coefficients for video playback
-// parameters       :
-//                 sel <scaler select>
-//                 in_scan <scale src data scan mode, if deinterlaceing open, the scan mode is progressive for scale>
-//                 in_size <scale region define,  src size, offset, scal size>
-//                 in_type <src data type>
-//                 out_scan <scale output data scan mode>
-//                 out_size <scale out size>
-//                 out_type <output data format>
-//                 smth_mode <scaler filter effect select>
-// return           : 
-//               success
-//***********************************************************************************************                                        
-__s32 DE_SCAL_Set_Scaling_Coef_for_video(__u8 sel, __scal_scan_mod_t *in_scan, __scal_src_size_t *in_size,
-                               __scal_src_type_t *in_type, __scal_scan_mod_t *out_scan, 
-                               __scal_out_size_t *out_size, __scal_out_type_t *out_type, __u32 smth_mode)  
-{
-    __s32 in_w0, in_h0, in_w1, in_h1, out_w0, out_h0, out_w1, out_h1;
-    __s32 ch0h_smth_level=0, ch0v_smth_level=0, ch1h_smth_level=0, ch1v_smth_level=0;
-    __u32 int_part, float_part;
-    __u32 zoom0_size, zoom1_size, zoom2_size, zoom3_size, zoom4_size, zoom5_size, al1_size;
-    __u32 ch0h_sc, ch0v_sc, ch1h_sc, ch1v_sc;
-    __u32 ch0v_fir_coef_addr, ch0h_fir_coef_addr, ch1v_fir_coef_addr, ch1h_fir_coef_addr;
-    __u32 ch0v_fir_coef_ofst, ch0h_fir_coef_ofst, ch1v_fir_coef_ofst, ch1h_fir_coef_ofst;
-    __s32 fir_ofst_tmp;
-    __u32 i;
-    
-    in_w0 = in_size->scal_width;
-    in_h0 = in_size->scal_height;
-
-    out_w0 = out_size->width;
-    out_h0 = out_size->height;
-
-    zoom0_size = 1;
-    zoom1_size = 8;
-    zoom2_size = 4;
-    zoom3_size = 1;
-    zoom4_size = 1;
-    zoom5_size = 1;
-    al1_size = zoom0_size + zoom1_size + zoom2_size + zoom3_size + zoom4_size + zoom5_size;
-    
-    if((in_type->mod == DE_SCAL_INTER_LEAVED) && (in_type->fmt == DE_SCAL_INYUV422))
-    {
-        in_w0 &=0xfffffffe;
-    }
-    
-    //channel 1,2 size 
-    if((in_type->fmt == DE_SCAL_INYUV420) || (in_type->fmt == DE_SCAL_INYUV422))
-    {
-        in_w1 = (in_w0 + 0x1)>>0x1;
-    }
-    else if(in_type->fmt == DE_SCAL_INYUV411)
-    {
-        in_w1 = (in_w0 + 0x3)>>0x2;
-    }
-    else
-    {
-        in_w1 = in_w0;
-    }
-    if((in_type->fmt == DE_SCAL_INYUV420) || (in_type->fmt == DE_SCAL_INCSIRGB))
-    {
-        in_h1 = (in_h0 + 0x1)>>0x1;
-    }
-    else
-    {
-        in_h1 = in_h0;
-    }
-    if((out_type->fmt == DE_SCAL_OUTPYUV420) || (out_type->fmt == DE_SCAL_OUTPYUV422))
-    {
-        out_w1 = (out_w0 + 0x1)>>0x1;
-    }
-    else if(out_type->fmt == DE_SCAL_OUTPYUV411)
-    {
-        out_w1 = (out_w0 + 0x3)>>0x2;
-    }
-    else
-    {
-        out_w1 = out_w0;
-    }
-    if(out_type->fmt == DE_SCAL_OUTPYUV420)
-    {
-        out_h1 = (out_h0+ 0x1)>>0x1;
-    }
-    else
-    {
-        out_h1 = out_h0;
-    }
-    
-    //added no-zero limited
-    in_h0 = (in_h0!=0) ? in_h0 : 1;
-	in_h1 = (in_h1!=0) ? in_h1 : 1;
-	in_w0 = (in_w0!=0) ? in_w0 : 1;
-	in_w1 = (in_w1!=0) ? in_w1 : 1;
-	out_h0 = (out_h0!=0) ? out_h0 : 1;
-	out_h1 = (out_h1!=0) ? out_h1 : 1;
-	out_w0 = (out_w0!=0) ? out_w0 : 1;
-	out_w1 = (out_w1!=0) ? out_w1 : 1;
-	    
-    //smooth level for channel 0,1 in vertical and horizontal direction
-    ch0h_smth_level = (smth_mode&0x40)  ?  0 - (smth_mode&0x3f) : smth_mode&0x3f;
-    ch0v_smth_level = ch0h_smth_level;
-    if((smth_mode>>7) &0x01)  
-    {
-      ch0v_smth_level = (smth_mode&0x4000) ? 0 - ((smth_mode&0x3f00)>>8) : ((smth_mode&0x3f00)>>8);
-    }
-    if((smth_mode>>31)&0x01)
-    {
-      ch1h_smth_level = (smth_mode&0x400000) ? 0 - ((smth_mode&0x3f0000)>>16) : ((smth_mode&0x3f0000)>>16);
-      ch1v_smth_level = ch1h_smth_level;
-      if((smth_mode >> 23)&0x1)
-      {
-        ch1v_smth_level = (smth_mode&0x40000000) ? 0 - ((smth_mode&0x3f000000)>>24) : ((smth_mode&0x3f000000)>>24);
-      }
-    }
-    //
-    ch0h_sc = (in_w0<<3)/out_w0;
-    ch0v_sc = (in_h0<<(3-in_scan->field))/(out_h0);
-    ch1h_sc = (in_w1<<3)/out_w1;
-    ch1v_sc = (in_h1<<(3-in_scan->field))/(out_h1);
-
-    //modify ch1 smooth level according to ratio to ch0
-    if(((smth_mode>>31)&0x01)==0x0)
-    {
-      if(!ch1h_sc)
-      {
-        ch1h_smth_level = 0;
-      }
-      else
-      {
-        ch1h_smth_level = ch0h_smth_level>>(ch0h_sc/ch1h_sc);
-      }
-
-      if(!ch1v_sc)
-      {
-        ch1v_smth_level = 0;
-      }
-      else
-      {
-        ch1v_smth_level = ch0v_smth_level>>(ch0v_sc/ch1v_sc);
-      }
-    }
-      
-      //comput the fir coefficient offset in coefficient table
-      int_part = ch0v_sc>>3;
-      float_part = ch0v_sc & 0x7;
-      ch0v_fir_coef_ofst = (int_part==0)  ? zoom0_size : 
-                           (int_part==1)  ? zoom0_size + float_part :
-                           (int_part==2)  ? zoom0_size + zoom1_size + (float_part>>1) : 
-                           (int_part==3)  ? zoom0_size + zoom1_size + zoom2_size : 
-                           (int_part==4)  ? zoom0_size + zoom1_size + zoom2_size +zoom3_size : 
-                           zoom0_size + zoom1_size + zoom2_size + zoom3_size + zoom4_size;
-      int_part = ch0h_sc>>3;
-      float_part = ch0h_sc & 0x7;
-      ch0h_fir_coef_ofst = (int_part==0)  ? zoom0_size : 
-                           (int_part==1)  ? zoom0_size + float_part :
-                           (int_part==2)  ? zoom0_size + zoom1_size + (float_part>>1) : 
-                           (int_part==3)  ? zoom0_size + zoom1_size + zoom2_size : 
-                           (int_part==4)  ? zoom0_size + zoom1_size + zoom2_size +zoom3_size : 
-                           zoom0_size + zoom1_size + zoom2_size + zoom3_size + zoom4_size;
-      int_part = ch1v_sc>>3;
-      float_part = ch1v_sc & 0x7;
-      ch1v_fir_coef_ofst = (int_part==0)  ? zoom0_size : 
-                           (int_part==1)  ? zoom0_size + float_part :
-                           (int_part==2)  ? zoom0_size + zoom1_size + (float_part>>1) : 
-                           (int_part==3)  ? zoom0_size + zoom1_size + zoom2_size : 
-                           (int_part==4)  ? zoom0_size + zoom1_size + zoom2_size +zoom3_size : 
-                           zoom0_size + zoom1_size + zoom2_size + zoom3_size + zoom4_size;
-      int_part = ch1h_sc>>3;
-      float_part = ch1h_sc & 0x7;
-      ch1h_fir_coef_ofst =  (int_part==0)  ? zoom0_size : 
-                            (int_part==1)  ? zoom0_size + float_part :
-                            (int_part==2)  ? zoom0_size + zoom1_size + (float_part>>1) : 
-                            (int_part==3)  ? zoom0_size + zoom1_size + zoom2_size : 
-                            (int_part==4)  ? zoom0_size + zoom1_size + zoom2_size +zoom3_size : 
-                            zoom0_size + zoom1_size + zoom2_size + zoom3_size + zoom4_size;
-    //added smooth level for each channel in horizontal and vertical direction
-    fir_ofst_tmp = ch0v_fir_coef_ofst + ch0v_smth_level;
-    ch0v_fir_coef_ofst = (fir_ofst_tmp<0) ? 0 : fir_ofst_tmp;
-    fir_ofst_tmp = ch0h_fir_coef_ofst + ch0h_smth_level;
-    ch0h_fir_coef_ofst = (fir_ofst_tmp<0) ? 0 : fir_ofst_tmp;
-    fir_ofst_tmp = ch1v_fir_coef_ofst + ch1v_smth_level;
-    ch1v_fir_coef_ofst = (fir_ofst_tmp<0) ? 0 : fir_ofst_tmp;
-    fir_ofst_tmp = ch1h_fir_coef_ofst + ch1h_smth_level;
-    ch1h_fir_coef_ofst = (fir_ofst_tmp<0) ? 0 : fir_ofst_tmp;
-    //modify coefficient offset
-    ch0v_fir_coef_ofst = (ch0v_fir_coef_ofst > (al1_size - 1)) ? (al1_size - 1) : ch0v_fir_coef_ofst;
-    ch1v_fir_coef_ofst = (ch1v_fir_coef_ofst > (al1_size - 1)) ? (al1_size - 1) : ch1v_fir_coef_ofst;
-    ch0h_fir_coef_ofst = (ch0h_fir_coef_ofst > (al1_size - 1)) ? (al1_size - 1) : ch0h_fir_coef_ofst; 
-    ch1h_fir_coef_ofst = (ch1h_fir_coef_ofst > (al1_size - 1)) ? (al1_size - 1) : ch1h_fir_coef_ofst;                                           
-    
-    //compute the fir coeficient address for each channel in horizontal and vertical direction
-    ch0v_fir_coef_addr = (ch0v_fir_coef_ofst<<7);
-    ch0h_fir_coef_addr = ((al1_size)<<7) + (ch0h_fir_coef_ofst<<8);
-    ch1v_fir_coef_addr = (ch1v_fir_coef_ofst<<7);
-    ch1h_fir_coef_addr = ((al1_size)<<7) + (ch1h_fir_coef_ofst<<8);
-
-    for(i=0; i<32; i++)
-    {
-	    scal_dev[sel]->ch0_horzcoef0[i].dwval = fir_tab_video[(ch0h_fir_coef_addr>>2) + 2*i];
-		scal_dev[sel]->ch0_horzcoef1[i].dwval = fir_tab_video[(ch0h_fir_coef_addr>>2) + 2*i + 1];
-        scal_dev[sel]->ch0_vertcoef[i].dwval  = fir_tab_video[(ch0v_fir_coef_addr>>2) + i];
-		scal_dev[sel]->ch1_horzcoef0[i].dwval = fir_tab_video[(ch1h_fir_coef_addr>>2) + 2*i];
-		scal_dev[sel]->ch1_horzcoef1[i].dwval = fir_tab_video[(ch1h_fir_coef_addr>>2) + 2*i + 1];
-        scal_dev[sel]->ch1_vertcoef[i].dwval  = fir_tab_video[(ch1v_fir_coef_addr>>2) + i];
-    }
-
-    scal_dev[sel]->frm_ctrl.bits.coef_rdy_en = 0x1;
+	scal_dev[sel]->frm_ctrl.bits.coef_access_ctrl = 0x0;
       
     return 0;
 }
@@ -1207,7 +986,7 @@ __s32 DE_SCAL_Start(__u8 sel)
 //***********************************************************************************
 __s32 DE_SCAL_Set_Filtercoef_Ready(__u8 sel)
 {
-    scal_dev[sel]->frm_ctrl.bits.coef_rdy_en = 0x1;
+    //scal_dev[sel]->frm_ctrl.bits.coef_rdy_en = 0x1;
     
     return 0;
 }
@@ -1363,10 +1142,37 @@ __s32 DE_SCAL_Disable(__u8 sel)
 __s32 DE_SCAL_Set_Writeback_Addr(__u8 sel, __scal_buf_addr_t *addr)
 {
     scal_dev[sel]->wb_addr0.dwval = addr->ch0_addr;
-    scal_dev[sel]->wb_addr1.dwval = addr->ch1_addr;
-    scal_dev[sel]->wb_addr2.dwval = addr->ch2_addr;
+    //scal_dev[sel]->wb_addr1.dwval = addr->ch1_addr;
+    //scal_dev[sel]->wb_addr2.dwval = addr->ch2_addr;
     
     
+    return 0;
+}
+
+
+//**********************************************************************************
+// function         : DE_SCAL_Set_Writeback_Chnl(__u8 sel, __u32 channel)
+// description      : scaler write back channel select
+// parameters       :
+//                 sel <scaler select>
+//                 channel <channel number, for argb 0, for plannar 0/1, 2, 3>
+// return            : success
+//***********************************************************************************
+__s32 DE_SCAL_Set_Writeback_Chnl(__u8 sel, __u32 channel)
+{
+    if(channel == 0)
+    {
+        scal_dev[sel]->output_fmt.bits.wb_chsel = 0;
+    }
+    else if(channel == 1)
+    {
+        scal_dev[sel]->output_fmt.bits.wb_chsel = 2;
+    }
+    else if(channel == 2)
+    {
+        scal_dev[sel]->output_fmt.bits.wb_chsel = 3;
+    }
+
     return 0;
 }
 

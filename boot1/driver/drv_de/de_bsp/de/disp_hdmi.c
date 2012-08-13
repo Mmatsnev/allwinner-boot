@@ -29,6 +29,7 @@ __s32 BSP_disp_hdmi_open(__u32 sel)
     if(!(gdisp.screen[sel].status & HDMI_ON))
     {
     	__disp_tv_mode_t     tv_mod;
+        __u32 scaler_index;
         
     	tv_mod = gdisp.screen[sel].hdmi_mode;
 
@@ -38,9 +39,24 @@ __s32 BSP_disp_hdmi_open(__u32 sel)
 		Image_open(sel);//set image normal channel start bit , because every de_clk_off( )will reset this bit
     	disp_clk_cfg(sel,DISP_OUTPUT_TYPE_HDMI, tv_mod);
 
-        BSP_disp_set_output_csc(sel, DISP_OUTPUT_TYPE_HDMI);
+        BSP_disp_set_output_csc(sel, DISP_OUTPUT_TYPE_HDMI, gdisp.screen[sel].iep_status&DRC_USED);
     	DE_BE_set_display_size(sel, tv_mode_to_width(tv_mod), tv_mode_to_height(tv_mod));
     	DE_BE_Output_Select(sel, sel);
+    	DE_BE_Set_Outitl_enable(sel, Disp_get_screen_scan_mode(tv_mod));
+        for(scaler_index=0; scaler_index<2; scaler_index++)
+        {
+            if((gdisp.scaler[scaler_index].status & SCALER_USED) && (gdisp.scaler[scaler_index].screen_index == sel))
+            {
+                if(Disp_get_screen_scan_mode(tv_mod) == 1)//interlace output
+                {
+                    Scaler_Set_Outitl(scaler_index, TRUE);
+                }
+                else
+                {
+                    Scaler_Set_Outitl(scaler_index, FALSE);
+                }
+            }
+        }
 
     	TCON1_set_hdmi_mode(sel,tv_mod);		 	 
     	TCON1_open(sel);
@@ -60,8 +76,7 @@ __s32 BSP_disp_hdmi_open(__u32 sel)
     	gdisp.screen[sel].status |= HDMI_ON;
         gdisp.screen[sel].lcdc_status |= LCDC_TCON1_USED;
         gdisp.screen[sel].output_type = DISP_OUTPUT_TYPE_HDMI;
-
-        Disp_set_out_interlace(sel);
+        
 #ifdef __LINUX_OSAL__
         Display_set_fb_timming(sel);
 #endif
@@ -73,7 +88,9 @@ __s32 BSP_disp_hdmi_open(__u32 sel)
 __s32 BSP_disp_hdmi_close(__u32 sel)
 {
     if(gdisp.screen[sel].status & HDMI_ON)
-    {            
+    {    
+        __u32 scaler_index;
+        
     	if(gdisp.init_para.Hdmi_close)
     	{
     	    gdisp.init_para.Hdmi_close();
@@ -89,14 +106,20 @@ __s32 BSP_disp_hdmi_close(__u32 sel)
     	image_clk_off(sel);
     	lcdc_clk_off(sel);
     	hdmi_clk_off();
+    	DE_BE_Set_Outitl_enable(sel, FALSE);
+        for(scaler_index=0; scaler_index<2; scaler_index++)
+        {
+            if((gdisp.scaler[scaler_index].status & SCALER_USED) && (gdisp.scaler[scaler_index].screen_index == sel))
+            {
+                Scaler_Set_Outitl(scaler_index, FALSE);
+            }
+        }
 
         gdisp.screen[sel].b_out_interlace = 0;
         gdisp.screen[sel].lcdc_status &= LCDC_TCON1_USED_MASK;
     	gdisp.screen[sel].status &= HDMI_OFF;
     	gdisp.screen[sel].output_type = DISP_OUTPUT_TYPE_NONE;
 		gdisp.screen[sel].pll_use_status &= ((gdisp.screen[sel].pll_use_status == VIDEO_PLL0_USED)? VIDEO_PLL0_USED_MASK : VIDEO_PLL1_USED_MASK);
-
-        Disp_set_out_interlace(sel);
     }
 
 	return DIS_SUCCESS;

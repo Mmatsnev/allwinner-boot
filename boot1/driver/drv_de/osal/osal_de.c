@@ -186,18 +186,7 @@ void OSAL_CacheRangeFlush(void *Address, __u32 Length, __u32 Flags)
 
 int OSAL_sw_get_ic_ver(void)
 {
-	__u32 reg_val;
-
-	reg_val = *((volatile __u32 *)(0x1c20c00 + 0x13C));
-	reg_val = (reg_val >> 6) & 0x03;
-	if(reg_val == 0)
-	{
-		return 0xA;
-	}
-	else
-	{
-		return 0xB;
-	}
+	return 0xB;
 }
 
 

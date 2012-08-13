@@ -21,6 +21,7 @@
 #include "drv_de.h"
 
 
+#pragma arm section rodata="EGON2_MAGIC"
 const eGon2_mod_t modinfo =
 {
     {'e','G','o','n','2','d','r','v'},		//.magic
@@ -35,6 +36,7 @@ const eGon2_mod_t modinfo =
 	    &DRV_DE_READ,
     	&DRV_DE_WRITE,
 	    &DRV_DE_IOCTRL,
-	    &DRV_DE_Standby
+	    &DRV_DE_Standby	    
 	}
 };
+#pragma arm section

@@ -188,6 +188,7 @@ __s32 BSP_disp_tv_open(__u32 sel)
     if(!(gdisp.screen[sel].status & TV_ON))
     {
         __disp_tv_mode_t     tv_mod;
+        __u32 scaler_index = 0;
 
         tv_mod = gdisp.screen[sel].tv_mode;
 
@@ -198,9 +199,25 @@ __s32 BSP_disp_tv_open(__u32 sel)
         tve_clk_on(sel);
         lcdc_clk_on(sel);
 
-        BSP_disp_set_output_csc(sel, DISP_OUTPUT_TYPE_TV);
+        BSP_disp_set_output_csc(sel, DISP_OUTPUT_TYPE_TV,gdisp.screen[sel].iep_status&DRC_USED);
         DE_BE_set_display_size(sel, tv_mode_to_width(tv_mod), tv_mode_to_height(tv_mod));
         DE_BE_Output_Select(sel, sel);
+		DE_BE_Set_Outitl_enable(sel, Disp_get_screen_scan_mode(tv_mod));
+
+        for(scaler_index=0; scaler_index<2; scaler_index++)
+        {
+            if((gdisp.scaler[scaler_index].status & SCALER_USED) && (gdisp.scaler[scaler_index].screen_index == sel))
+            {
+                if(Disp_get_screen_scan_mode(tv_mod) == 1)//interlace output
+                {
+                    Scaler_Set_Outitl(scaler_index, TRUE);
+                }
+                else
+                {
+                    Scaler_Set_Outitl(scaler_index, FALSE);
+                }
+            }
+        }
         
         TCON1_set_tv_mode(sel,tv_mod);
         TVE_set_tv_mode(sel, tv_mod);	
@@ -209,7 +226,8 @@ __s32 BSP_disp_tv_open(__u32 sel)
         TCON1_open(sel);
         Disp_TVEC_Open(sel);
 
-        Disp_Switch_Dram_Mode(DISP_OUTPUT_TYPE_TV, tv_mod);
+        Disp_Switch_Dram_Mode(DISP_OUTPUT_TYPE_TV, tv_mod);  
+        Disp_de_flicker_enable(sel, TRUE);
 #ifdef __LINUX_OSAL__
         {
             user_gpio_set_t  gpio_info[1];
@@ -240,8 +258,6 @@ __s32 BSP_disp_tv_open(__u32 sel)
         gdisp.screen[sel].status |= TV_ON;
         gdisp.screen[sel].lcdc_status |= LCDC_TCON1_USED;
         gdisp.screen[sel].output_type = DISP_OUTPUT_TYPE_TV;
-
-        Disp_set_out_interlace(sel);
 #ifdef __LINUX_OSAL__
         Display_set_fb_timming(sel);
 #endif
@@ -253,7 +269,9 @@ __s32 BSP_disp_tv_open(__u32 sel)
 __s32 BSP_disp_tv_close(__u32 sel)
 {
     if(gdisp.screen[sel].status & TV_ON)
-    {        
+    {
+        __u32 scaler_index = 0;
+        
         Image_close(sel);
         TCON1_close(sel);
         Disp_TVEC_Close(sel);
@@ -261,7 +279,15 @@ __s32 BSP_disp_tv_close(__u32 sel)
         tve_clk_off(sel);
         image_clk_off(sel);
         lcdc_clk_off(sel);
-        
+        Disp_de_flicker_enable(sel, 2);	//must close immediately, because vbi may not come
+		DE_BE_Set_Outitl_enable(sel, FALSE);
+        for(scaler_index=0; scaler_index<2; scaler_index++)
+        {
+            if((gdisp.scaler[scaler_index].status & SCALER_USED) && (gdisp.scaler[scaler_index].screen_index == sel))
+            {
+                Scaler_Set_Outitl(scaler_index, FALSE);
+            }
+        }
 #ifdef __LINUX_OSAL__
         {
             user_gpio_set_t  gpio_info[1];
@@ -293,8 +319,6 @@ __s32 BSP_disp_tv_close(__u32 sel)
         gdisp.screen[sel].lcdc_status &= LCDC_TCON1_USED_MASK;
         gdisp.screen[sel].output_type = DISP_OUTPUT_TYPE_NONE;
 		gdisp.screen[sel].pll_use_status &= ((gdisp.screen[sel].pll_use_status == VIDEO_PLL0_USED)? VIDEO_PLL0_USED_MASK : VIDEO_PLL1_USED_MASK);
-
-		Disp_set_out_interlace(sel);
     }
     return DIS_SUCCESS;
 }

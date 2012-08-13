@@ -5,7 +5,7 @@
 
 #define DE_WB_END_IE    			(1<<7)      /*write back end interrupt */
 #define DE_FE_INTEN_ALL             0x1ff     /*front-end all interrupt enable*/
-#define DE_IMG_REG_LOAD_FINISH  (1<<1)
+#define DE_IMG_IRDY_IE  (1<<6)
 
 #define SCAL_WB_ERR_SYNC (1<<15) //sync reach flag when capture in process
 #define SCAL_WB_ERR_LOSEDATA (1<<14) //lose data flag when capture in process
@@ -238,9 +238,6 @@ __s32 DE_SCAL_Set_Scaling_Factor(__u8 sel, __scal_scan_mod_t *in_scan, __scal_sr
 __s32 DE_SCAL_Set_Scaling_Coef(__u8 sel, __scal_scan_mod_t *in_scan, __scal_src_size_t *in_size,
                                __scal_src_type_t *in_type, __scal_scan_mod_t *out_scan, 
                                __scal_out_size_t *out_size, __scal_out_type_t *out_type, __u8 smth_mode);  
-__s32 DE_SCAL_Set_Scaling_Coef_for_video(__u8 sel, __scal_scan_mod_t *in_scan, __scal_src_size_t *in_size,
-                               __scal_src_type_t *in_type, __scal_scan_mod_t *out_scan, 
-                               __scal_out_size_t *out_size, __scal_out_type_t *out_type, __u32 smth_mode)  ;
 __s32 DE_SCAL_Set_CSC_Coef(__u8 sel, __u8 in_csc_mode, __u8 out_csc_mode, __u8 incs, __u8 outcs, __u32  in_br_swap, __u32 out_br_swap);
 __s32 DE_SCAL_Set_Out_Format(__u8 sel, __scal_out_type_t *out_type);
 __s32 DE_SCAL_Set_Out_Size(__u8 sel, __scal_scan_mod_t *out_scan, __scal_out_type_t *out_type, __scal_out_size_t *out_size);
@@ -254,6 +251,7 @@ __s32 DE_SCAL_Output_Select(__u8 sel, __u8 out);
 __s32 DE_SCAL_Writeback_Enable(__u8 sel);
 __s32 DE_SCAL_Writeback_Disable(__u8 sel);
 __s32 DE_SCAL_Set_Writeback_Addr(__u8 sel, __scal_buf_addr_t *addr);
+__s32 DE_SCAL_Set_Writeback_Chnl(__u8 sel, __u32 channel);
 __s32 DE_SCAL_Set_CSC_Coef_Enhance(__u8 sel, __u8 in_csc_mode, __u8 out_csc_mode, __u8 incs, __u8 outcs,
                                                    __s32  bright, __s32 contrast, __s32 saturaion, __s32 hue,
                                                    __u32  in_br_swap, __u32 out_br_swap);
@@ -299,7 +297,6 @@ __s32 DE_BE_EnableINT(__u8 sel,__u32 irqsrc);
 __s32 DE_BE_DisableINT(__u8 sel, __u32 irqsrc);
 __u32 DE_BE_QueryINT(__u8 sel);
 __u32 DE_BE_ClearINT(__u8 sel,__u32 irqsrc);
-__s32 DE_BE_reg_auto_load_en(__u32 sel, __u32 en);
 
 __s32 DE_BE_Layer_Enable(__u32 sel, __u8 layidx, __bool enable);
 __s32 DE_BE_Layer_Set_Format(__u32 sel, __u8 layidx,__u8 format,__bool br_swap,__u8 order);
@@ -334,7 +331,7 @@ __s32 DE_BE_Sprite_Block_Set_Size(__u32 sel, __u8 blk_idx,__u32 xsize,__u32 ysiz
 __s32 DE_BE_Sprite_Block_Set_fb(__u32 sel, __u8 blk_idx,__u32 addr, __u32 line_width);
 __s32 DE_BE_Sprite_Block_Set_Next_Id(__u32 sel, __u8 blk_idx,__u8 next_blk_id);
 __s32 DE_BE_Sprite_Set_Palette_Table(__u32 sel, __u32 address, __u32 offset, __u32 size);
-__s32 DE_BE_Set_Enhance(__u8 sel,__u32 brightness, __u32 contrast, __u32 saturaion, __u32 hue);
+__s32 DE_BE_Set_Enhance(__u8 sel, __u32 out_csc, __u32 out_color_range, __s32 brightness, __s32 contrast, __s32 saturaion, __s32 hue);
 __s32 DE_BE_enhance_enable(__u32 sel, __bool enable);
 __s32 DE_BE_set_display_size(__u32 sel, __u32 width, __u32 height);
 __s32 DE_BE_get_display_width(__u32 sel);
@@ -342,7 +339,7 @@ __s32 DE_BE_get_display_height(__u32 sel);
 __s32 DE_BE_deflicker_enable(__u32 sel, __bool enable);
 __s32 DE_BE_output_csc_enable(__u32 sel, __bool enable);
 __s32 DE_BE_Set_Outitl_enable(__u32 sel, __bool enable);
-__s32 DE_BE_Output_Cfg_Csc_Coeff(__u32 sel, __u32 out_csc, __u32 out_color_range);
+
 //__s32 DE_BE_Output_Cfg_Csc_Coeff(__u32 sel, __u8 cs_mode);
 __s32 DE_BE_Format_To_Bpp(__u32 sel, __u8 format);
 __u32 DE_BE_Offset_To_Addr(__u32 src_addr,__u32 width,__u32 x,__u32 y,__u32 bpp);

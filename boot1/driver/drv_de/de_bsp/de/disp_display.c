@@ -39,34 +39,35 @@ __s32 BSP_disp_init(__disp_bsp_init_para * para)
         gdisp.scaler[screen_id].hue = 50;
 
         gdisp.screen[screen_id].lcd_bright = 192;
+
+        gdisp.screen[screen_id].lcd_bright_dimming = 256;
     }
     memcpy(&gdisp.init_para,para,sizeof(__disp_bsp_init_para));
     memset(g_video,0,sizeof(g_video));
 
     DE_Set_Reg_Base(0, para->base_image0);
-    DE_Set_Reg_Base(1, para->base_image1);
+    //DE_Set_Reg_Base(1, para->base_image1);
     DE_SCAL_Set_Reg_Base(0, para->base_scaler0);
-    DE_SCAL_Set_Reg_Base(1, para->base_scaler1);
+    //DE_SCAL_Set_Reg_Base(1, para->base_scaler1);
     LCDC_set_reg_base(0,para->base_lcdc0);
-    LCDC_set_reg_base(1,para->base_lcdc1);
+    //LCDC_set_reg_base(1,para->base_lcdc1);
     TVE_set_reg_base(0, para->base_tvec0);
-    TVE_set_reg_base(1, para->base_tvec1);
-
-    BSP_disp_close_lcd_backlight(0);
-    BSP_disp_close_lcd_backlight(1);
+    //TVE_set_reg_base(1, para->base_tvec1);
+    DE_IEP_Set_Reg_Base(0, para->base_iep);
 
 	disp_pll_init();
 
     Scaler_Init(0);
-    Scaler_Init(1);
+    //Scaler_Init(1);
     Image_init(0);
-    Image_init(1);
+    //Image_init(1);
     Disp_lcdc_init(0);
-    Disp_lcdc_init(1);
+    //Disp_lcdc_init(1);
     Disp_TVEC_Init(0);
-    Disp_TVEC_Init(1);
+    //Disp_TVEC_Init(1);
     Display_Hdmi_Init();
 
+	Disp_iep_init(0);
     return DIS_SUCCESS;
 }
 
@@ -77,28 +78,29 @@ __s32 BSP_disp_exit(__u32 mode)
         BSP_disp_close();
         
         Scaler_Exit(0);
-        Scaler_Exit(1);
+        //Scaler_Exit(1);
         Image_exit(0);
-        Image_exit(1);
+        //Image_exit(1);
         Disp_lcdc_exit(0);
-        Disp_lcdc_exit(1);
+        //Disp_lcdc_exit(1);
         Disp_TVEC_Exit(0);
-        Disp_TVEC_Exit(1);
+        //Disp_TVEC_Exit(1);
         Display_Hdmi_Exit();
+        Disp_iep_exit(0);
     }
     else if(mode == DISP_EXIT_MODE_CLEAN_PARTLY)
     {
         OSAL_InterruptDisable(INTC_IRQNO_LCDC0);
         OSAL_UnRegISR(INTC_IRQNO_LCDC0,Disp_lcdc_event_proc,(void*)0);
 
-        OSAL_InterruptDisable(INTC_IRQNO_LCDC1);
-        OSAL_UnRegISR(INTC_IRQNO_LCDC1,Disp_lcdc_event_proc,(void*)0);
+        //OSAL_InterruptDisable(INTC_IRQNO_LCDC1);
+        //OSAL_UnRegISR(INTC_IRQNO_LCDC1,Disp_lcdc_event_proc,(void*)0);
 
         OSAL_InterruptDisable(INTC_IRQNO_SCALER0);
         OSAL_UnRegISR(INTC_IRQNO_SCALER0,Scaler_event_proc,(void*)0);
 
-        OSAL_InterruptDisable(INTC_IRQNO_SCALER1);
-        OSAL_UnRegISR(INTC_IRQNO_SCALER1,Scaler_event_proc,(void*)0);
+        //OSAL_InterruptDisable(INTC_IRQNO_SCALER1);
+        //OSAL_UnRegISR(INTC_IRQNO_SCALER1,Scaler_event_proc,(void*)0);
     }
     
     return DIS_SUCCESS;
@@ -200,7 +202,7 @@ __s32 BSP_disp_print_reg(__bool b_force_on, __u32 id)
             
         case DISP_REG_CCMU:
             base = gdisp.init_para.base_ccmu;
-            size = 0x158;
+            size = 0x164;
             sprintf(str, "ccmu:\n");
             break;
             

@@ -27,9 +27,10 @@ void DRV_lcd_open_callback(void *parg)
 
     flow = BSP_disp_lcd_get_open_flow(sel);
 
-	if(i < flow->func_num)
+    if(i < flow->func_num)
     {
-    	flow->func[i].func(sel);
+        //__inf("open:%d\n", i);
+        flow->func[i].func(sel);
         if(flow->func[i].delay == 0)
         {
             DRV_lcd_open_callback((void*)sel);
@@ -37,7 +38,7 @@ void DRV_lcd_open_callback(void *parg)
         else
         {
             wBoot_timer_start(lcd_timer[sel], flow->func[i].delay, 0);
-    	}
+        }
     }
     else if(i == flow->func_num)
     {
@@ -80,7 +81,8 @@ void DRV_lcd_close_callback(void *parg)
 
     if(i < flow->func_num)
     {
-    	flow->func[i].func(sel);
+        //__inf("close:%d\n", i);
+        flow->func[i].func(sel);
         if(flow->func[i].delay == 0)
         {
             DRV_lcd_close_callback((void*)sel);
@@ -113,7 +115,7 @@ __bool DRV_lcd_check_close_finished(__u32 sel)
 {
     if(lcd_op_finished[sel] && lcd_timer[sel] != NULL)
     {
-    	wBoot_timer_release(lcd_timer[sel]);
+        wBoot_timer_release(lcd_timer[sel]);
         lcd_timer[sel] = NULL;
     }
     return lcd_op_finished[sel];
@@ -161,6 +163,7 @@ __s32 DRV_DE_INIT(void)
     para.base_sdram     = 0x01c01000;
     para.base_pioc      = 0x01c20800;
     para.base_pwm       = 0x01c20c00;
+    para.base_iep       = 0x01e70000;
 	para.disp_int_process = disp_int_process;
 
     BSP_disp_init(&para);
@@ -323,6 +326,7 @@ __s32 DRV_DE_IOCTRL(__u32 hd, __u32 cmd, __s32 aux, void *pbuffer)
         para2 = *((__u32*)((__u32)pbuffer+8));
     }
 
+    //__inf("**%x\n", cmd);
     switch(cmd)
 	{
 //----disp global----
@@ -503,7 +507,7 @@ __s32 DRV_DE_IOCTRL(__u32 hd, __u32 cmd, __s32 aux, void *pbuffer)
 		return DRV_lcd_close(aux);
 
 	case DISP_CMD_LCD_SET_BRIGHTNESS:
-		return BSP_disp_lcd_set_bright(aux, para0);
+		return BSP_disp_lcd_set_bright(aux, (__disp_lcd_bright_t)para0, 0);
 
 	case DISP_CMD_LCD_GET_BRIGHTNESS:
 		return BSP_disp_lcd_get_bright(aux);
