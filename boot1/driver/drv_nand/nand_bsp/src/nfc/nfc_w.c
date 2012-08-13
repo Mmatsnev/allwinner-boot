@@ -207,7 +207,7 @@ __s32 NFC_Write_Seq( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 d
 	__s32 ret;
 	__s32 i;
 	__u32 cfg;
-	__u32 ecc_mode_temp;
+	__u32 ecc_mode_temp,ecc_set;
 	__u32 program_cmd,random_program_cmd;
 	NFC_CMD_LIST *cur_cmd,*program_addr_cmd;
 
@@ -278,9 +278,13 @@ __s32 NFC_Write_Seq( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 d
 	/*enable ecc*/
 	_enable_ecc(1);
 	
-	/*set ecc to 24-bit ecc*/
-    ecc_mode_temp = NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000;
-	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(0x1<<12) ));
+	/*set ecc to specified ecc*/
+    ecc_mode_temp = (NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000)>>12;
+	if(ecc_mode_temp>=4)  //change for hynix 2y nm flash
+		ecc_set = 0x4;
+	else//change for hynix 2x nm flash
+		ecc_set = 0x1;
+	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(ecc_set<<12) ));
 	
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
 
@@ -300,7 +304,7 @@ __s32 NFC_Write_Seq( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 d
 	_disable_ecc();
 	
 	/*set ecc to original value*/
-	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|ecc_mode_temp);
+		NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(ecc_mode_temp<<12));
 
 	/*switch to ahb*/
 	NFC_WRITE_REG(NFC_REG_CTL, (NFC_READ_REG(NFC_REG_CTL)) & (~NFC_RAM_METHOD));
@@ -523,7 +527,7 @@ __s32 _read_in_page_mode_seq(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__
 	__u32 cfg;
 	NFC_CMD_LIST *cur_cmd,*read_addr_cmd;
 	__u32 read_data_cmd,random_read_cmd0,random_read_cmd1;
-	__u32 ecc_mode_temp;
+	__u32 ecc_mode_temp,ecc_set;
 
 	ret = 0;
 	read_addr_cmd = rcmd;
@@ -583,9 +587,14 @@ __s32 _read_in_page_mode_seq(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__
 	/*enable ecc*/
 	_enable_ecc(1);
 	
-	/*set ecc to 24-bit ecc*/
-    ecc_mode_temp = NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000;
-	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(0x1<<12)));
+	/*set ecc to specified ecc*/
+    ecc_mode_temp = (NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000)>>12;
+	if(ecc_mode_temp==4)  //change for hynix 2y nm flash
+		ecc_set = 0x4;
+	else if(ecc_mode_temp < 4) //change for hynix 2x nm flash
+		ecc_set = 0x1;
+	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(ecc_set<<12) ));
+	
 
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
 
@@ -608,7 +617,7 @@ __s32 _read_in_page_mode_seq(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__
 	_disable_ecc();
 
     /*set ecc to original value*/
-	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|ecc_mode_temp);
+	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(ecc_mode_temp<<12));
     
 	/*if dma mode is wait*/
 	if(0 == dma_wait_mode){
