@@ -312,7 +312,7 @@ __s32 _detail_mmc_type(void)
 	SDC_CMD_T cmd = {0};
 	__u32 time;
 	__u8 response[128];
-	__s32  try_time = 200;
+    __s32  try_time = 6000;
 
 	/*make cards to idle state*/
 	if(0 != _to_idle_state())
