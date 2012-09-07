@@ -398,9 +398,9 @@ __s32 eGon2_twi_init(__s32 twi_port, void *twi_ctrl, __u32 system_clock, __u32 t
 {
     __s32   reset_delay;
 
-    CCMU_REG_APB_MOD1 &= ~(1 << (0 + twi_port));
+    CCMU_REG_APB2_GATING &= ~(1 << (0 + twi_port));
     _for_loop(100);
-    CCMU_REG_APB_MOD1 |=  (1 << (0 + twi_port));
+    CCMU_REG_APB2_GATING |=  (1 << (0 + twi_port));
 
     eGon2_GPIO_Set_cfg((normal_gpio_cfg *)twi_ctrl, 2, 1);
 
@@ -492,7 +492,7 @@ set_clk:
 */
 __s32 eGon2_twi_exit(void)
 {
-    CCMU_REG_APB_MOD1 &= ~(1 << (0 + twi_index));
+    CCMU_REG_APB2_GATING &= ~(1 << (0 + twi_index));
 
     return 0;
 }

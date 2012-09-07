@@ -113,6 +113,9 @@
 #define TWIC1_REGS_BASE        ( REGS_BASE + 0x2B000 )    //twi1
 #define TWIC2_REGS_BASE        ( REGS_BASE + 0x2B400 )    //twi2
 
+#define ARMA9_GIC_BASE		   ( 0x01c81000)
+#define ARMA9_CPUIF_BASE	   ( 0x01c82000)
 
+#define RUART0_REGS_BASE	   ( 0x01f02800)
 
 #endif // end of #ifndef __SUNII_H_

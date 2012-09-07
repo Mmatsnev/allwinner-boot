@@ -43,7 +43,7 @@ struct core_pll_freq_tbl{
     __u32   Pll;
     __u32   clk_div;
 };
-
+#if 0
 /* core pll parameter table */
 static struct core_pll_freq_tbl    CorePllTbl[] = {
 
@@ -297,7 +297,8 @@ static struct core_pll_freq_tbl    CorePllTbl[] = {
     { 30,    1,    0,    0,    1440, CLK_DIV(1, 4, 2, 2) },   /* freq = (6M * 240), index = 247 */
     { 31,    1,    0,    0,    1488, CLK_DIV(1, 4, 2, 2) }    /* freq = (6M * 248), index = 248 */
 };
-int clk_get_pll_para(struct core_pll_freq_tbl *factor, __u32 rate);
+#endif
+static int clk_get_pll_para(struct core_pll_freq_tbl *factor, __u32 rate);
 /*
 ************************************************************************************************************
 *
@@ -316,36 +317,19 @@ int clk_get_pll_para(struct core_pll_freq_tbl *factor, __u32 rate);
 *
 ************************************************************************************************************
 */
-static __u32 _get_corepll(void)
+static __u32 _get_pll1_clock(void)
 {
 	__u32 reg_val;
-	__u32 div_p, factor_n;
-	__u32 factor_k, factor_m;
+	__u32 factor_n;
+	__u32 factor_k, div_m;
 	__u32 clock;
 
 	reg_val  = CCMU_REG_PLL1_CTRL;
-	div_p    = 1 << ((reg_val >> 16) & 0x3);
-	factor_n = (reg_val >> 8) & 0x1f;
+	factor_n = (reg_val >> 10) & 0x1f;
 	factor_k = ((reg_val >> 4) & 0x3) + 1;
-	factor_m = ((reg_val >> 0) & 0x3) + 1;
+	div_m = ((reg_val >> 0) & 0x3) + 1;
 
-	clock = 24 * factor_n * factor_k/div_p/factor_m;
-
-//	{
-//		struct core_pll_freq_tbl core_pll_div;
-//
-//		reg_val  = CCMU_REG_PLL1_CTRL;
-//		div_p    = (reg_val >> 16) & 0x3;
-//		factor_n = (reg_val >> 8) & 0x1f;
-//		factor_k = ((reg_val >> 4) & 0x3);
-//		factor_m = ((reg_val >> 0) & 0x3);
-//		eGon2_printf("div_p:factor_n:factor_k:factor_m=%d:%d:%d:%d\n",div_p,factor_n,factor_k,factor_m);
-//		clk_get_pll_para(&core_pll_div, clock);
-//		if((core_pll_div.FactorN != factor_n) || (core_pll_div.FactorK != factor_k) || (core_pll_div.FactorM != factor_m) || (core_pll_div.FactorP != div_p))
-//		{
-//			eGon2_printf("ERROR!!!!!!!!!!!, clock = %d\n", clock);
-//		}
-//	}
+	clock = 24000000 * factor_n * factor_k/div_m;
 
 	return clock;
 }
@@ -373,9 +357,17 @@ static __u32 _get_axi_clock(void)
 	__u32 reg_val;
 	__u32 clock_src, factor;
 
-	reg_val   = CCMU_REG_AHB_APB;
+	reg_val   = CCMU_REG_AXI_MOD;
 	clock_src = (reg_val >> 16) & 0x03;
-	factor    = ((reg_val >> 0) & 0x03) + 1;
+	factor    = (reg_val >> 0) & 0x07;
+	if(factor >= 3)
+	{
+		factor = 4;
+	}
+	else
+	{
+		factor ++;
+	}
 
 	switch(clock_src)
 	{
@@ -383,10 +375,10 @@ static __u32 _get_axi_clock(void)
 			clock = 32000;
 			break;
 		case 1:
-			clock = 24;
+			clock = 24000000;
 			break;
 		case 2:
-			clock =  _get_corepll();
+			clock =  _get_pll1_clock();
 			break;
 		default:
 			return 0;
@@ -414,15 +406,16 @@ static __u32 _get_axi_clock(void)
 */
 static __u32 _get_ahb_clock(void)
 {
-	__u32 clock;
-	__u32 factor;
-
-	factor = (CCMU_REG_AHB_APB >> 4) & 0x03;
-	clock  = _get_axi_clock();
-
-	clock >>= factor;
-
-	return clock;
+//	__u32 clock;
+//	__u32 factor;
+//
+//	factor = (CCMU_REG_AHB_APB >> 4) & 0x03;
+//	clock  = _get_axi_clock();
+//
+//	clock >>= factor;
+//
+//	return clock;
+	return 0;
 }
 /*
 ************************************************************************************************************
@@ -444,22 +437,24 @@ static __u32 _get_ahb_clock(void)
 */
 static __u32 _get_apb0_clock(void)
 {
-	__u32 clock;
-	__u32 factor;
+//	__u32 clock;
+//	__u32 factor;
+//
+//	factor = (CCMU_REG_AHB_APB >> 8) & 0x03;
+//	clock  = _get_ahb_clock();
+//
+//	if(factor)
+//	{
+//		clock >>= factor;
+//	}
+//	else
+//	{
+//		clock >>= 1;
+//	}
+//
+//	return clock;
 
-	factor = (CCMU_REG_AHB_APB >> 8) & 0x03;
-	clock  = _get_ahb_clock();
-
-	if(factor)
-	{
-		clock >>= factor;
-	}
-	else
-	{
-		clock >>= 1;
-	}
-
-	return clock;
+	return 0;
 }
 /*
 ************************************************************************************************************
@@ -481,16 +476,17 @@ static __u32 _get_apb0_clock(void)
 */
 static __u32 _get_apb1_clock(void)
 {
-	__u32 clock = 0;
-	__u32 factor;
-
-	factor = (CCMU_REG_APB1 >> 24) & 0x03;
-	if(factor == 0)
-	{
-		clock = 24000;
-	}
-
-	return clock;
+//	__u32 clock = 0;
+//	__u32 factor;
+//
+//	factor = (CCMU_REG_APB1 >> 24) & 0x03;
+//	if(factor == 0)
+//	{
+//		clock = 24000;
+//	}
+//
+//	return clock;
+	return 0;
 }
 /*
 ************************************************************************************************************
@@ -518,7 +514,7 @@ __u32 eGon2_clock_get(__u32 clock_name)
 	{
 		case WBOOT_CLOCK_CORE_PLL:
 		{
-			clock = _get_corepll();
+			clock = _get_pll1_clock();
 		}
 		break;
 
@@ -528,22 +524,22 @@ __u32 eGon2_clock_get(__u32 clock_name)
 		}
 		break;
 
-		case WBOOT_CLOCK_AHB_CLOCK:
-		{
-			clock = _get_ahb_clock();
-		}
-		break;
-
-		case WBOOT_CLOCK_APB0_CLOCK:
-		{
-			clock = _get_apb0_clock();
-		}
-		break;
-
-		case WBOOT_CLOCK_APB1_CLOCK:
-		{
-			clock = _get_apb1_clock();
-		}
+//		case WBOOT_CLOCK_AHB_CLOCK:
+//		{
+//			clock = _get_ahb_clock();
+//		}
+//		break;
+//
+//		case WBOOT_CLOCK_APB0_CLOCK:
+//		{
+//			clock = _get_apb0_clock();
+//		}
+//		break;
+//
+//		case WBOOT_CLOCK_APB1_CLOCK:
+//		{
+//			clock = _get_apb1_clock();
+//		}
 
 		default:
 			break;
@@ -569,73 +565,53 @@ __u32 eGon2_clock_get(__u32 clock_name)
 *
 ************************************************************************************************************
 */
-__u32 eGon2_clock_set(__u32 clock_name, __u32 clock_frequency)
+static int clk_get_pll_para(struct core_pll_freq_tbl *factor, __u32 pll_clk)
 {
-    __u32 reg_val;
-    __u32 i;
-	__u32 tmpFactorN, tmpFactorK;
-	__u32 axi_div;
+    __u32 n, k, m = 1;
+	__u32 rval = 0;
+	__u32 div = 0;
+	__u32 mod2, mod3;
+	__u32 min_mod = 0;
 
-    //检查时钟是否合法
-    if((!clock_frequency) || (clock_frequency > 2 * 1024 * 1024))
-    {
-        //默认频率
-        clock_frequency = 384;
-    }
-    else if(clock_frequency < 24)
-    {
-        //设置时钟不到24M，则运行在默认频率
-        clock_frequency = 24;
-        //切换到24M
-        reg_val = CCMU_REG_AHB_APB;
-        reg_val &= ~(0x03 << 16);
-        reg_val |=  (0x01 << 16);
-        CCMU_REG_AHB_APB = reg_val;
+    div = pll_clk/24;
+	if (div <= 32)
+	{
+		n = div;
+		k = 1;
+	}
+	else
+	{
+		/* when m=1, we cann't get absolutely accurate value for follow clock:
+		 * 840(816), 888(864),
+		 * 984(960),
+		 * 1032(1008),
+		 * 1128(1104), 1176(1152),
+		 * 1272(1248)
+		 * 1320(1296),
+		 * 1416(1392), 1464(1440),
+		 * 1560(1536),
+		 * 1608(1584),
+		 * 1704(1680), 1752(1728),
+		 * 1848(1824), 1896(1872),
+		 * 1992(1968)
+		 */
+		mod2 = div&1;
+		mod3 = div%3;
+		min_mod = mod2;
+		k = 2;
+		if (min_mod > mod3) {
+			min_mod = mod3;
+			k = 3;
+		}
+		n = div / k;
+	}
+    factor->FactorN = n;
+    factor->FactorK = k;
+    factor->FactorM = m;
+//    factor->FactorP = CorePllTbl[index].FactorP;
+//    factor->clk_div = CorePllTbl[index].clk_div;
 
-        return 24;
-    }
-    //切换到24M
-    reg_val = CCMU_REG_AHB_APB;
-    reg_val &= ~(0x03 << 16);
-    reg_val |=  (0x01 << 16);
-    CCMU_REG_AHB_APB = reg_val;
-    //调整时钟频率
-    if(clock_frequency <= 744)
-    {
-        tmpFactorK = 0;
-        axi_div    = 0;
-    }
-    else if(clock_frequency <= 1488)
-    {
-        axi_div    = 1;
-        tmpFactorK = 1;
-        clock_frequency >>= 1;
-    }
-    else if(clock_frequency <= 2000)
-    {
-        axi_div    = 2;
-        tmpFactorK = 2;
-        clock_frequency >>= 2;
-    }
-    tmpFactorN = (clock_frequency/24) & 0x1f;
-    reg_val = CCMU_REG_PLL1_CTRL;
-    reg_val &= ~((0x1f << 8) | (0x03 << 4));
-	reg_val |=  (tmpFactorN<<8) | (tmpFactorK<<4);
-    CCMU_REG_PLL1_CTRL = reg_val;
-    //修改AXI分频
-    reg_val = CCMU_REG_AHB_APB;
-    reg_val &= ~(0x03 << 0);
-    reg_val |=  (axi_div << 0);
-    CCMU_REG_AHB_APB = reg_val;
-    //延时，等待时钟稳定
-    for(i=0; i<0x4000; i++);
-    //切换时钟到COREPLL上
-    reg_val = CCMU_REG_AHB_APB;
-    reg_val &= ~(0x03 << 16);
-    reg_val |=  (0x02 << 16);
-    CCMU_REG_AHB_APB = reg_val;
-
-    return 24 * tmpFactorN * (tmpFactorK + 1);
+    return 0;
 }
 /*
 ************************************************************************************************************
@@ -655,96 +631,117 @@ __u32 eGon2_clock_set(__u32 clock_name, __u32 clock_frequency)
 *
 ************************************************************************************************************
 */
-int clk_get_pll_para(struct core_pll_freq_tbl *factor, __u32 rate)
+__u32 eGon2_clock_set(__u32 clock_name, __u32 clock_frequency)
 {
-    int     index;
+    __u32 reg_val;
+    __u32 i;
+	__u32 tmpFactorN, tmpFactorK;
+//	__u32 axi_div;
+	struct core_pll_freq_tbl  pll_factor;
 
-    if(rate > 1488)
+    if(!clock_frequency)
     {
-        rate = 1488;
+        //默认频率
+        clock_frequency = 408;
     }
-    index = rate/6;
+    else if(clock_frequency > 2 * 1024 * 1024)
+    {
+    	clock_frequency = 2 * 1024 * 1024;
+    }
+    else if(clock_frequency < 24)
+    {
+		clock_frequency = 24;
+    }
+    clk_get_pll_para(&pll_factor, clock_frequency);
+    //切换到24M
+    reg_val = CCMU_REG_AXI_MOD;
+    reg_val &= ~(0x03 << 16);
+    reg_val |=  (0x01 << 16);
+    CCMU_REG_AXI_MOD = reg_val;
+    //调整时钟频率
+    reg_val = CCMU_REG_PLL1_CTRL;
+    reg_val &= ~((0x1f << 8) | (0x03 << 4) | (0x03 << 0));
+	reg_val |=  (pll_factor.FactorN<<8) | (pll_factor.FactorK<<4) | (pll_factor.FactorM << 0);
+    CCMU_REG_PLL1_CTRL = reg_val;
+    //修改AXI分频
+//    reg_val = CCMU_REG_AHB_APB;
+//    reg_val &= ~(0x03 << 0);
+//    reg_val |=  (axi_div << 0);
+//    CCMU_REG_AHB_APB = reg_val;
+    //延时，等待时钟稳定
+    for(i=0; i<0x4000; i++);
+    //切换时钟到COREPLL上
+    reg_val = CCMU_REG_AXI_MOD;
+    reg_val &= ~(0x03 << 16);
+    reg_val |=  (0x02 << 16);
+    CCMU_REG_AXI_MOD = reg_val;
 
-    factor->FactorN = CorePllTbl[index].FactorN;
-    factor->FactorK = CorePllTbl[index].FactorK;
-    factor->FactorM = CorePllTbl[index].FactorM;
-    factor->FactorP = CorePllTbl[index].FactorP;
-    factor->clk_div = CorePllTbl[index].clk_div;
-
-    return 0;
+    return 24 * tmpFactorN * (tmpFactorK + 1);
 }
-
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 __u32 eGon2_clock_set_ext(__u32 clock_frequency, __u32 core_vol)
 {
     __u32 reg_val;
     __u32 i;
-    int   tmp;
+//    int   tmp;
     struct core_pll_freq_tbl  pll_factor;
     //检查时钟是否合法
-    if((!clock_frequency) || (clock_frequency > 2 * 1024 * 1024))
+    if(!clock_frequency)
     {
         //默认频率
-        clock_frequency = 384;
+        clock_frequency = 408;
+    }
+    else if(clock_frequency > 2 * 1024 * 1024)
+    {
+    	clock_frequency = 2 * 1024 * 1024;
     }
     else if(clock_frequency < 24)
     {
-        //设置时钟不到24M，则运行在默认频率
-        clock_frequency = 24;
-        //切换到24M
-        reg_val = CCMU_REG_AHB_APB;
-        reg_val &= ~(0x03 << 16);
-        reg_val |=  (0x01 << 16);
-        CCMU_REG_AHB_APB = reg_val;
-
-        return 24;
-    }
-    else
-    {
-		for(i=0;;i++)
-		{
-			if(core_vol >= volt_freq_table[i][1])
-			{
-				if(clock_frequency >= volt_freq_table[i][0])
-				{
-					clock_frequency = volt_freq_table[i][0];
-				}
-				break;
-			}
-			if(!volt_freq_table[i][0])
-			{
-				clock_frequency = 384;
-				break;
-			}
-		}
+		clock_frequency = 24;
     }
     //切换到24M
-    reg_val = CCMU_REG_AHB_APB;
+    reg_val = CCMU_REG_AXI_MOD;
     reg_val &= ~(0x03 << 16);
     reg_val |=  (0x01 << 16);
-    CCMU_REG_AHB_APB = reg_val;
+    CCMU_REG_AXI_MOD = reg_val;
     //延时，等待时钟稳定
     for(i=0; i<0x4000; i++);
     //调整时钟频率
 	clk_get_pll_para(&pll_factor, clock_frequency);
-    reg_val = CCMU_REG_PLL1_CTRL;
-    reg_val &= ~((0x1f << 8) | (0x03 << 4) | (0x03 << 16) | (0x03 << 0));
-	reg_val |=  (pll_factor.FactorN<<8) | (pll_factor.FactorK<<4) | (pll_factor.FactorP << 16) | (pll_factor.FactorM << 0);
+	reg_val = CCMU_REG_PLL1_CTRL;
+    reg_val &= ~((0x1f << 8) | (0x03 << 4) | (0x03 << 0));
+	reg_val |=  (pll_factor.FactorN<<8) | (pll_factor.FactorK<<4) | (pll_factor.FactorM << 0);
     CCMU_REG_PLL1_CTRL = reg_val;
     //修改AXI,AHB,APB分频
-    reg_val = CCMU_REG_AHB_APB;
-    reg_val &= ~(0x3ff << 0);
-    reg_val |=  (pll_factor.clk_div << 0);
-    CCMU_REG_AHB_APB = reg_val;
+//    reg_val = CCMU_REG_AHB_APB;
+//    reg_val &= ~(0x3ff << 0);
+//    reg_val |=  (pll_factor.clk_div << 0);
+//    CCMU_REG_AHB_APB = reg_val;
     //延时，等待时钟稳定
     for(i=0; i<0x4000; i++);
     //切换时钟到COREPLL上
-    reg_val = CCMU_REG_AHB_APB;
+    reg_val = CCMU_REG_AXI_MOD;
     reg_val &= ~(0x03 << 16);
     reg_val |=  (0x02 << 16);
-    CCMU_REG_AHB_APB = reg_val;
-    tmp = (reg_val>>8)&0x03;
-    eGon2_printf("axi:ahb:apb=%d:%d:%d\n", ((reg_val>>0)&0x03) + 1, 1<<((reg_val>>4)&0x03), tmp?2:(1<<tmp));
+    CCMU_REG_AXI_MOD = reg_val;
+//    tmp = (reg_val>>8)&0x03;
+//    eGon2_printf("axi:ahb:apb=%d:%d:%d\n", ((reg_val>>0)&0x03) + 1, 1<<((reg_val>>4)&0x03), tmp?2:(1<<tmp));
 
-    return  _get_corepll();
+    return  _get_pll1_clock();
 }
 

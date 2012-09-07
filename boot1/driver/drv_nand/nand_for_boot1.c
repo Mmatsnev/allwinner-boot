@@ -722,10 +722,6 @@ __s32  NAND_EraseChip( const boot_nand_para_t *nand_param)
 	__u8*  page_buf_read;
 	__s32  error_flag = 0;
 	__s32  block_start;
-	__u32  die_skip_flag = (nand_param->OperationOpt)&(0x1<<11);
-	__u32  block_cnt_of_die = (nand_param->BlkCntPerDie);
-
-
 
     page_buf_read = (__u8*)wBoot_malloc(32 * 1024);
     if(!page_buf_read)
@@ -797,10 +793,7 @@ __s32  NAND_EraseChip( const boot_nand_para_t *nand_param)
 		for( j = block_start;  j < info.blk_cnt_per_chip;  j++ )
 		{
 			para_read.chip = chip;
-			if(!die_skip_flag)
-			    para_read.block = j;
-			else
-			    para_read.block = j%block_cnt_of_die + 2*(j/block_cnt_of_die);
+			para_read.block = j;
 			para_read.mainbuf = page_buf_read;
 			para_read.oobbuf = oob_buf_read;
 
@@ -896,8 +889,6 @@ __s32 NAND_BadBlockScan(const boot_nand_para_t *nand_param)
 	__u32  chip;
 	__u8   oob_buf[OOB_BUF_SIZE];
 	__u8*  page_buf;
-	__u32  die_skip_flag = (nand_param->OperationOpt)&(0x1<<11);
-	__u32  block_cnt_of_die = (nand_param->BlkCntPerDie);
 
 	for(i=0; i<8; i++)
 	    bad_block_cnt[i] = 0;
@@ -964,10 +955,7 @@ __s32 NAND_BadBlockScan(const boot_nand_para_t *nand_param)
 		for( j = 0;  j < info.blk_cnt_per_chip;  j++ )
 		{
 			para.chip = chip;
-			if(!die_skip_flag)
-			    para.block = j;
-			else
-			    para.block = j%block_cnt_of_die + 2*(j/block_cnt_of_die);
+			para.block = j;
 			para.mainbuf = page_buf;
 			para.oobbuf = oob_buf;
 

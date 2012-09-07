@@ -8,58 +8,32 @@
 
 typedef struct
 {
-    __u8        ChipCnt;                            //the count of the total nand flash chips are currently connecting on the CE pin
-    __u16       ChipConnectInfo;                    //chip connect information, bit == 1 means there is a chip connecting on the CE pin
-	__u8		RbCnt;
-	__u8		RbConnectInfo;						//the connect  information of the all rb  chips are connected
-    __u8        RbConnectMode;						//the rb connect  mode
-	__u8        BankCntPerChip;                     //the count of the banks in one nand chip, multiple banks can support Inter-Leave
-    __u8        DieCntPerChip;                      //the count of the dies in one nand chip, block management is based on Die
-    __u8        PlaneCntPerDie;                     //the count of planes in one die, multiple planes can support multi-plane operation
-    __u8        SectorCntPerPage;                   //the count of sectors in one single physic page, one sector is 0.5k
-    __u16       PageCntPerPhyBlk;                   //the count of physic pages in one physic block
-    __u16       BlkCntPerDie;                       //the count of the physic blocks in one die, include valid block and invalid block
-    __u16       OperationOpt;                       //the mask of the operation types which current nand flash can support support
-    __u8        FrequencePar;                       //the parameter of the hardware access clock, based on 'MHz'
-    __u8        EccMode;                            //the Ecc Mode for the nand flash chip, 0: bch-16, 1:bch-28, 2:bch_32
-    __u8        NandChipId[8];                      //the nand chip id of current connecting nand chip
-    __u16       ValidBlkRatio;                      //the ratio of the valid physical blocks, based on 1024
-	__u32 		good_block_ratio;					//good block ratio get from hwscan
-	__u32		ReadRetryType;						//the read retry type
-	__u32       DDRType;
-	__u32		Reserved[32];
-}boot_nand_para_t;
+	__u8 id[8];
+	__u8 chip_cnt;
+	__u8 chip_connect;
+	__u8 rb_cnt;
+	__u8 rb_connect;
+	__u32 good_block_ratio;
+}_nand_connect_info_t;
 
 
-
-typedef struct boot_physical_param
-{
+struct boot_physical_param{
 	__u8   chip; //chip no
 	__u16  block; // block no within chip
 	__u16  page; // page no within block
 	__u16  sectorbitmap; //done't care
 	void   *mainbuf; //data buf
 	void   *oobbuf; //oob buf
-}
-boot_physical_param_t;
+};
 
-typedef struct boot_flash_info
-{
+struct boot_flash_info{
 	__u32 chip_cnt;
 	__u32 blk_cnt_per_chip;
 	__u32 blocksize; //unit by sector
 	__u32 pagesize; //unit by sector
 	__u32 pagewithbadflag; /*bad block flag was written at the first byte of spare area of this page*/
-}
-boot_flash_info_t;
+};
 
-typedef struct _boot_nand_logical_t
-{
-	__u32 start_sector;           //起始扇区
-	__u32 nsector;				  //总扇区数
-	void  *pbuffer;				  //数据地址
-}
-boot_nand_logical_t;
 /*
 ************************************************************************************************************************
 *                       SCAN NAND HW
@@ -72,7 +46,7 @@ boot_nand_logical_t;
 *               = FAIL    initial fail.
 ************************************************************************************************************************
 */
-__s32 NAND_HWScanStart(boot_nand_para_t *nand_connect);
+__s32 NAND_HWScanStart(_nand_connect_info_t *nand_connect);
 
 
 /************************************************************************************************************************
@@ -207,7 +181,7 @@ __s32 NAND_VersionGet(__u8 *version);
 *               other  Fail.
 ************************************************************************************************************************
 */
-__s32  NAND_EraseBootBlocks( const boot_nand_para_t *connect_info_p);
+__s32  NAND_EraseBootBlocks( const _nand_connect_info_t *connect_info_p);
 
 
 /*
@@ -222,7 +196,7 @@ __s32  NAND_EraseBootBlocks( const boot_nand_para_t *connect_info_p);
 *               other  Fail.
 ************************************************************************************************************************
 */
-__s32  NAND_EraseChip( const boot_nand_para_t *connect_info_p);
+__s32  NAND_EraseChip( const _nand_connect_info_t *connect_info_p);
 
 /*******************************************************************************
 *函数名称: NAND_BadBlockScan
@@ -234,7 +208,7 @@ __s32  NAND_EraseChip( const boot_nand_para_t *connect_info_p);
 *
 *备    注:
 *******************************************************************************/
- __s32 NAND_BadBlockScan(const boot_nand_para_t *connect_info_p);
+ __s32 NAND_BadBlockScan(const _nand_connect_info_t *connect_info_p);
 
 
 __s32 NAND_Init(void);

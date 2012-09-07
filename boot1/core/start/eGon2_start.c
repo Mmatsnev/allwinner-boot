@@ -25,7 +25,16 @@
 static void  print_version(void);
 static __s32 reserved_init(void);
 static __s32 reserved_exit(void);
+
+__u32 timer_hd;
 static void eGon2_storage_type_set(void);
+static void timer_init(void)
+{
+	*(volatile unsigned int *)(0x01c20000 + 0x144) |= (1U << 31);
+	*(volatile unsigned int *)(0x01c20C00 + 0x80 )  = 1;
+	*(volatile unsigned int *)(0x01c20C00 + 0x8C )  = 0x2EE0;
+	*(volatile unsigned int *)(0x01c20C00 + 0x84 )  = 0;
+}
 /*******************************************************************************
 *函数名称: eGon2_start
 *函数原型：void Boot1_C_part( void )
@@ -45,14 +54,14 @@ void eGon2_start( void )
 	H_FILE  hfile = NULL;
 	FS_PART_OPTS_t   fs_ops;
 
+	timer_init();
 	/* init enviroment for running app */
 //	move_RW( );
 	reposition_boot_standby();
 	clear_ZI( );
-
     // 做两次调频，第一次先到384M ???
     //default_clock = eGon2_clock_set(0, 240);
-    default_clock = 384;
+    default_clock = 408;
     //起始地址在0x4X400000，保证堆起始地址在0x4Y000000(Y = X + 1)
     boot_heap_base = BOOT1_BASE + 0x01200000;
     //设置堆的大小为16M
@@ -114,6 +123,7 @@ void eGon2_start( void )
 
     	force_to_card0 = 1;
     }
+
 	eGon2_printf("flash init start\n");
     eGon2_block_device_init();
     eGon2_printf("flash init finish\n");

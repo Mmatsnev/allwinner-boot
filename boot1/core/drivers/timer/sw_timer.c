@@ -105,6 +105,61 @@ __u32 eGon2_timer_request(void *func_addr, void *p_arg)
 *
 ************************************************************************************************************
 */
+//__s32 eGon2_timer_start(__u32 hd, __s32 delay_time, __s32 auto_restart)
+//{
+//    __u32             reg_val;
+//    sw_timer_mag_t   *tmp = (sw_timer_mag_t *)hd;
+//
+//    if((hd != (__u32)&timer_port[0]) && (hd != (__u32)&timer_port[1]))
+//    {
+//        return -1;
+//    }
+//
+//    if(!tmp->used)
+//    {
+//        return -1;
+//    }
+//
+//    reg_val =  (0  << 0)  |            // 不启动TIMER
+//               (0  << 1)  |            // 使用单次模式
+//               (1  << 2)  |            // 使用高频晶振24M
+//               (5  << 4);              // 除频系统32，保证当设置时间是1的时候，触发延时1ms
+//    reg_val |= (0  << 0)  |            // 暂时没有start timer
+//               (1  << 1);              // 自动更新初始值用于计时
+//
+//    tmp->timer_ctl->control = reg_val; //首先把初始值写到寄存器，但是不启动
+//    tmp->restart = auto_restart;
+//    if(!auto_restart)                           //如果不需要自动重新运行
+//    {
+//        reg_val |= 1 << 7;                      //设置single mode,one shot mode
+//    }
+//    else
+//    {
+//        reg_val &= ~(1 << 7);                   //interval mode
+//    }
+//
+//    if(delay_time >= SW_TIMER_MAX_TICK)
+//    {
+//        delay_time = SW_TIMER_MAX_TICK;
+//    }
+//
+//    tmp->timer_ctl->init_val = delay_time * (24000 / 32);   //确保用户输入的数值1就可以代表1ms
+//    tmp->timer_ctl->control = reg_val;
+//
+//    CFG_SW_TIMER_INT_CTRL |= (1 << tmp->index);    //开启中断
+//    //这里开启中断
+//    if(tmp->index == 0)
+//    {
+//        eGon2_EnableInt(GIC_SRC_TIMER0);
+//    }
+//    else
+//    {
+//        eGon2_EnableInt(GIC_SRC_TIMER1);
+//    }
+//    tmp->timer_ctl->control |= 1;     //启动timer
+//
+//    return 0;
+//}
 __s32 eGon2_timer_start(__u32 hd, __s32 delay_time, __s32 auto_restart)
 {
     __u32             reg_val;
@@ -122,8 +177,8 @@ __s32 eGon2_timer_start(__u32 hd, __s32 delay_time, __s32 auto_restart)
 
     reg_val =  (0  << 0)  |            // 不启动TIMER
                (0  << 1)  |            // 使用单次模式
-               (1  << 2)  |            // 使用高频晶振24M
-               (5  << 4);              // 除频系统32，保证当设置时间是1的时候，触发延时1ms
+               (0  << 2)  |            // 使用32K，仅限FPGA
+               (0  << 4);              // 仅限FPGA，设置除频率系数为5
     reg_val |= (0  << 0)  |            // 暂时没有start timer
                (1  << 1);              // 自动更新初始值用于计时
 
@@ -143,18 +198,18 @@ __s32 eGon2_timer_start(__u32 hd, __s32 delay_time, __s32 auto_restart)
         delay_time = SW_TIMER_MAX_TICK;
     }
 
-    tmp->timer_ctl->init_val = delay_time * (24000 / 32);   //确保用户输入的数值1就可以代表1ms
+    tmp->timer_ctl->init_val = delay_time * (32 / 1);   //确保用户输入的数值1就可以代表1ms
     tmp->timer_ctl->control = reg_val;
 
     CFG_SW_TIMER_INT_CTRL |= (1 << tmp->index);    //开启中断
     //这里开启中断
     if(tmp->index == 0)
     {
-        eGon2_EnableInt(INTC_IRQNO_TIMER0);
+        eGon2_EnableInt(GIC_SRC_TIMER0);
     }
     else
     {
-        eGon2_EnableInt(INTC_IRQNO_TIMER1);
+        eGon2_EnableInt(GIC_SRC_TIMER1);
     }
     tmp->timer_ctl->control |= 1;     //启动timer
 
@@ -195,12 +250,12 @@ __s32 eGon2_timer_stop(__u32 hd)
     if(tmp->index == 0)
     {
         CFG_SW_TIMER_INT_STATS |= 0x01;
-        eGon2_DisableInt(INTC_IRQNO_TIMER0);
+        eGon2_DisableInt(GIC_SRC_TIMER0);
     }
     else
     {
         CFG_SW_TIMER_INT_STATS |= 0x02;
-        eGon2_DisableInt(INTC_IRQNO_TIMER1);
+        eGon2_DisableInt(GIC_SRC_TIMER1);
     }
     CFG_SW_TIMER_INT_CTRL &= ~(1 << tmp->index);    //关闭中断
 
@@ -241,11 +296,11 @@ __s32 eGon2_timer_release(__u32 hd)
     CFG_SW_TIMER_INT_CTRL &= ~(1 << tmp->index);    //关闭中断
     if(tmp->index == 0)
     {
-        eGon2_DisableInt(INTC_IRQNO_TIMER0);
+        eGon2_DisableInt(GIC_SRC_TIMER0);
     }
     else
     {
-        eGon2_DisableInt(INTC_IRQNO_TIMER1);
+        eGon2_DisableInt(GIC_SRC_TIMER1);
     }
 
     tmp->used = 0;
@@ -278,12 +333,12 @@ __s32 timer0_int_func(void *arg)
         return 0;
     }
     CFG_SW_TIMER_INT_STATS |= 0x01;
-    eGon2_DisableInt(INTC_IRQNO_TIMER0);
+    eGon2_DisableInt(GIC_SRC_TIMER0);
 
     timer_int_func[0](timer_port[0].arg);
     if(timer_port[0].restart)
     {
-        eGon2_EnableInt(INTC_IRQNO_TIMER0);
+        eGon2_EnableInt(GIC_SRC_TIMER0);
     }
 
     return 0;
@@ -313,11 +368,11 @@ __s32 timer1_int_func(void *arg)
         return 0;
     }
     CFG_SW_TIMER_INT_STATS |= 0x02;
-    eGon2_DisableInt(INTC_IRQNO_TIMER1);
+    eGon2_DisableInt(GIC_SRC_TIMER1);
     timer_int_func[1](timer_port[1].arg);
     if(timer_port[1].restart)
     {
-        eGon2_EnableInt(INTC_IRQNO_TIMER1);
+        eGon2_EnableInt(GIC_SRC_TIMER1);
     }
 
     return 0;
@@ -390,6 +445,7 @@ void eGon2_timer_init(void)
 //	*(volatile unsigned int *)(0x01c20C00 + 0x80 )  = 1;
 //	*(volatile unsigned int *)(0x01c20C00 + 0x8C )  = 0x0C;
 //	*(volatile unsigned int *)(0x01c20C00 + 0x84 )  = 0;
+	CFG_SW_TIMER_INT_STATS |= 0x03;
 }
 /*
 ************************************************************************************************************

@@ -95,7 +95,7 @@ extern  __s32   SDMMC_PhyWrite(__u32 block, __u32 nblock, void *buf, __u32 card_
 *               = -1     fail.
 ************************************************************************************************************************
 */
-extern  __s32   SDMMC_LogicalInit(__u32 card_no, __s32 card_offset, __u32 speed_mode, __u32 line_sel);
+extern  __s32   SDMMC_LogicalInit(__u32 card_no, __s32 card_offset, __u32 line_sel);
 /*
 ************************************************************************************************************************
 *                       SDMMC_LogicalExit

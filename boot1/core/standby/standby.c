@@ -164,7 +164,7 @@ static int eGon2_enter_standby(void)
 	//处理clock
 	standby_clock_store();
 	//处理dram，之后不允许再访问dram
-	dram_power_save_process();
+	//dram_power_save_process();
 	//禁止drampll输出使能
 	standby_clock_drampll_ouput(0);
 	//切换到24M
@@ -222,7 +222,7 @@ static int eGon2_exit_standby(void)
 	standby_clock_drampll_ouput(1);
 	//激活dram
 	standby_tmr_enable_watchdog();
-	dram_power_up_process();
+	//dram_power_up_process();
 	standby_tmr_disable_watchdog();
 	//还原中断状态
 	standby_int_exit();
