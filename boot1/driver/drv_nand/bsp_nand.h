@@ -40,7 +40,7 @@
 //---------------------------------------------------------------
 //  结构体 定义
 //---------------------------------------------------------------
-typedef struct 
+typedef struct
 {
     __u8        ChipCnt;                            //the count of the total nand flash chips are currently connecting on the CE pin
     __u16       ChipConnectInfo;                    //chip connect information, bit == 1 means there is a chip connecting on the CE pin
@@ -78,7 +78,7 @@ struct boot_physical_param{
 	__u8   chip; //chip no
 	__u16  block; // block no within chip
 	__u16  page; // apge no within block
-	__u16  sectorbitmap; //done't care
+	__u64  sectorbitmap; //done't care
 	void   *mainbuf; //data buf
 	void   *oobbuf; //oob buf
 };
@@ -140,11 +140,11 @@ extern __s32 NFC_LSBDisable(__u32 chip, __u32 read_retry_type);
 extern __s32 NFC_LSBInit(__u32 read_retry_type);
 extern __s32 NFC_LSBExit(__u32 read_retry_type);
 
-/* 
+/*
 *   Description:
 *   1. if u wanna set dma callback hanlder(sleep during dma transfer) to free cpu for other tasks,
 *      one must call the interface before nand flash initialization.
-      this option is also protected by dma poll method,wakup(succeed or timeout) then check 
+      this option is also protected by dma poll method,wakup(succeed or timeout) then check
       dma transfer complete or still running.
 *   2. if u use dma poll method,no need to call the interface.
 *

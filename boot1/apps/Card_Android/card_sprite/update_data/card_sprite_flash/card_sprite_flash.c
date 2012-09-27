@@ -434,7 +434,7 @@ int create_stdmbr(void *mbr_i)
 	mbrst->part_info[2].start_sectorl  = 1;
 	mbrst->part_info[2].start_sectorh  = 0;
 	mbrst->part_info[2].total_sectorsl = (size & 0x0000ffff) >> 0;
-	mbrst->part_info[2].total_sectorsh = (size & 0xffff0000) >> 0;
+	mbrst->part_info[2].total_sectorsh = (size & 0xffff0000) >> 16;
 
 	mbrst->end_flag = 0xAA55;
 	if(SDMMC_PhyWrite(0, 1, mbr_bufst, 2))
