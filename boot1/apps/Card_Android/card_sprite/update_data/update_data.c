@@ -31,8 +31,8 @@ extern  int      env_exist;
 static  int      flash_start_sector = -1;
 
 int		android_format;
-char    *flash_memory_base = (char *)0x48000000;
-char    *env_memory_base   = (char *)0x46000000;
+char    *flash_memory_base = (char *)0x46000000;
+char    *env_memory_base   = (char *)0x44000000;
 char    *flash_memory;
 int		 flash_memory_size;
 /*

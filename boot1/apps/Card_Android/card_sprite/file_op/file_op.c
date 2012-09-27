@@ -65,6 +65,8 @@ WRes DFB_Part_Read(void *data, __u32 size, CSzFile *p)
     UInt32 Left;
     UInt32 ReadOut;
     UInt32 len;
+    __int64 tmp_len_64;
+    UInt32 tmp_pen_32;
     char *pBuffer = NULL;
 
     /* 先判断是否已达到文件结尾 */
@@ -78,15 +80,15 @@ WRes DFB_Part_Read(void *data, __u32 size, CSzFile *p)
     Left = size;
     ReadOut = 0;
     len = 0;
-    Offset = p->CurPos & (DEC_SECTOR_SIZE - 1);
+    Offset = (__u32)(p->CurPos & (DEC_SECTOR_SIZE - 1));
     if (Offset)
     {
         /* 直接从buffer里面读取 */
         pBuffer = (char *)(p->Buffer_t.Buffer) + p->Buffer_t.Pos;
         len = size < (DEC_SECTOR_SIZE - Offset) ? size : (DEC_SECTOR_SIZE - Offset);
-        if (len > (p->Size - p->CurPos))
+        if ((__int64)len > (p->Size - p->CurPos))
         {
-            len = p->Size - p->Buffer_t.Pos;
+            len = (__u32)(p->Size - p->CurPos);
 			Left = 0;
         }
         else
@@ -115,12 +117,12 @@ WRes DFB_Part_Read(void *data, __u32 size, CSzFile *p)
         }
         p->CurSec += SectorCnt;
         len = Left < DEC_SECTOR_SIZE ? Left : SectorCnt << DEC_SECTOR_BITS;
-        if (len >= (p->Size - p->CurPos))
+        if ((__int64)len > (p->Size - p->CurPos))
         {
-            len = p->Size - p->CurPos;
+            len = (__u32)(p->Size - p->CurPos);
 			Left = 0;
         }
-		else
+        else
 		{
 			Left -= len;
 		}
@@ -135,15 +137,10 @@ WRes DFB_Part_Read(void *data, __u32 size, CSzFile *p)
             return 0;
         }
         len = Left;
-        if (len > (p->Size - p->Buffer_t.Pos))
+        if ((__int64)len > (p->Size - p->CurPos))
         {
-            len = p->Size - p->Buffer_t.Pos;
-			Left = 0;
+            len = (__u32)(p->Size - p->CurPos);
         }
-		else
-		{
-			Left -= len;
-		}
 		SET_BUFFER_DIRTY(&p->Buffer_t);
 
         pBuffer = (char *)data + ReadOut;
@@ -158,6 +155,7 @@ WRes DFB_Part_Read(void *data, __u32 size, CSzFile *p)
 
 WRes DFB_Part_Write(const void *data, __u32 size, CSzFile *p)
 {
+#if 0
     UInt32 Offset;
     UInt32 Left;
     UInt32 WriteOut;
@@ -237,6 +235,8 @@ WRes DFB_Part_Write(const void *data, __u32 size, CSzFile *p)
         WriteOut += len;
     }
     return WriteOut;
+#endif
+    return 0;
 }
 
 void File_Construct(CSzFile *p)
@@ -351,16 +351,16 @@ WRes File_Seek(CSzFile *p, __int64 pos, ESzSeek origin)
       default: return 1;
     }
     /* 只支持在打开文件大小范围内seek */
-    if ((p->Size < (UInt32)(SeekPos + pos)) || (0 > (SeekPos + pos)))
+    if (p->Size < (SeekPos + pos))
     {
         sprite_wrn("Seek overflow\n");
         return 1;
     }
-    p->CurPos = (UInt32)(SeekPos + pos);
+    p->CurPos = SeekPos + pos;
     p->CurSec = p->SectorNr + (p->CurPos>>DEC_SECTOR_BITS);
 
     /* 如果Seek后的位置未以一个Sector对齐，则预读一个Sector到Buffer中 */
-    Offset = p->CurPos & (DEC_SECTOR_SIZE - 1);
+    Offset = (__u32)(p->CurPos & (DEC_SECTOR_SIZE - 1));
     if (Offset)
     {
         if (SUCCESS != DFB_LogicRead(p->CurSec, 1, p->Buffer_t.Buffer))

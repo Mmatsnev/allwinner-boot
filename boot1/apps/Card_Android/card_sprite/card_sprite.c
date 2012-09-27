@@ -281,7 +281,6 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	sprite_ratio = CARD_SPRITE_GET_MAP;
 	for(i=0;i<dl_info->download_count;i++)
 	{
-__download_part_data__:
 		__inf("dl name = %s\n", dl_info->one_part_info[i].name);
 	    imgitemhd = Img_OpenItem(imghd, "RFSFAT16", (char *)dl_info->one_part_info[i].dl_filename);
 	    if(!imgitemhd)
@@ -457,6 +456,8 @@ __download_part_data__:
 	    {
 	    	__inf("part %s not need verify\n", dl_info->one_part_info[i].dl_filename);
 	    }
+__download_part_data__:
+		;
 	}
 	sprite_show(CARD_SPRITE_DOWN_PART);
 /*****************************************************************************
