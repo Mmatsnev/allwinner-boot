@@ -220,7 +220,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
     for(i=0;i<mbr_count;i++)
     {
     	tmp_mbr_cfg = (MBR *)(tmp_mbr_buf + i * sizeof(MBR));
-		crc = calc_crc32((void *)&tmp_mbr_cfg->version, sizeof(MBR) - 4);
+		crc = calc1_crc32((void *)&tmp_mbr_cfg->version, sizeof(MBR) - 4);
 		__inf("count crc=%x, source crc=%x\n", crc, tmp_mbr_cfg->crc32);
 		if(crc != tmp_mbr_cfg->crc32)
 		{
@@ -258,7 +258,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
     Img_CloseItem(imghd, imgitemhd);
     imgitemhd = NULL;
     //检查 DOWNLOAD MAP的合法性
-	crc = calc_crc32(&dl_info->version, sizeof(download_info) - 4);
+	crc = calc1_crc32(&dl_info->version, sizeof(download_info) - 4);
 	if(crc != dl_info->crc32)
 	{
 		sprite_wrn("sprite update error: download map file is not correct\n");
