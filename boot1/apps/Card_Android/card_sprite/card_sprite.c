@@ -119,15 +119,17 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
     }
     //准备nand数据信息
 	sprite_show(CARD_SPRITE_FLASH_INFO);
-	src_buf = (char *)sprite_malloc(1024 * 1024);
-    if(!src_buf)
-    {
-        sprite_wrn("sprite update error: fail to get memory for tmpdata\n");
-
-        goto _update_error_;
-    }
-    dest_buf = src_buf + 512 * 1024;
+	//src_buf = (char *)sprite_malloc(1024 * 1024);
+    //if(!src_buf)
+    //{
+    //   sprite_wrn("sprite update error: fail to get memory for tmpdata\n");
+    //
+    //   goto _update_error_;
+    //}
+    //dest_buf = src_buf + 512 * 1024;
 	/* dl info 获取内存空间 */
+    src_buf =  (char *)(0x48000000);
+    dest_buf = (char *)(0x4C000000);
     dl_info = (download_info *)sprite_malloc(sizeof(download_info));
     if(!dl_info)
     {
@@ -639,10 +641,10 @@ __download_part_data__:
     ret = 0;
 
 _update_error_:
-    if(src_buf)
-    {
-        sprite_free(src_buf);
-    }
+//    if(src_buf)
+//    {
+//        sprite_free(src_buf);
+//    }
 //    if(buf0)
 //    {
 //        sprite_free(buf0);

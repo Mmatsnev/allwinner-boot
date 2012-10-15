@@ -55,7 +55,7 @@ typedef struct  __CSzFile
   int   		writeMode;		/* write open mode falg 			*/
   Sector_t 		SectorNr;		/* begin sector number 				*/
   Sector_t 		CurSec;			/* current sector number 			*/
-  __int64  		CurPos;			/* file current postion 			*/
+  UInt32   		CurPos;			/* file current postion 			*/
   __int64   	Size;			/* total size (just for read open) 	*/
   DecBuffer_t	Buffer_t;		/* data buffer 						*/
 } CSzFile;
