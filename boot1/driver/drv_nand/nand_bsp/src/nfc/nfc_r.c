@@ -120,22 +120,31 @@ __s32 _wait_cmd_finish(void)
 	return 0;
 }
 
-void _dma_config_start(__u8 rw, __u32 buff_addr, __u32 len)
+void _dma_config_start(__u8 rw, __u32 src_addr, __u32 dst_addr, __u32 len)
 {
-	NAND_DMAConfigStart(rw, buff_addr, len);
+	__u32 reg_val;
+
+	//set mbus dma mode
+	reg_val = NFC_READ_REG(NFC_REG_CTL);
+	reg_val &= (~(0x1<<15));
+	NFC_WRITE_REG(NFC_REG_CTL, reg_val);
+
+	//set dma address & byte counter
+	if(rw)
+		NFC_WRITE_REG(NFC_REG_MDMA_ADDR, src_addr);
+	else
+		NFC_WRITE_REG(NFC_REG_MDMA_ADDR, dst_addr);
+	NFC_WRITE_REG(NFC_REG_DMA_CNT, len);
 }
+
 
 __s32 _wait_dma_end(void)
 {
 	__s32 timeout = 0xffff;
 
-	while( (timeout--) && ( NAND_QueryDmaStat()) );
+	while ( (timeout--) && (!(NFC_READ_REG(NFC_REG_ST) & NFC_DMA_INT_FLAG)) );
 	if (timeout <= 0)
-	{
-	    PRINT("nand _wait_dma_end time out, status:0x%x\n", NFC_READ_REG(NFC_REG_ST));
 		return -ERR_TIMEOUT;
-    }
-
 	return 0;
 }
 
@@ -276,7 +285,7 @@ __s32 _read_in_page_mode(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__u8 d
 	NFC_WRITE_REG(NFC_REG_CTL, (NFC_READ_REG(NFC_REG_CTL)) | NFC_RAM_METHOD);
 
 	/*set dma and run*/
-	_dma_config_start(0, (__u32)mainbuf, pagesize);
+	_dma_config_start(0, NFC_REG_IO_DATA, (__u32)mainbuf, pagesize);
 
 	/*wait cmd fifo free*/
 	ret = _wait_cmdfifo_free();
@@ -314,8 +323,6 @@ __s32 _read_in_page_mode(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__u8 d
 	/*enable ecc*/
 	_enable_ecc(1);
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
-
-    NAND_WaitDmaFinish();
 
 	/*wait cmd fifo free and cmd finish*/
 	ret = _wait_cmdfifo_free();
@@ -578,10 +585,8 @@ __s32 NFC_SelectChip( __u32 chip)
     cfg = NFC_READ_REG(NFC_REG_CTL);
     cfg &= ( (~NFC_CE_SEL) & 0xffffffff);
     cfg |= ((chip & 0x7) << 24);
-    if(((read_retry_mode == 0)||(read_retry_mode == 1))&&(read_retry_cycle))
-        cfg |= (0x1<<6);
     NFC_WRITE_REG(NFC_REG_CTL,cfg);
-    
+
     if((cfg>>18)&0x3) //ddr nand
     {
         //set ddr param
@@ -620,14 +625,10 @@ __s32 NFC_SelectRb( __u32 rb)
 
 __s32 NFC_DeSelectChip( __u32 chip)
 {
-    __u32 cfg;
 
-    if(((read_retry_mode == 0)||(read_retry_mode == 1))&&(read_retry_cycle))
-    {
-        cfg = NFC_READ_REG(NFC_REG_CTL);
-        cfg &= (~(0x1<<6));
-        NFC_WRITE_REG(NFC_REG_CTL,cfg);    
-    }
+
+
+
 
 	return 0;
 }
@@ -756,8 +757,9 @@ __s32 NFC_Init(NFC_INIT_INFO *nand_info )
 {
 	__s32 ret;
     __s32 i;
-    
+
     PRINT("[NAND] nand driver version: 0x%x, 0x%x, data: %x\n", NAND_VERSION_0, NAND_VERSION_1, NAND_DRV_DATE);
+    PRINT("[NAND] boot1 debug******************************\n");
     //init ddr_param
     for(i=0;i<8;i++)
         ddr_param[i] = 0;
@@ -780,17 +782,17 @@ __s32 NFC_Init(NFC_INIT_INFO *nand_info )
 	ret = NFC_ChangMode( nand_info);
 
 	/*request special dma*/
-	if (NAND_RequestDMA() < 0)
+/*	if (NAND_RequestDMA() < 0)
 	{
-	    PRINT("NAND_RequestDMA  fail\n"); 
+	    PRINT("NAND_RequestDMA  fail\n");
 	    return -1;
 	}
 	else
 	{
-	    PRINT("NAND_RequestDMA  ok\n"); 
+	    PRINT("NAND_RequestDMA  ok\n");
 	}
-		
-		
+*/
+
 	return ret;
 
 }
@@ -819,9 +821,9 @@ void NFC_Exit( void )
 
     //init pin
     NAND_PIORelease();
-    
+
     //init dma
-    NAND_ReleaseDMA();
+//    NAND_ReleaseDMA();
 }
 
 /*******************************************************************************
@@ -1240,13 +1242,12 @@ __s32 NFC_ReadRetry(__u32 chip, __u32 retry_count, __u32 read_retry_type)
     		    //fix 0
     			if((retry_count >=2)&&(retry_count<=6))
     				param[0] = 0;
-    			
+
     			if((retry_count == 5)||(retry_count == 6))
         	    	param[1] = 0;
-        	    	
-        	    ret =_vender_set_param(&param[0], &read_retry_reg_adr[0], read_retry_reg_num);	
-	        }    
-		    	    
+	        }
+
+		    ret =_vender_set_param(&param[0], &read_retry_reg_adr[0], read_retry_reg_num);
 		}
 		else if((read_retry_mode == 2)||(read_retry_mode == 3))
 		{
@@ -1458,11 +1459,11 @@ __s32 NFC_SetDefaultParam(__u32 chip,__u8* default_value,__u32 read_retry_type)
         {
             if((read_retry_mode == 0x0)||(read_retry_mode == 0x1))
                 default_value[i] = read_retry_default_val[chip][i];
-            else if((read_retry_mode == 0x2)||(read_retry_mode == 0x3))   
+            else if(read_retry_mode == 0x2)
                 default_value[i] = hynix_read_retry_otp_value[chip][0][i];
         }
         ret =_vender_set_param(default_value, &read_retry_reg_adr[0], read_retry_reg_num);
-        
+
     	return ret;
     }
     else if((read_retry_mode>=0x20)&&(read_retry_mode<0x30))  //samsung read retry mode

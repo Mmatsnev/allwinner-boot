@@ -759,6 +759,7 @@ __s32 NFC_Init(NFC_INIT_INFO *nand_info )
     __s32 i;
 
     PRINT("[NAND] nand driver version: 0x%x, 0x%x, data: %x\n", NAND_VERSION_0, NAND_VERSION_1, NAND_DRV_DATE);
+    PRINT("[NAND] boot1 debug******************************\n");
     //init ddr_param
     for(i=0;i<8;i++)
         ddr_param[i] = 0;

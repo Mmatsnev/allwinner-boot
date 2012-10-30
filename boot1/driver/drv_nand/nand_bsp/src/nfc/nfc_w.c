@@ -14,7 +14,7 @@
 extern __u32 pagesize;
 extern __s32 _wait_cmdfifo_free(void);
 extern __s32 _wait_cmd_finish(void);
-extern void _dma_config_start(__u8 rw, __u32 buff_addr, __u32 len);
+extern void _dma_config_start(__u8 rw, __u32 src_addr, __u32 dst_addr, __u32 len);
 extern __s32 _wait_dma_end(void);
 extern __s32 _check_ecc(__u32 eblock_cnt);
 extern void _disable_ecc(void);
@@ -135,7 +135,7 @@ __s32 NFC_Write( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 dma_w
 //	else
 //		attr = 0x2930280;
 
-	_dma_config_start(1, (__u32)mainbuf, pagesize);
+	_dma_config_start(1, (__u32)mainbuf, NFC_REG_IO_DATA, pagesize);
 
 	/*wait cmd fifo free*/
 	ret = _wait_cmdfifo_free();
@@ -178,8 +178,6 @@ __s32 NFC_Write( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 dma_w
 	/*enable ecc*/
 	_enable_ecc(1);
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
-
-    NAND_WaitDmaFinish();
 
 	_wait_twb();
 	_wait_cmdfifo_free();
@@ -235,7 +233,7 @@ __s32 NFC_Write_Seq( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 d
 //	else
 //		attr = 0x2930280;
 
-	_dma_config_start(1, (__u32)mainbuf, pagesize);
+	_dma_config_start(1, (__u32)mainbuf, NFC_REG_IO_DATA, pagesize);
 
 	/*wait cmd fifo free*/
 	ret = _wait_cmdfifo_free();
@@ -277,14 +275,12 @@ __s32 NFC_Write_Seq( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 d
 
 	/*enable ecc*/
 	_enable_ecc(1);
-	
+
 	/*set ecc to 24-bit ecc*/
     ecc_mode_temp = NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000;
 	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(0x1<<12) ));
-	
-	NFC_WRITE_REG(NFC_REG_CMD,cfg);
 
-    NAND_WaitDmaFinish();
+	NFC_WRITE_REG(NFC_REG_CMD,cfg);
 
 	_wait_twb();
 	_wait_cmdfifo_free();
@@ -347,7 +343,7 @@ __s32 NFC_Write_1K( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 dm
 //	else
 //		attr = 0x2930280;
 
-	_dma_config_start(1, (__u32)mainbuf, 1024);
+	_dma_config_start(1, (__u32)mainbuf, NFC_REG_IO_DATA, 1024);
 
 	/*wait cmd fifo free*/
 	ret = _wait_cmdfifo_free();
@@ -394,8 +390,6 @@ __s32 NFC_Write_1K( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 dm
     ecc_mode_temp = NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000;
 	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(0x8<<12) ));
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
-
-    NAND_WaitDmaFinish();
 
 	_wait_twb();
 	_wait_cmdfifo_free();
@@ -538,14 +532,16 @@ __s32 _read_in_page_mode_seq(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__
 	//access NFC internal RAM by DMA bus
 	NFC_WRITE_REG(NFC_REG_CTL, (NFC_READ_REG(NFC_REG_CTL)) | NFC_RAM_METHOD);
 
-//	/*set dma and run*/
-//	/*sdram*/
-//	if (NFC_IS_SDRAM((__u32)mainbuf))
-//		attr = 0x2810293;
-//	/*sram*/
-//	else
-//		attr = 0x2800293;
-	_dma_config_start(0, (__u32)mainbuf, pagesize);
+	/*set dma and run*/
+	/*sdram*/
+	/*
+	if (NFC_IS_SDRAM((__u32)mainbuf))
+		attr = 0x2810293;
+
+	else
+		attr = 0x2800293;
+	*/
+	_dma_config_start(0, NFC_REG_IO_DATA, (__u32)mainbuf, pagesize);
 
 	/*wait cmd fifo free*/
 	ret = _wait_cmdfifo_free();
@@ -588,8 +584,6 @@ __s32 _read_in_page_mode_seq(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__
 	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(0x1<<12)));
 
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
-
-    NAND_WaitDmaFinish();
 
 	/*wait cmd fifo free and cmd finish*/
 	ret = _wait_cmdfifo_free();
@@ -647,14 +641,16 @@ __s32 _read_in_page_mode_1K(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__u
       page_size_temp = (NFC_READ_REG(NFC_REG_CTL) & 0xf00)>>8;
 	NFC_WRITE_REG(NFC_REG_CTL, (NFC_READ_REG(NFC_REG_CTL)) | (0x3<<8));
 
-	///*set dma and run*/
-	///*sdram*/
-	//if (NFC_IS_SDRAM((__u32)mainbuf))
-	//	attr = 0x2810293;
-	///*sram*/
-	//else
-	//	attr = 0x2800293;
-	_dma_config_start(0, (__u32)mainbuf, 1024);
+	/*set dma and run*/
+	/*sdram*/
+	/*
+	if (NFC_IS_SDRAM((__u32)mainbuf))
+		attr = 0x2810293;
+
+	else
+		attr = 0x2800293;
+	*/
+	_dma_config_start(0, NFC_REG_IO_DATA, (__u32)mainbuf, 1024);
 
 	/*wait cmd fifo free*/
 	ret = _wait_cmdfifo_free();
@@ -697,8 +693,6 @@ __s32 _read_in_page_mode_1K(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__u
 	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(0x8<<12) ));
 
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
-
-    NAND_WaitDmaFinish();
 
 	/*wait cmd fifo free and cmd finish*/
 	ret = _wait_cmdfifo_free();
@@ -762,8 +756,8 @@ __s32 _read_in_page_mode_spare(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,
 	///*sram*/
 	//else
 	//	attr = 0x2800293;
-	_dma_config_start(0, (__u32)mainbuf, 2048);
-
+	//_dma_config_start(0, (__u32)mainbuf, 2048);
+	_dma_config_start(0, NFC_REG_IO_DATA, (__u32)mainbuf, 2048);
 	/*wait cmd fifo free*/
 	ret = _wait_cmdfifo_free();
 	if (ret)
@@ -791,7 +785,7 @@ __s32 _read_in_page_mode_spare(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,
 	/*set sequence mode*/
 	//cfg |= 0x1<<25;
 	cfg |= ( (read_addr_cmd->addr_cycle - 1) << 16);
-	cfg |= (NFC_SEND_ADR | NFC_DATA_TRANS | NFC_SEND_CMD1 | NFC_SEND_CMD2 | NFC_WAIT_FLAG | NFC_DATA_SWAP_METHOD);
+	cfg |= (NFC_SEND_ADR | NFC_DATA_TRANS | NFC_SEND_CMD1 | NFC_SEND_CMD2 | NFC_WAIT_FLAG );
 	cfg |= ((__u32)0x2 << 30);//page command
 
 	if (pagesize/1024 == 1)
@@ -800,8 +794,6 @@ __s32 _read_in_page_mode_spare(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,
 	/*enable ecc*/
 	_enable_ecc(1);
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
-
-    NAND_WaitDmaFinish();// 
 
 	/*wait cmd fifo free and cmd finish*/
 	ret = _wait_cmdfifo_free();
@@ -819,13 +811,13 @@ __s32 _read_in_page_mode_spare(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,
 	ret = _check_ecc(2048/1024);
 	_disable_ecc();
 
-	/*if dma mode is wait*/
+	/*if dma mode is wait
 	if(0 == dma_wait_mode){
 		ret1 = _wait_dma_end();
 		if (ret1)
 			return ret1;
 	}
-
+	*/
 	return ret;
 }
 

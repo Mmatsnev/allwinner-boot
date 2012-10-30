@@ -757,7 +757,7 @@ __s32 _read_in_page_mode_spare(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,
 	//else
 	//	attr = 0x2800293;
 	//_dma_config_start(0, (__u32)mainbuf, 2048);
-
+	_dma_config_start(0, NFC_REG_IO_DATA, (__u32)mainbuf, 2048);
 	/*wait cmd fifo free*/
 	ret = _wait_cmdfifo_free();
 	if (ret)
