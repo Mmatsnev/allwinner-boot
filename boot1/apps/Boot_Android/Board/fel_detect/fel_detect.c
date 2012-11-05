@@ -20,7 +20,7 @@
 */
 #include "include.h"
 #include "common_res.h"
-
+#include "axp_i.h"
 
 #define   BAT_VOL_ACTIVE     (10)
 
@@ -125,7 +125,7 @@ __s32 check_power_status(void)
 {
 	__s32 status;
 	__s32 power_start;
-
+    __u32 dcin, bat_exist;
 	status = wBoot_power_get_level();
 	if(status == 1)						//低电状态下，无外部电源，直接关机
 	{
@@ -160,7 +160,7 @@ __s32 check_power_status(void)
 			}
 		}
 	}
-	else							//电池电量足够情况下
+	else							//status=2 电池电量足够情况下
 	{
 		if(power_start & 0x01)		//如果第0bit的值为1，则进入系统
 		{
@@ -173,10 +173,28 @@ __s32 check_power_status(void)
 	__inf("startup status = %d\n", status);
 	if(status)
 	{
-		return 0;
+      uint8_t reg_addr;
+      uint8_t value;
+      uint8_t power_trigger;
+      wBoot_power_get_dcin_battery_exist(&dcin, &bat_exist);
+      reg_addr = BOOT_POWER20_STATUS;
+      if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
+      {
+          return -1;
+      }
+      power_trigger  = (value >> 0) & 0x01;
+      //dc存在，电源触发，同时电池存在，则standby,解决用户在系统里强制关机后插DC自动开机问题
+      if(!(dcin&&power_trigger&&bat_exist)) //如果三个条件有一个不满足，则直接开机.
+      {
+          return 0;
+          
+      }//到这里说明三个条件都满足，所以不能直接开机，进入后面的standby判断
+      __inf("power trigger\n");
+      
+
 	}
 	{
-		__u32 dcin, bat_exist;
+		
 		__s32 bat_cal, this_bat_cal;
 		__u32 bat_show_hd = NULL;
 		int   i, j;
