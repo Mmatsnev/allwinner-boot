@@ -247,13 +247,14 @@ __s32 sprite_flash_write(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 *
 ************************************************************************************************************
 */
-int sprite_flash_hardware_scan(void *flash_info, int erase_flash)
+int sprite_flash_hardware_scan(void* mbr_i,void *flash_info, int erase_flash)
 {
-	int  ret;
+	int  ret,i;
 	boot_nand_para_t  nand_para;
 	int  line_sel;
 	int  speed_mode;
 	int  type;
+	MBR* mbr_info=(MBR*)mbr_i;
 	//…®√ËNAND
 
 	type = 0;
@@ -314,39 +315,26 @@ __hardware_scan__:
 	card_sprite_type = 1;
 	if(erase_flash)
 	{
-		int   rest, start;
-		char  *data;
+      char *data;
+      data = wBoot_malloc(1024*4);
+      memset(data,0xff,1024*4);
+      for(i=0;i<mbr_info->PartCount;i++)
+      {
+            __inf("erase sdcard part: %s ,start sector=%d,sector count=8\n",\
+                mbr_info->array[i].name,mbr_info->array[i].lenlo);
 
-		data = wBoot_malloc(1024 * 1024);
-		memset(data, 0xff, 1024 * 1024);
-		rest = ret;
-		start = 0;
+            if(SDMMC_PhyWrite(mbr_info->array[i].addrlo,8,data,2))
+            {
+                __inf("erase sdcard part %s fail!\n",mbr_info->array[i].name);
+                wBoot_free(data);
+               return -1;
+            }
 
-		while(rest > 2048)
-		{
-			if(SDMMC_PhyWrite(start, 2048, data, 2))
-			{
-				__inf("erase sdcard from sector %d, total 2048 failed\n", start);
-
-				return -1;
-			}
-			start += 2048;
-			rest -= 2048;
-		}
-		if(rest)
-		{
-			if(SDMMC_PhyWrite(start, rest, data, 2))
-			{
-				__inf("erase sdcard from sector %d, total %d failed\n", start, rest);
-
-				return -1;
-			}
-		}
-		if(data)
-		{
-			wBoot_free(data);
-		}
+      }
+     wBoot_free(data);
 	}
+
+
 	SDMMC_PhyExit(2);
 
 	return 1;
