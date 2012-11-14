@@ -173,26 +173,8 @@ __s32 check_power_status(void)
 	__inf("startup status = %d\n", status);
 	if(status)
 	{
-      uint8_t reg_addr;
-      uint8_t value;
-      uint8_t power_trigger;
-      wBoot_power_get_dcin_battery_exist(&dcin, &bat_exist);
-      reg_addr = BOOT_POWER20_STATUS;
-      if(BOOT_TWI_Read(AXP20_ADDR, &reg_addr, &value))
-      {
-          return -1;
-      }
-      power_trigger  = (value >> 0) & 0x01;
-      //dc存在，电源触发，同时电池存在，则standby,解决用户在系统里强制关机后插DC自动开机问题
-      if(!(dcin&&power_trigger&&bat_exist)) //如果三个条件有一个不满足，则直接开机.
-      {
-          return 0;
-          
-      }//到这里说明三个条件都满足，所以不能直接开机，进入后面的standby判断
-      __inf("power trigger\n");
-      
-
-	}
+	    return 0;
+    }
 	{
 		
 		__s32 bat_cal, this_bat_cal;
