@@ -80,6 +80,7 @@
 */
 static __s32 check_key_to_fel(void)
 {
+#if 0
     __s32 ret, count, time_tick;
     __s32 value_old, value_new, value_cnt;
     __s32 new_key, new_key_flag;
@@ -172,6 +173,8 @@ static __s32 check_key_to_fel(void)
             return value_old;
         }
     }
+#endif
+	return 1;
 }
 /*
 ************************************************************************************************************

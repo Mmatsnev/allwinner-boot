@@ -185,6 +185,7 @@ __s32 sprite_flash_exit(int type)
 */
 __s32 sprite_flash_read(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 {
+	__inf("read start %x, count %x\n", nSectNum, nSectorCnt);
 	if(!card_sprite_type)
 	{
 		return NAND_LogicRead(nSectNum, nSectorCnt, pBuf);
@@ -216,6 +217,7 @@ __s32 sprite_flash_read(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 */
 __s32 sprite_flash_write(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 {
+	__inf("write start %x, count %x\n", nSectNum, nSectorCnt);
 	if(!card_sprite_type)
 	{
 		return NAND_LogicWrite(nSectNum, nSectorCnt, pBuf);
@@ -415,7 +417,7 @@ int create_stdmbr(void *mbr_i)
 	mbrst = (mbr_stand *)mbr_bufst;
 
 	//memcpy(mbr_bufst, tmp_buffer, 13);
-	usize = SDMMC_GetDiskSize() - 20 * 1024 * 1024/512 - size;
+	usize = SDMMC_PhyDiskSize() - 20 * 1024 * 1024/512 - size;
 
 	mbrst->part_info[0].indicator = 0x80;
 	mbrst->part_info[0].part_type = 0x0B;
@@ -431,10 +433,10 @@ int create_stdmbr(void *mbr_i)
 	mbrst->part_info[1].total_sectorsh = (mbr->array[0].lenlo  & 0xffff0000) >> 16;
 
 	mbrst->part_info[2].part_type = 0x05;
-	mbrst->part_info[2].start_sectorl  = 0;
-	mbrst->part_info[2].start_sectorh  = 1;
+	mbrst->part_info[2].start_sectorl  = 1;
+	mbrst->part_info[2].start_sectorh  = 0;
 	mbrst->part_info[2].total_sectorsl = (size & 0x0000ffff) >> 0;
-	mbrst->part_info[2].total_sectorsh = (size & 0xffff0000) >> 0;
+	mbrst->part_info[2].total_sectorsh = (size & 0xffff0000) >> 16;
 
 	mbrst->end_flag = 0xAA55;
 	if(SDMMC_PhyWrite(0, 1, mbr_bufst, 2))

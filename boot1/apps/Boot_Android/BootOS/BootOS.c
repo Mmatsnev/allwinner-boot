@@ -248,7 +248,8 @@ __s32 PreBootOS(char *os_para, __u32 *kernal_addr, __u32 *para_addr, __s32 *logo
     os_img = (boot_sys_img_set_t *)os_para;
     //此处增加接口，显示开机logo
     *logo_status = os_img->logo_off;
-    boot_show_logo(os_img->logo_name, os_img->logo_show, os_img->logo_address);
+    //boot_show_logo(os_img->logo_name, os_img->logo_show, os_img->logo_address);
+    boot_show_logo("c:\\os_show\\bootlogo.bmp", os_img->logo_show, os_img->logo_address);
     //os_img->img_set = (char *)os_img + ((boot_sys_img_set_t *)0)->img_set;
     //填充所有参数
     //依次加载OS各个部分到内存中
@@ -302,13 +303,13 @@ __s32 BootOS_detect_os_type(__u32 *para_addr, __u32 *kernal_addr, void *os_info,
 	recovery = check_key_to_recovery();
 	if(recovery > 0)
     {
-        char   buffer[1024];
+        char   buffer[MBR_SIZE];
         char   data[2048];
         MBR    *mbr;
         int    start = 0, i;
         bootloader_msg  *bt_msg;
 
-        wBoot_block_read(0, 2, buffer);
+        wBoot_block_read(0, MBR_SIZE/512, buffer);
         mbr = (MBR *)buffer;
         for(i=0;i<mbr->PartCount;i++)
         {

@@ -118,4 +118,6 @@
 
 #define RUART0_REGS_BASE	   ( 0x01f02800)
 
+#define P2WI_REGS_BASE         ( 0x01F03400)
+
 #endif // end of #ifndef __SUNII_H_

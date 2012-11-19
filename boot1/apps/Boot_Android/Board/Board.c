@@ -46,12 +46,13 @@ __s32 BoardInit_Display(__s32 source, __s32 mode)
     __s32 ret = 0;
     __s32 source_type, tv_mode, dislpay_device;
 
-    board_res.display_source = source;
-    if((source < 0) || (mode < 0))
-    {
-        board_res.display_source = -1;
-        return 0;
-    }
+	__inf("source = %d, mode = %d\n", source, mode);
+//    board_res.display_source = source;
+//    if((source < 0) || (mode < 0))
+//    {
+//        board_res.display_source = -1;
+//        return 0;
+//    }
     ret = wBoot_driver_install("c:\\drv_de.drv");
     if(ret != 0)
     {

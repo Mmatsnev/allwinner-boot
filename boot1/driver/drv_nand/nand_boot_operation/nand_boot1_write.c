@@ -58,14 +58,14 @@ __s32 write_in_one_blk( __u32 blk_num, void *buf, __u32 size, __u32 blk_size )
         	NF_mark_bad_block( blk_num );         // 在标记坏块前，先擦除
         	return ADV_NF_NEW_BAD_BLOCK;
         }
-		__msg("Succeed in erasing block %u.\n", blk_num);
+		__inf("Succeed in erasing block %u.\n", blk_num);
 
         for( copy_base = blk_num * blk_size, copy_end = copy_base + size, blk_end = copy_base + blk_size;
         	 copy_end <= blk_end;
         	 copy_base += size, copy_end = copy_base + size )
         {
     	    status = NF_write( copy_base >> NF_SCT_SZ_WIDTH, buf, scts_per_copy );
-    		__msg("finish in progmming address %x on block %u.\n", copy_base, blk_num );
+    		__inf("finish in progmming address %x on block %u.\n", copy_base, blk_num );
     	    if( status == NF_OVERTIME_ERR )
     	    	return ADV_NF_OVERTIME_ERR;
     	    else if( status == NF_PROG_ERR )
@@ -91,7 +91,7 @@ try_again:
 
 
 failure:
-		__msg("fail in programming block %u, it is bad block.\n", blk_num);
+	__msg("fail in programming block %u, it is bad block.\n", blk_num);
 	/* 先擦除，后标记 */
 	NF_erase( blk_num );
 	NF_mark_bad_block( blk_num );

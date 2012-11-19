@@ -49,6 +49,7 @@ static int status;
 */
 int eGon2_standby_mode(void)
 {
+#if 0
 	__u32 dcin_exist, battery_exist;
 	__s32 key_status;
 
@@ -129,6 +130,7 @@ int eGon2_standby_mode(void)
 	eGon2_restore_sp();
 
 	return status;
+#endif
 }
 /*
 ************************************************************************************************************
@@ -149,6 +151,7 @@ int eGon2_standby_mode(void)
 #define   DCDC2_STANDBY_VOL      (1250)
 #define   DCDC3_STANDBY_VOL		 (1250)
 
+#if 0
 static int eGon2_enter_standby(void)
 {
 	int i;
@@ -362,7 +365,7 @@ static int eGon2_mod_exit_standby(void)
 
 	return 0;
 }
-
+#endif
 
 
 

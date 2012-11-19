@@ -29,7 +29,7 @@
 #define  ENV_DATA_DRAM_ADDRESS         0x58000000
 #define  ENV_FLASH_DRAM_ADDRESS		   0x48000000
 #define  ENV_SIZE                      (128 * 1024)
-#define  PRIVATE_FLASH_DRAM_ADDRESS	   0x5A000000
+#define  PRIVATE_FLASH_DRAM_ADDRESS	   0x5E000000
 
 char  *env_data_dram_base;
 char  *env_data_dram_addr;
@@ -172,7 +172,7 @@ int env_fetch_from_boot1(void)
 */
 int private_fetch_from_flash(void)
 {
-	char mbr_buf[4 * 1024];
+	char mbr_buf[MBR_SIZE];
 	MBR  *mbr_info;
 	int  crc, i;
 	int  size, start;
@@ -188,7 +188,7 @@ int private_fetch_from_flash(void)
 
 		return -1;
 	}
-	if(sprite_flash_read(0, 8, mbr_buf))
+	if(sprite_flash_read(0, MBR_SIZE/512, mbr_buf))
 	{
 		__inf("update flash env err: read flash error\n");
 
@@ -196,7 +196,7 @@ int private_fetch_from_flash(void)
 	}
 	for(i=0;i<4;i++)
 	{
-		mbr_info = (MBR *)(mbr_buf + i * 1024);
+		mbr_info = (MBR *)(mbr_buf + i * MBR_SIZE);
 		crc = calc_crc32((void *)&mbr_info->version, sizeof(MBR) - 4);
 		if(crc == mbr_info->crc32)
 		{
@@ -247,10 +247,10 @@ int private_fetch_from_flash(void)
 update_flash_env_err:
 	sprite_flash_exit(0);
 #endif
-	if(!env_exist)		//如果在旧的环境变量中没有找到动态数据，则去boot1中寻找
-	{
-		ret = env_fetch_from_boot1();
-	}
+//	if(!env_exist)		//如果在旧的环境变量中没有找到动态数据，则去boot1中寻找
+//	{
+//		ret = env_fetch_from_boot1();
+//	}
 
 	return ret;
 }

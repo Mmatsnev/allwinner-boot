@@ -372,7 +372,7 @@ static int mmc_trans_data_by_dma(struct mmc *mmc, struct mmc_data *data)
 	else
 		remain = SDXC_DES_BUFFER_MAX_LEN;
 
-	//OSAL_CacheRangeFlush(buff, (unsigned long)byte_cnt, CACHE_CLEAN_FLUSH_D_CACHE_REGION);
+	//OSAL_SDCARD_CacheRangeFlush(buff, (unsigned long)byte_cnt, CACHE_CLEAN_FLUSH_D_CACHE_REGION);
 	for (i=0; i < buff_frag_num; i++, des_idx++) {
 		memset((void*)&pdes[des_idx], 0, sizeof(struct sunxi_mmc_des));
 		pdes[des_idx].des_chain = 1;
@@ -401,7 +401,7 @@ static int mmc_trans_data_by_dma(struct mmc *mmc, struct mmc_data *data)
 			(u32)((u32*)&pdes[des_idx])[0], (u32)((u32*)&pdes[des_idx])[1],
 			(u32)((u32*)&pdes[des_idx])[2], (u32)((u32*)&pdes[des_idx])[3]);
 	}
-	//OSAL_CacheRangeFlush(pdes, sizeof(struct sunxi_mmc_des) * (des_idx+1), CACHE_CLEAN_FLUSH_D_CACHE_REGION);
+	//OSAL_SDCARD_CacheRangeFlush(pdes, sizeof(struct sunxi_mmc_des) * (des_idx+1), CACHE_CLEAN_FLUSH_D_CACHE_REGION);
 
 	/*
 	 * GCTRLREG

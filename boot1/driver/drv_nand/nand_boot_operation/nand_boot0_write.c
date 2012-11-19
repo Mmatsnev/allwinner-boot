@@ -90,15 +90,16 @@ __s32  Nand_Burn_Boot0(__u32 Boot0_buf, __u32 length )
 				para.oobbuf = oob_buf;
 				if( NAND_PhyWrite_1K( &para ) != SUCCESS )
 				{
-					__msg("NAND_PhyWrite_1K error\n");
+					__inf("NAND_PhyWrite_1K error\n");
 				}
 				if( NAND_PhyRead_1K( &para ) != SUCCESS )
 				{
-					__msg("NAND_PhyRead_1K error\n");
+					__inf("NAND_PhyRead_1K error\n");
 				}
 
        		}
-       	}
+		}
+		__inf("burn block %d\n", i);
     }
 
 	ret = 0;

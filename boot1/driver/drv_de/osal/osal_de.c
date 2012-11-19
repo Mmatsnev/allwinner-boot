@@ -71,6 +71,18 @@ void OSAL_free(void * pAddr)
 	wBoot_free(pAddr);
 }
 
+
+void * OSAL_PhyAlloc(__u32 Size)
+{
+	return wBoot_malloc(Size);
+}
+
+void OSAL_PhyFree(void *pAddr, __u32 Size)
+{
+    wBoot_free(pAddr);
+}
+
+
 /*
 *******************************************************************************
 *                     OSAL_IrqLock

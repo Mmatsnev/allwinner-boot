@@ -63,198 +63,255 @@
 #define GIC_SRC_SPI(n)		(n+32)
 
 //#ifndef FPGA_PLATFORM	//chip irq mapping
-#if 0
+#define AW_IRQ_GIC_START    (32)
 
-#define GIC_SRC_UART0		GIC_SRC_SPI(0)   // (32)
-#define GIC_SRC_UART1		GIC_SRC_SPI(1)   // (33)
-#define GIC_SRC_UART2       GIC_SRC_SPI(2)   // (34)
-#define GIC_SRC_UART3       GIC_SRC_SPI(3)   // (35)
-#define GIC_SRC_UART4       GIC_SRC_SPI(4)   // (36)
-#define GIC_SRC_UART5       GIC_SRC_SPI(5)   // (37)
-#define GIC_SRC_TWI0        GIC_SRC_SPI(6  ) // (38)
-#define GIC_SRC_TWI1        GIC_SRC_SPI(7  ) // (39)
-#define GIC_SRC_TWI2        GIC_SRC_SPI(8  ) // (40)
-#define GIC_SRC_TWI3        GIC_SRC_SPI(9  ) // (41)
-//#define GIC_SRC_STWI        GIC_SRC_SPI(10 ) // (42)
+#ifndef CONFIG_SUN6I_FPGA	//chip irq mapping
 
-#define GIC_SRC_PAEINT      GIC_SRC_SPI(11 ) // (43)
-#define GIC_SRC_SPDIF       GIC_SRC_SPI(12 ) // (44)
-#define GIC_SRC_IIS0        GIC_SRC_SPI(13 ) // (45)
-#define GIC_SRC_IIS1        GIC_SRC_SPI(14 ) // (46)
-#define GIC_SRC_PBEINT      GIC_SRC_SPI(15 ) // (47)
-#define GIC_SRC_PEEINT      GIC_SRC_SPI(16 ) // (48)
-#define GIC_SRC_PGEINT      GIC_SRC_SPI(17 ) // (49)
+#define AW_IRQ_UART0		(AW_IRQ_GIC_START + 0)		/*	UART0		*/
+#define AW_IRQ_UART1		(AW_IRQ_GIC_START + 1)		/*	UART1		*/
+#define AW_IRQ_UART2		(AW_IRQ_GIC_START + 2)		/*	UART2		*/
+#define AW_IRQ_UART3		(AW_IRQ_GIC_START + 3)		/*	UART3		*/
+#define AW_IRQ_UART4		(AW_IRQ_GIC_START + 4)		/*	UART3		*/
+#define AW_IRQ_UART5		(AW_IRQ_GIC_START + 5)		/*	UART3		*/
+#define AW_IRQ_TWI0			(AW_IRQ_GIC_START + 6)		/*	TWI0		*/
+#define AW_IRQ_TWI1			(AW_IRQ_GIC_START + 7)		/*	TWI1		*/
+#define AW_IRQ_TWI2			(AW_IRQ_GIC_START + 8)		/*	TWI0		*/
+#define AW_IRQ_TWI3			(AW_IRQ_GIC_START + 9)		/*	TWI1		*/
 
-#define GIC_SRC_TIMER0      GIC_SRC_SPI(18 ) // (50)
-#define GIC_SRC_TIMER1      GIC_SRC_SPI(19 ) // (51)
-#define GIC_SRC_TIMER2      GIC_SRC_SPI(20 ) // (52)
-#define GIC_SRC_TIMER3      GIC_SRC_SPI(21 ) // (53)
-#define GIC_SRC_TIMER4      GIC_SRC_SPI(22 ) // (54)
-#define GIC_SRC_TIMER5      GIC_SRC_SPI(23 ) // (55)
+#define AW_IRQ_EINTA		(AW_IRQ_GIC_START + 11)		/*	EINTA		*/
+#define AW_IRQ_SPDIF		(AW_IRQ_GIC_START + 12)		/*	SPDIF		*/
+#define AW_IRQ_DAUDIO0		(AW_IRQ_GIC_START + 13)		/*	DAUDIO0		*/
+#define AW_IRQ_DAUDIO1      (AW_IRQ_GIC_START + 14)     /*  DAUDIO1     */
+#define AW_IRQ_EINTB        (AW_IRQ_GIC_START + 15)     /*  EINTB       */
+#define AW_IRQ_EINTE        (AW_IRQ_GIC_START + 16)     /*  EINTE       */
+#define AW_IRQ_EINTG        (AW_IRQ_GIC_START + 17)     /*  EINTG       */
+#define AW_IRQ_TIMER0		(AW_IRQ_GIC_START + 18)		/*	Timer0		*/
+#define AW_IRQ_TIMER1		(AW_IRQ_GIC_START + 19)		/*	Timer1		*/
+#define AW_IRQ_TIMER2		(AW_IRQ_GIC_START + 20)		/*	Timer2		*/
+#define AW_IRQ_TIMER3       (AW_IRQ_GIC_START + 21)     /*  Timer3      */
+#define AW_IRQ_TIMER4       (AW_IRQ_GIC_START + 22)     /*  Timer4      */
+#define AW_IRQ_TIMER5       (AW_IRQ_GIC_START + 23)     /*  Timer5      */
+#define	AW_IRQ_WATCHDOG4	(AW_IRQ_GIC_START + 24)		/*	WATCHDOG4	*/
+#define	AW_IRQ_WATCHDOG1	(AW_IRQ_GIC_START + 25)		/*	WATCHDOG1	*/
+#define	AW_IRQ_WATCHDOG2	(AW_IRQ_GIC_START + 26)		/*	WATCHDOG2	*/
+#define	AW_IRQ_WATCHDOG3	(AW_IRQ_GIC_START + 27)		/*	WATCHDOG3	*/
+#define	AW_IRQ_TOUCHPANEL	(AW_IRQ_GIC_START + 28)		/*	TOUCH PANEL	*/
+#define AW_IRQ_CODEC		(AW_IRQ_GIC_START +	29)		/*	AUDIO CEDEC	*/
+#define AW_IRQ_LRADC		(AW_IRQ_GIC_START + 30)		/*	LRADC		*/
+#define AW_IRQ_MTCACC		(AW_IRQ_GIC_START + 31)		/*	MTCACC		*/
+#define AW_IRQ_NMI			(AW_IRQ_GIC_START + 32)		/*	NMI			*/
+#define AW_IRQ_RTIMER0		(AW_IRQ_GIC_START + 33)		/*	R_TIMER 0	*/
+#define AW_IRQ_RTIMER1		(AW_IRQ_GIC_START + 34)		/*	R_TIMER 1	*/
 
-#define GIC_SRC_WATCHDOG4   GIC_SRC_SPI(24 ) // (56)
-#define GIC_SRC_WATCHDOG1   GIC_SRC_SPI(25 ) // (57)
-#define GIC_SRC_WATCHDOG2   GIC_SRC_SPI(26 ) // (58)
-#define GIC_SRC_WATCHDOG3   GIC_SRC_SPI(27 ) // (59)
-#define GIC_SRC_TP          GIC_SRC_SPI(28 ) // (60)
-#define GIC_SRC_CODEC       GIC_SRC_SPI(29 ) // (61)
-#define GIC_SRC_LRADC       GIC_SRC_SPI(30 ) // (62)
-#define GIC_SRC_MTCACC      GIC_SRC_SPI(31 ) // (63)
-#define GIC_SRC_NMI         GIC_SRC_SPI(32 ) // (64)
-#define GIC_SRC_RTIMER0     GIC_SRC_SPI(33 ) // (65)
-#define GIC_SRC_RTIMER1     GIC_SRC_SPI(34 ) // (66)
+#define AW_IRQ_RWATCHDOG	(AW_IRQ_GIC_START + 36)     /*	R_WATCHDO	*/
+#define AW_IRQ_RCIR			(AW_IRQ_GIC_START + 37)     /*  R_CIR		*/
+#define	AW_IRQ_RUART		(AW_IRQ_GIC_START + 38)		/*	R_UART		*/
+#define AW_IRQ_RP2TWI		(AW_IRQ_GIC_START + 39)		/*	R_P2TWI		*/
+#define	AW_IRQ_RALARM0		(AW_IRQ_GIC_START + 40)		/*	R_RLARM 0	*/
+#define	AW_IRQ_RALARM1		(AW_IRQ_GIC_START + 41)		/*	R_RLARM 1	*/
 
-#define GIC_SRC_RWATCHDOG   GIC_SRC_SPI(36 ) // (68)
-#define GIC_SRC_RCIR        GIC_SRC_SPI(37 ) // (69)
-#define GIC_SRC_RUART       GIC_SRC_SPI(38 ) // (70)
-#define GIC_SRC_RP2WI       GIC_SRC_SPI(39 ) // (71)
-#define GIC_SRC_RALARM0     GIC_SRC_SPI(40 ) // (72)
-#define GIC_SRC_RALARM1     GIC_SRC_SPI(41 ) // (73)
-//#define GIC_SRC_RPIO        GIC_SRC_SPI(42 ) // (74)
-#define GIC_SRC_1WIRE       GIC_SRC_SPI(43 ) // (75)
-#define GIC_SRC_TWI         GIC_SRC_SPI(44 ) // (76)
-#define GIC_SRC_RPLEINT     GIC_SRC_SPI(45 ) // (77)
-#define GIC_SRC_RPMEINT     GIC_SRC_SPI(46 ) // (78)
+#define AW_IRQ_R_1WIRE		(AW_IRQ_GIC_START + 43)		/*	R_ONE_WIRE	*/
+#define	AW_IRQ_RTWI			(AW_IRQ_GIC_START + 44)		/*	R_TWI		*/
+#define AW_IRQ_EINTL		(AW_IRQ_GIC_START + 45)		/*	R_EINTL		*/
+#define AW_IRQ_EINTM		(AW_IRQ_GIC_START + 46)		/*	R_EINTM		*/
 
-#define GIC_SRC_SPINLOCK    GIC_SRC_SPI(48 ) // (80)
-#define GIC_SRC_MBOX        GIC_SRC_SPI(49 ) // (81)
-#define GIC_SRC_DMA         GIC_SRC_SPI(50 ) // (82)
-#define GIC_SRC_HSTMR0      GIC_SRC_SPI(51 ) // (83)
-#define GIC_SRC_HSTMR1      GIC_SRC_SPI(52 ) // (84)
-#define GIC_SRC_HSTMR2      GIC_SRC_SPI(53 ) // (85)
-#define GIC_SRC_HSTMR3      GIC_SRC_SPI(54 ) // (86)
+#define	AW_IRQ_SPINLOCK		(AW_IRQ_GIC_START + 48)		/*	SPINLOCK	*/
+#define	AW_IRQ_MBOX			(AW_IRQ_GIC_START + 49)		/*	M-BOX		*/
+#define	AW_IRQ_DMA			(AW_IRQ_GIC_START + 50)		/*	DMA			*/
+#define AW_IRQ_HSTIMER0		(AW_IRQ_GIC_START + 51)		/*	HSTIMER0	*/
+#define AW_IRQ_HSTIMER1		(AW_IRQ_GIC_START + 52)		/*	HSTIMER1	*/
+#define AW_IRQ_HSTIMER2		(AW_IRQ_GIC_START + 53)		/*	HSTIMER2	*/
+#define AW_IRQ_HSTIMER3		(AW_IRQ_GIC_START + 54)		/*	HSTIMER3	*/
 
-#define GIC_SRC_TZASC       GIC_SRC_SPI(56 ) // (88)
+#define	AW_IRQ_TZASC		(AW_IRQ_GIC_START + 56)		/*	TZASC		*/
 
-#define GIC_SRC_VE          GIC_SRC_SPI(58 ) // (90)
-#define GIC_SRC_DIGMIC      GIC_SRC_SPI(59 ) // (91)
-#define GIC_SRC_MMC0        GIC_SRC_SPI(60 ) // (92)
-#define GIC_SRC_MMC1        GIC_SRC_SPI(61 ) // (93)
-#define GIC_SRC_MMC2        GIC_SRC_SPI(62 ) // (94)
-#define GIC_SRC_MMC3        GIC_SRC_SPI(63 ) // (95)
+#define	AW_IRQ_VE			(AW_IRQ_GIC_START + 58)		/*	VE			*/
+#define	AW_IRQ_DIGMIC		(AW_IRQ_GIC_START + 59)		/*	DIG_MIC		*/
+#define AW_IRQ_MMC0			(AW_IRQ_GIC_START + 60)		/*	MMC0		*/
+#define AW_IRQ_MMC1			(AW_IRQ_GIC_START + 61)		/*	MMC1		*/
+#define AW_IRQ_MMC2			(AW_IRQ_GIC_START + 62)		/*	MMC2		*/
+#define AW_IRQ_MMC3			(AW_IRQ_GIC_START + 63)		/*	MMC3		*/
 
-#define GIC_SRC_SPI0        GIC_SRC_SPI(65 ) // (97 )
-#define GIC_SRC_SPI1        GIC_SRC_SPI(66 ) // (98 )
-#define GIC_SRC_SPI2        GIC_SRC_SPI(67 ) // (99 )
-#define GIC_SRC_SPI3        GIC_SRC_SPI(68 ) // (100)
-#define GIC_SRC_NAND1       GIC_SRC_SPI(69 ) // (101)
-#define GIC_SRC_NAND0       GIC_SRC_SPI(70 ) // (102)
-#define GIC_SRC_USBOTG      GIC_SRC_SPI(71 ) // (103)
-#define GIC_SRC_USBEHCI0    GIC_SRC_SPI(72 ) // (104)
-#define GIC_SRC_USBOHCI0    GIC_SRC_SPI(73 ) // (105)
-#define GIC_SRC_USBEHCI1    GIC_SRC_SPI(74 ) // (106)
-#define GIC_SRC_USBOHCI1    GIC_SRC_SPI(75 ) // (107)
-//#define GIC_SRC_USBEHCI2    GIC_SRC_SPI(76 ) // (108)
-#define GIC_SRC_USBOHCI2    GIC_SRC_SPI(77 ) // (109)
+#define AW_IRQ_SPI0			(AW_IRQ_GIC_START + 65)		/*	SPI0		*/
+#define AW_IRQ_SPI1			(AW_IRQ_GIC_START + 66)		/*	SPI1		*/
+#define AW_IRQ_SPI2			(AW_IRQ_GIC_START + 67)		/*	SPI2		*/
+#define AW_IRQ_SPI3			(AW_IRQ_GIC_START + 68)		/*	SPI3		*/
+#define AW_IRQ_NAND1		(AW_IRQ_GIC_START + 69)		/*	NAND1		*/
+#define AW_IRQ_NAND0		(AW_IRQ_GIC_START + 70)		/*	NAND0		*/
 
-#define GIC_SRC_SS          GIC_SRC_SPI(80 ) // (112)
-#define GIC_SRC_TS          GIC_SRC_SPI(81 ) // (113)
-#define GIC_SRC_GMAC        GIC_SRC_SPI(82 ) // (114)
+#define AW_IRQ_USB_OTG		(AW_IRQ_GIC_START + 71)		/*	USB_OTG		*/
+#define AW_IRQ_USB_EHCI0	(AW_IRQ_GIC_START + 72)		/*	USB_EHCI0	*/
+#define AW_IRQ_USB_OHCI0	(AW_IRQ_GIC_START + 73)		/*	USB_OHCI0	*/
+#define AW_IRQ_USB_EHCI1	(AW_IRQ_GIC_START + 74)		/*	USB_EHCI1	*/
+#define AW_IRQ_USB_OHCI1	(AW_IRQ_GIC_START + 75)		/*	USB_OHCI1	*/
 
-#define GIC_SRC_CSI0        GIC_SRC_SPI(84 ) // (116)
-#define GIC_SRC_CSI1        GIC_SRC_SPI(85 ) // (117)
-#define GIC_SRC_LCD0        GIC_SRC_SPI(86 ) // (118)
-#define GIC_SRC_LCD1        GIC_SRC_SPI(87 ) // (119)
-#define GIC_SRC_HDMI        GIC_SRC_SPI(88 ) // (120)
-#define GIC_SRC_MIPIDSI     GIC_SRC_SPI(89 ) // (121)
-#define GIC_SRC_MIPICSI     GIC_SRC_SPI(90 ) // (122)
-#define GIC_SRC_DRC01       GIC_SRC_SPI(91 ) // (123)
-#define GIC_SRC_DEU01       GIC_SRC_SPI(92 ) // (124)
-#define GIC_SRC_DEFE0       GIC_SRC_SPI(93 ) // (125)
-#define GIC_SRC_DEFE1       GIC_SRC_SPI(94 ) // (126)
-#define GIC_SRC_DEBE0       GIC_SRC_SPI(95 ) // (127)
-#define GIC_SRC_DEBE1       GIC_SRC_SPI(96 ) // (128)
-#define GIC_SRC_GPU         GIC_SRC_SPI(97 ) // (129)
+#define AW_IRQ_USB_OHCI2	(AW_IRQ_GIC_START + 77)		/*	USB_OHCI2	*/
 
-#define GIC_SRC_CTI0        GIC_SRC_SPI(108) // (140)
-#define GIC_SRC_CTI1        GIC_SRC_SPI(109) // (141)
-#define GIC_SRC_CTI2        GIC_SRC_SPI(110) // (142)
-#define GIC_SRC_CTI3        GIC_SRC_SPI(111) // (143)
-#define GIC_SRC_COMMTX0     GIC_SRC_SPI(112) // (144)
-#define GIC_SRC_COMMTX1     GIC_SRC_SPI(113) // (145)
-#define GIC_SRC_COMMTX2     GIC_SRC_SPI(114) // (146)
-#define GIC_SRC_COMMTX3     GIC_SRC_SPI(115) // (147)
-#define GIC_SRC_COMMRX0     GIC_SRC_SPI(116) // (148)
-#define GIC_SRC_COMMRX1     GIC_SRC_SPI(117) // (149)
-#define GIC_SRC_COMMRX2     GIC_SRC_SPI(118) // (150)
-#define GIC_SRC_COMMRX3     GIC_SRC_SPI(119) // (151)
-#define GIC_SRC_PMU0        GIC_SRC_SPI(120) // (152)
-#define GIC_SRC_PMU1        GIC_SRC_SPI(121) // (153)
-#define GIC_SRC_PMU2        GIC_SRC_SPI(122) // (154)
-#define GIC_SRC_PMU3        GIC_SRC_SPI(123) // (155)
-#define GIC_SRC_AXIE        GIC_SRC_SPI(124) // (156)
 
-#define GIC_IRQ_NUM			(GIC_SRC_GPU + 1)
+#define AW_IRQ_SS			(AW_IRQ_GIC_START + 80)		/*	SS			*/
+#define AW_IRQ_TS			(AW_IRQ_GIC_START + 81)		/*	TS			*/
+#define AW_IRQ_GMAC			(AW_IRQ_GIC_START + 82)		/*	GMAC		*/
+#define AW_IRQ_MP			(AW_IRQ_GIC_START + 83)		/*	MP			*/
+#define AW_IRQ_CSI0			(AW_IRQ_GIC_START + 84)		/*	CSI0		*/
+#define AW_IRQ_CSI1			(AW_IRQ_GIC_START + 85)		/*	CSI1		*/
+#define AW_IRQ_LCD0			(AW_IRQ_GIC_START + 86)		/*	LCD0		*/
+#define AW_IRQ_LCD1			(AW_IRQ_GIC_START + 87)		/*	LCD1		*/
+#define AW_IRQ_HDMI			(AW_IRQ_GIC_START + 88)		/*	HDMI		*/
+#define AW_IRQ_MIPIDSI		(AW_IRQ_GIC_START + 89)		/*	MIPI DSI	*/
+#define AW_IRQ_MIPICSI		(AW_IRQ_GIC_START + 90)		/*	MIPI CSI	*/
+#define AW_IRQ_DRC01		(AW_IRQ_GIC_START + 91)		/*	DRC 0/1		*/
+#define AW_IRQ_DEU01		(AW_IRQ_GIC_START + 92)		/*	DEU	0/1		*/
+#define AW_IRQ_DEFE0		(AW_IRQ_GIC_START + 93)		/*	DE_FE0		*/
+#define AW_IRQ_DEFE1		(AW_IRQ_GIC_START + 94)		/*	DE_FE1		*/
+#define AW_IRQ_DEBE0		(AW_IRQ_GIC_START + 95)		/*	DE_BE0		*/
+#define AW_IRQ_DEBE1		(AW_IRQ_GIC_START + 96)		/*	DE_BE1		*/
+#define	AW_IRQ_GPU			(AW_IRQ_GIC_START + 97)		/*	GPU			*/
 
-#else	//fpga irq mapping
-#define GIC_SRC_NMI         GIC_SRC_SPI(0) 	// (32)
-#define GIC_SRC_UART0		GIC_SRC_SPI(1)	// (33)
-#define GIC_SRC_TWI0        GIC_SRC_SPI(2)	// (34)
-#define GIC_SRC_TWI1        GIC_SRC_SPI(2)	// (34)	not exist in fpga, just for compiling
-#define GIC_SRC_TWI2        GIC_SRC_SPI(2)	// (34)	not exist in fpga, just for compiling
-#define GIC_SRC_TWI3        GIC_SRC_SPI(2)	// (34)	not exist in fpga, just for compiling
-#define GIC_SRC_PAEINT      GIC_SRC_SPI(2)	// (34)
-#define GIC_SRC_PBEINT      GIC_SRC_SPI(2)	// (34) not exist in fpga, just for compiling
-#define GIC_SRC_PEEINT      GIC_SRC_SPI(2)	// (34) not exist in fpga, just for compiling
-#define GIC_SRC_PGEINT      GIC_SRC_SPI(2)	// (34) not exist in fpga, just for compiling
-#define GIC_SRC_SPDIF       GIC_SRC_SPI(3)  // (35)
-#define GIC_SRC_IIS0        GIC_SRC_SPI(3)  // (35)
-#define GIC_SRC_CSI0        GIC_SRC_SPI(3)  // (35)
-#define GIC_SRC_MIPIDSI     GIC_SRC_SPI(3)  // (35)
-#define GIC_SRC_MIPICSI     GIC_SRC_SPI(3)  // (35)
-#define GIC_SRC_TIMER0      GIC_SRC_SPI(4)  // (36)
-#define GIC_SRC_TIMER1      GIC_SRC_SPI(5)  // (37)
-#define GIC_SRC_TIMER2      GIC_SRC_SPI(5)  // (37)
-#define GIC_SRC_TIMER3      GIC_SRC_SPI(5)  // (37)
-#define GIC_SRC_TIMER4      GIC_SRC_SPI(5)  // (37)
-#define GIC_SRC_TIMER5      GIC_SRC_SPI(5)  // (37)
-#define GIC_SRC_DMA         GIC_SRC_SPI(6)  // (38)
-#define GIC_SRC_WATCHDOG1   GIC_SRC_SPI(7)  // (39)
-#define GIC_SRC_WATCHDOG2   GIC_SRC_SPI(8)  // (40)
-#define GIC_SRC_RTIMER0     GIC_SRC_SPI(9)  // (41)
-#define GIC_SRC_RTIMER1     GIC_SRC_SPI(9)  // (41)
-#define GIC_SRC_RWATCHDOG   GIC_SRC_SPI(9)  // (41)
-#define GIC_SRC_SPINLOCK    GIC_SRC_SPI(10) // (42)
-#define GIC_SRC_MBOX        GIC_SRC_SPI(11) // (43)
-#define GIC_SRC_HSTMR0      GIC_SRC_SPI(12) // (44)
-#define GIC_SRC_HSTMR1      GIC_SRC_SPI(12) // (44)	not exist in fpga, just for compiling
-#define GIC_SRC_HSTMR2      GIC_SRC_SPI(12) // (44)	not exist in fpga, just for compiling
-#define GIC_SRC_HSTMR3      GIC_SRC_SPI(12) // (44)	not exist in fpga, just for compiling
-#define GIC_SRC_MMC0        GIC_SRC_SPI(13) // (45)
-#define GIC_SRC_MMC1        GIC_SRC_SPI(13) // (45) not exist in fpga, just for compiling
-#define GIC_SRC_MMC2        GIC_SRC_SPI(13) // (45)
-#define GIC_SRC_MMC3        GIC_SRC_SPI(13) // (45) not exist in fpga, just for compiling
-#define GIC_SRC_SPI0        GIC_SRC_SPI(13) // (45)
-#define GIC_SRC_NAND0       GIC_SRC_SPI(14) // (46)
-#define GIC_SRC_NAND1       GIC_SRC_SPI(15) // (47)
-#define GIC_SRC_GPU         GIC_SRC_SPI(15) // (47)
-#define GIC_SRC_RCIR    	GIC_SRC_SPI(16) // (48)
-#define GIC_SRC_RUART    	GIC_SRC_SPI(16) // (48)
-#define GIC_SRC_RPLEINT     GIC_SRC_SPI(17) // (49)
-#define GIC_SRC_RPMEINT     GIC_SRC_SPI(17) // (49)
-#define GIC_SRC_RALARM0     GIC_SRC_SPI(18) // (50)
-#define GIC_SRC_RALARM1     GIC_SRC_SPI(18) // (50)
-#define GIC_SRC_RP2WI       GIC_SRC_SPI(19) // (51)
-#define GIC_SRC_TWI         GIC_SRC_SPI(19) // (51)
-#define GIC_SRC_VE          GIC_SRC_SPI(20) // (52)
-#define GIC_SRC_USBOTG      GIC_SRC_SPI(21) // (53)
-#define GIC_SRC_USBEHCI0    GIC_SRC_SPI(22) // (54)
-#define GIC_SRC_USBOHCI0    GIC_SRC_SPI(23) // (55)
-#define GIC_SRC_SS          GIC_SRC_SPI(24) // (56)
-#define GIC_SRC_TS          GIC_SRC_SPI(24) // (56)
-#define GIC_SRC_GMAC        GIC_SRC_SPI(24) // (56)
-#define GIC_SRC_CODEC       GIC_SRC_SPI(24) // (56)
-#define GIC_SRC_TP          GIC_SRC_SPI(24) // (56)
-#define GIC_SRC_LCD0        GIC_SRC_SPI(25) // (57)
-#define GIC_SRC_TZASC       GIC_SRC_SPI(26) // (58)
-#define GIC_SRC_DEFE0       GIC_SRC_SPI(27) // (59)
-#define GIC_SRC_DEBE0       GIC_SRC_SPI(28) // (60)
-#define GIC_SRC_DRC01       GIC_SRC_SPI(29) // (61)
-#define GIC_SRC_DEU01       GIC_SRC_SPI(30) // (62)
-#define GIC_SRC_1WIRE       GIC_SRC_SPI(31) // (63)
-#define GIC_IRQ_NUM			(GIC_SRC_1WIRE + 1)
+#define	AW_IRQ_CTI0			(AW_IRQ_GIC_START + 108)	/*	CTI0		*/
+#define	AW_IRQ_CTI0			(AW_IRQ_GIC_START + 109)	/*	CTI1		*/
+#define	AW_IRQ_CTI0			(AW_IRQ_GIC_START + 110)	/*	CTI2		*/
+#define	AW_IRQ_CTI0			(AW_IRQ_GIC_START + 111)	/*	CTI3		*/
+#define AW_IRQ_COMMTX0		(AW_IRQ_GIC_START + 112)	/*	COMMTX0		*/
+#define AW_IRQ_COMMTX1		(AW_IRQ_GIC_START + 113)	/*	COMMTX1		*/
+#define AW_IRQ_COMMTX2		(AW_IRQ_GIC_START + 114)	/*	COMMTX2		*/
+#define AW_IRQ_COMMTX3		(AW_IRQ_GIC_START + 115)	/*	COMMTX3		*/
+#define AW_IRQ_COMMRX0		(AW_IRQ_GIC_START + 116)	/*	COMMRX0		*/
+#define AW_IRQ_COMMRX1		(AW_IRQ_GIC_START + 117)	/*	COMMRX1		*/
+#define AW_IRQ_COMMRX2		(AW_IRQ_GIC_START + 118)	/*	COMMRX2		*/
+#define AW_IRQ_COMMRX3		(AW_IRQ_GIC_START + 119)	/*	COMMRX3		*/
+#define	AW_IRQ_PMU0			(AW_IRQ_GIC_START + 120)	/*	PMU0		*/
+#define	AW_IRQ_PMU1			(AW_IRQ_GIC_START + 121)	/*	PMU1		*/
+#define	AW_IRQ_PMU2			(AW_IRQ_GIC_START + 122)	/*	PMU2		*/
+#define	AW_IRQ_PMU3			(AW_IRQ_GIC_START + 123)	/*	PMU3		*/
+#define	AW_IRQ_AXI_ERROR	(AW_IRQ_GIC_START + 124)	/*	AXI_ERROR	*/
 
-#endif
+#define GIC_IRQ_NUM			(AW_IRQ_AXI_ERROR + 1)
+
+#elif   defined (AW_FPGA_V4_PLATFORM) 			   /* S4 820 */
+#define	AW_IRQ_NMI			(AW_IRQ_GIC_START + 0) /*	NMI			*/
+#define AW_IRQ_UART0		(AW_IRQ_GIC_START + 1) /*	UART0		*/
+#define AW_IRQ_UART1    	(AW_IRQ_GIC_START + 1) /*   UART1   	*/
+#define AW_IRQ_TWI0			(AW_IRQ_GIC_START + 2) /*	TWI0		*/
+#define AW_IRQ_TWI1			(AW_IRQ_GIC_START + 2) /*	TWI1		*/
+#define AW_IRQ_EINTA		(AW_IRQ_GIC_START + 2) /*	EINTA		*/
+#define AW_IRQ_SPDIF		(AW_IRQ_GIC_START + 3) /*	SPDIF		*/
+#define AW_IRQ_IIS			(AW_IRQ_GIC_START + 3) /*	IIS			*/
+#define AW_IRQ_MP			(AW_IRQ_GIC_START + 3) /*	MP			*/
+#define AW_IRQ_CSI0			(AW_IRQ_GIC_START + 3) /*	CSI0		*/
+#define AW_IRQ_CSI1			(AW_IRQ_GIC_START + 3) /*	CSI1		*/
+#define	AW_IRQ_MIPIDSI		(AW_IRQ_GIC_START + 3) /*	MIPIDSI		*/
+#define	AW_IRQ_MIPICSI		(AW_IRQ_GIC_START + 3) /*	MIPICSI		*/
+#define	AW_IRQ_TIMER0		(AW_IRQ_GIC_START + 4) /*	TIMER0		*/
+#define AW_IRQ_TIMER1		(AW_IRQ_GIC_START + 5) /*	TIMER1		*/
+#define AW_IRQ_TIMER2		(AW_IRQ_GIC_START + 5) /*	TIMER2		*/
+#define AW_IRQ_TIMER3		(AW_IRQ_GIC_START + 5) /*	TIMER3		*/
+#define AW_IRQ_TIMER4		(AW_IRQ_GIC_START + 5) /*	TIMER4		*/
+#define AW_IRQ_TIMER5		(AW_IRQ_GIC_START + 5) /*	TIMER5		*/
+#define AW_IRQ_DMA			(AW_IRQ_GIC_START + 6) /*	DMA			*/
+#define	AW_IRQ_WATCHDOG1	(AW_IRQ_GIC_START + 7) /*	WATCHDOG1	*/
+#define	AW_IRQ_WATCHDOG2	(AW_IRQ_GIC_START + 8) /*	WATCHDOG2	*/
+#define	AW_IRQ_RTIMER0		(AW_IRQ_GIC_START + 9) /*	RTIMER0		*/
+#define	AW_IRQ_RTIMER1		(AW_IRQ_GIC_START + 9) /*	RTIMER1		*/
+#define	AW_IRQ_RWATCHDOG	(AW_IRQ_GIC_START + 9) /*	RWATCHDOG	*/
+#define	AW_IRQ_SPINLOCK		(AW_IRQ_GIC_START + 10)/*	SPINLOCK	*/
+#define AW_IRQ_MBOX			(AW_IRQ_GIC_START + 11)/*	MBOX		*/
+#define	AW_IRQ_HSTIMER0		(AW_IRQ_GIC_START + 12)/*	HSTIMER		*/
+#define	AW_IRQ_MMC0			(AW_IRQ_GIC_START + 13)/*	MMC0		*/
+#define AW_IRQ_MMC1			(AW_IRQ_GIC_START + 13)/*	MMC1		*/
+#define AW_IRQ_SPI0			(AW_IRQ_GIC_START + 13)/*	SPI0		*/
+#define AW_IRQ_NAND0		(AW_IRQ_GIC_START + 14)/*	NAND0		*/
+#define AW_IRQ_NAND1		(AW_IRQ_GIC_START + 15)/*	NAND1		*/
+#define AW_IRQ_MMC2			(AW_IRQ_GIC_START + 15)/*	MMC2		*/
+#define AW_IRQ_MMC3			(AW_IRQ_GIC_START + 15)/*	MMC3		*/
+#define AW_IRQ_RCIR			(AW_IRQ_GIC_START + 16)/*	RCIR		*/
+#define AW_IRQ_RUART		(AW_IRQ_GIC_START + 16)/*	RUART		*/
+#define AW_IRQ_EINTL		(AW_IRQ_GIC_START + 17)/*	EINTL		*/
+#define AW_IRQ_EINTM		(AW_IRQ_GIC_START + 17)/*	EINTM		*/
+#define AW_IRQ_RALARM0		(AW_IRQ_GIC_START + 18)/*	RALARM0		*/
+#define AW_IRQ_RALARM1		(AW_IRQ_GIC_START + 18)/*	RALARM1		*/
+#define AW_IRQ_RP2TWI		(AW_IRQ_GIC_START + 19)/*	RP2WI		*/
+#define AW_IRQ_RTWI			(AW_IRQ_GIC_START + 19)/*	RTWI		*/
+#define AW_IRQ_VE			(AW_IRQ_GIC_START + 20)/*	VE			*/
+#define AW_IRQ_USB_OTG		(AW_IRQ_GIC_START + 21)/*	USB_OTG		*/
+#define AW_IRQ_USB_HCI		(AW_IRQ_GIC_START + 21)/*	USB_HCI		*/
+#define AW_IRQ_USB_EHCI0	(AW_IRQ_GIC_START + 22)/*	USB_EHCI0	*/
+#define AW_IRQ_USB_OHCI0	(AW_IRQ_GIC_START + 23)/*	USB_OHCI0	*/
+#define AW_IRQ_SS			(AW_IRQ_GIC_START + 24)/*	SS			*/
+#define AW_IRQ_TS			(AW_IRQ_GIC_START + 24)/*	TS			*/
+#define AW_IRQ_GMAC			(AW_IRQ_GIC_START + 24)/*	GMAC		*/
+#define AW_IRQ_CODEC		(AW_IRQ_GIC_START + 24)/*	CODEC		*/
+#define AW_IRQ_TP			(AW_IRQ_GIC_START + 24)/*	TP			*/
+#define AW_IRQ_LRADC		(AW_IRQ_GIC_START + 24)/*	LRADC		*/
+#define AW_IRQ_MTCACC		(AW_IRQ_GIC_START + 24)/*	MTCACC		*/
+#define AW_IRQ_LCD0			(AW_IRQ_GIC_START + 25)/*	LCD0		*/
+#define AW_IRQ_TZASC		(AW_IRQ_GIC_START + 26)/*	TZASC		*/
+#define AW_IRQ_DEFE0		(AW_IRQ_GIC_START + 27)/*	DEFE0		*/
+#define AW_IRQ_DEBE0		(AW_IRQ_GIC_START + 28)/*	DEFB0		*/
+#define AW_IRQ_DRC01		(AW_IRQ_GIC_START + 29)/*	DRC01		*/
+#define AW_IRQ_DEU01		(AW_IRQ_GIC_START + 30)/*	DEU01		*/
+#define AW_IRQ_1WIRE		(AW_IRQ_GIC_START + 31)/*	R_1WIRE		*/
+#define GIC_IRQ_NUM			(AW_IRQ_1WIRE + 1)
+
+#elif defined (AW_FPGA_V7_PLATFORM)
+
+#define AW_IRQ_NMI			(AW_IRQ_GIC_START + 0) /*	NMI			*/
+#define AW_IRQ_UART0		(AW_IRQ_GIC_START + 1) /*	UART0		*/
+#define AW_IRQ_TWI0			(AW_IRQ_GIC_START + 2) /*	TWI0		*/
+#define AW_IRQ_TWI1			(AW_IRQ_GIC_START + 2) /*	TWI1		*/
+#define AW_IRQ_SPDIF		(AW_IRQ_GIC_START + 3) /*	SPDIF		*/
+#define AW_IRQ_IIS			(AW_IRQ_GIC_START + 3) /*	IIS			*/
+#define AW_IRQ_CSI0			(AW_IRQ_GIC_START + 3) /*	CSI0		*/
+#define AW_IRQ_CSI1			(AW_IRQ_GIC_START + 3) /*	CSI1		*/
+#define	AW_IRQ_MIPIDSI		(AW_IRQ_GIC_START + 3) /*	MIPIDSI		*/
+#define	AW_IRQ_MIPICSI		(AW_IRQ_GIC_START + 3) /*	MIPICSI		*/
+#define	AW_IRQ_TIMER0		(AW_IRQ_GIC_START + 4) /*	TIMER0		*/
+#define AW_IRQ_TIMER1		(AW_IRQ_GIC_START + 5) /*	TIMER1		*/
+#define AW_IRQ_DMA			(AW_IRQ_GIC_START + 6) /*	DMA			*/
+#define	AW_IRQ_WATCHDOG1	(AW_IRQ_GIC_START + 7) /*	WATCHDOG1	*/
+#define	AW_IRQ_WATCHDOG2	(AW_IRQ_GIC_START + 8) /*	WATCHDOG2	*/
+#define	AW_IRQ_RTIMER0		(AW_IRQ_GIC_START + 9) /*	RTIMER0		*/
+#define	AW_IRQ_RTIMER1		(AW_IRQ_GIC_START + 9) /*	RTIMER1		*/
+#define	AW_IRQ_RWATCHDOG	(AW_IRQ_GIC_START + 9) /*	RWATCHDOG	*/
+#define	AW_IRQ_SPINLOCK		(AW_IRQ_GIC_START + 10)/*	SPINLOCK	*/
+#define AW_IRQ_MBOX			(AW_IRQ_GIC_START + 11)/*	MBOX		*/
+#define	AW_IRQ_HSTIMER0		(AW_IRQ_GIC_START + 12)/*	HSTIMER		*/
+#define	AW_IRQ_MMC0			(AW_IRQ_GIC_START + 13)/*	MMC0		*/
+#define	AW_IRQ_MMC1			(AW_IRQ_GIC_START + 13)/*	MMC1		*/
+#define	AW_IRQ_MMC2			(AW_IRQ_GIC_START + 13)/*	MMC2		*/
+#define	AW_IRQ_MMC3			(AW_IRQ_GIC_START + 13)/*	MMC3		*/
+#define AW_IRQ_SPI0			(AW_IRQ_GIC_START + 13)/*	SPI0		*/
+#define AW_IRQ_NAND0		(AW_IRQ_GIC_START + 14)/*	NAND0		*/
+#define AW_IRQ_NAND1		(AW_IRQ_GIC_START + 15)/*	NAND1		*/
+#define AW_IRQ_RCIR			(AW_IRQ_GIC_START + 16)/*	RCIR		*/
+#define AW_IRQ_RUART		(AW_IRQ_GIC_START + 16)/*	RUART		*/
+#define AW_IRQ_RGPIOL		(AW_IRQ_GIC_START + 17)/*	RGPIOL		*/
+#define AW_IRQ_RALARM0		(AW_IRQ_GIC_START + 18)/*	RALARM0		*/
+#define AW_IRQ_RALARM1		(AW_IRQ_GIC_START + 18)/*	RALARM1		*/
+#define AW_IRQ_RP2TWI		(AW_IRQ_GIC_START + 19)/*	RP2WI		*/
+#define AW_IRQ_RTWI			(AW_IRQ_GIC_START + 19)/*	RTWI		*/
+#define AW_IRQ_VE			(AW_IRQ_GIC_START + 20)/*	VE			*/
+#define AW_IRQ_USB_OTG		(AW_IRQ_GIC_START + 21)/*	USB_OTG		*/
+#define AW_IRQ_USB_HCI		(AW_IRQ_GIC_START + 21)/*	USB_HCI		*/
+#define AW_IRQ_USB_EHCI0	(AW_IRQ_GIC_START + 22)/*	USB_EHCI0	*/
+#define AW_IRQ_USB_OHCI0	(AW_IRQ_GIC_START + 23)/*	USB_OHCI0	*/
+#define AW_IRQ_SS			(AW_IRQ_GIC_START + 24)/*	SS			*/
+#define AW_IRQ_TS			(AW_IRQ_GIC_START + 24)/*	TS			*/
+#define AW_IRQ_GMAC			(AW_IRQ_GIC_START + 24)/*	GMAC		*/
+#define AW_IRQ_CODEC		(AW_IRQ_GIC_START + 24)/*	CODEC		*/
+#define AW_IRQ_TP			(AW_IRQ_GIC_START + 24)/*	TP			*/
+#define AW_IRQ_LCD0			(AW_IRQ_GIC_START + 25)/*	LCD0		*/
+#define AW_IRQ_TZASC		(AW_IRQ_GIC_START + 26)/*	TZASC		*/
+#define AW_IRQ_GPU			(AW_IRQ_GIC_START + 26)/*	GPU			*/
+#define AW_IRQ_DEFE0		(AW_IRQ_GIC_START + 27)/*	DEFE0		*/
+#define AW_IRQ_DEBE0		(AW_IRQ_GIC_START + 28)/*	DEFB0		*/
+#define AW_IRQ_DRC01		(AW_IRQ_GIC_START + 29)/*	DRC01		*/
+#define AW_IRQ_DEU01		(AW_IRQ_GIC_START + 30)/*	DEU01		*/
+#define AW_IRQ_1WIRE		(AW_IRQ_GIC_START + 31)/*	R_1WIRE		*/
+
+#define GIC_IRQ_NUM			(AW_IRQ_1WIRE + 1)
+
+#endif	//fpga irq mapping
+
 
 #endif  /* _INTC_H_ */
 

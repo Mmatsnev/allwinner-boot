@@ -85,7 +85,7 @@ __s32 SDMMC_LogicaErase(__u32 block, __u32 nblock, __u32 card_no)
 	return mmc_berase(card_no, block + bootcard_offset, nblock);
 }
 
-void OSAL_CacheRangeFlush(void*Address, __u32 Length, __u32 Flags)
+void OSAL_SDCARD_CacheRangeFlush(void*Address, __u32 Length, __u32 Flags)
 {
 	;
 }

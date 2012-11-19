@@ -53,6 +53,7 @@ extern  __u32 usb_run(void);
 int BootMain(int argc, char **argv)
 {
 	__s32                 ret;
+	int                   erase_flash;
 	MBR					  mbr_info;
     boot_global_info_t   *global_info;
 
@@ -95,7 +96,7 @@ int BootMain(int argc, char **argv)
 	   			break;
 	   	}
 	}
-
+	__inf("card sprite begin\n");
 	//数据初始化
 	memset(&board_res, 0, sizeof(boot_hardware_res));
     //申请内存，填充第一个启动脚本
@@ -137,8 +138,19 @@ int BootMain(int argc, char **argv)
         return -1;
 	}
 	boot_ui_check_device_open();
+
+	ret = wBoot_script_parser_fetch("platform", "eraseflag", &erase_flash, 1);
+	if((!ret) && (erase_flash))
+	{
+		erase_flash = 1;
+	}
+	else
+	{
+		erase_flash = 0;
+	}
+
     //开始准备系统数据
-    ret = card_sprite((void *)&mbr_info, global_info->erase_flash, cue);
+    ret = card_sprite((void *)&mbr_info, erase_flash, cue);
 
 	sprite_wrn_exit();
 	sprite_led_exit(ret);

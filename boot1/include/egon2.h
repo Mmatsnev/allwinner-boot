@@ -23,6 +23,9 @@
 #ifndef _EGON2_H_
 #define _EGON2_H_
 
+#define  CONFIG_SUN6I_FPGA
+#define  AW_FPGA_V4_PLATFORM
+
 #include "types.h"
 #include "arch.h"
 #include "interinc/boot1_v2.h"

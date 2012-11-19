@@ -202,13 +202,13 @@ void eGon2_swi_handler_entry(__u32 swi_number, struct swi_regs * swi_reg)
 /* ÄÚÖÃPOWER²Ù×÷ */
         case EGON2_SWI_POWER_GET_SOURCE:
         {
-            swi_reg->reg[0] = eGon2_power_get_dcin_battery_exist((__u32 *)swi_reg->reg[0], (__u32 *)swi_reg->reg[1]);
+            swi_reg->reg[0] = axp_power_get_dcin_battery_exist((__u32 *)swi_reg->reg[0], (__u32 *)swi_reg->reg[1]);
         }
         break;
 
         case EGON2_SWI_POWER_GET_BAT_VOL:
         {
-            swi_reg->reg[0] = eGon2_power_get_battery_vol((__u32 *)swi_reg->reg[0]);
+            swi_reg->reg[0] = axp_probe_battery_vol((__u32 *)swi_reg->reg[0]);
         }
         break;
 
@@ -220,55 +220,56 @@ void eGon2_swi_handler_entry(__u32 swi_number, struct swi_regs * swi_reg)
 
         case EGON2_SWI_POWER_GET_KEY:
         {
-            swi_reg->reg[0] = eGon2_power_get_key();
+            swi_reg->reg[0] = axp_probe_key();
         }
         break;
 
         case EGON2_SWI_POWER_CHECK_STARTUP:
         {
-            swi_reg->reg[0] = eGon2_power_check_startup();
+            swi_reg->reg[0] = axp_probe_startup_cause();
         }
         break;
 
         case EGON2_SWI_POWER_SET_SW1:
         {
-            swi_reg->reg[0] = eGon2_power_set_sw1(swi_reg->reg[0]);
+            //swi_reg->reg[0] = eGon2_power_set_sw1(swi_reg->reg[0]);
         }
         break;
 
         case EGON2_SWI_POWER_GET_LEVEL_STATUS:
         {
-        	swi_reg->reg[0] = eGon2_get_power_vol_level();
+        	swi_reg->reg[0] = axp_get_power_vol_level();
         }
         break;
 
         case EGON2_SWI_POWER_SET_OFF_VOL:
         {
-        	swi_reg->reg[0] = eGon2_set_power_off_vol();
+        	swi_reg->reg[0] = axp_set_hardware_poweroff_vol();
         }
         break;
 
         case EGON2_SWI_POWER_BATTERY_CAL:
         {
-        	swi_reg->reg[0] = eGon2_power_axp_rest_cal();
+        	swi_reg->reg[0] = axp_probe_rest_battery_capacity();
         }
         break;
 
 		case EGON2_SWI_POWER_CUR_LIMIT:
 		{
-			swi_reg->reg[0] = eGon2_power_vbus_cur_limit(swi_reg->reg[0]);
+			swi_reg->reg[0] = axp_set_vbus_cur_limit(swi_reg->reg[0]);
 		}
 		break;
 
 		case EGON2_SWI_POWER_VOL_LIMIT:
 		{
-			swi_reg->reg[0] = eGon2_power_vbus_vol_limit(swi_reg->reg[0]);
+			swi_reg->reg[0] = axp_set_vbus_vol_limit(swi_reg->reg[0]);
 		}
 		break;
 
 		case EGON2_SWI_POWER_TYPE:
 		{
-			swi_reg->reg[0] = eGon2_power_type();
+			//swi_reg->reg[0] = eGon2_power_type();
+			swi_reg->reg[0] = 0;
 		}
 		break;
 		/* cache ²Ù×÷ */

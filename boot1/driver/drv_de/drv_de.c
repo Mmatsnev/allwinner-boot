@@ -149,23 +149,66 @@ __s32 DRV_DE_INIT(void)
 {
     __disp_bsp_init_para para;
 
-    para.base_image0    = 0x01e60000;
-    para.base_image1    = 0x01e40000;
-    para.base_scaler0   = 0x01e00000;
-    para.base_scaler1   = 0x01e20000;
-    para.base_lcdc0     = 0x01c0c000;
-    para.base_lcdc1     = 0x01c17000;
-    para.base_tvec0     = 0x01c0a000;
-    para.base_tvec1     = 0x01c1b000;
-    para.base_ccmu      = 0x01c20000;
-    para.base_sdram     = 0x01c01000;
-    para.base_pioc      = 0x01c20800;
-    para.base_pwm       = 0x01c20c00;
-	para.disp_int_process = disp_int_process;
+    para.base_image0   = 0x01e60000;
+    para.base_image1   = 0x01e40000;
+    para.base_scaler0  = 0x01e00000;
+    para.base_scaler1  = 0x01e20000;
+    para.base_lcdc0    = 0x01c0c000;
+    para.base_lcdc1    = 0x01c0d000;
+    para.base_deu0     = 0x01eb0000;
+    para.base_deu1     = 0x01ea0000;
+    para.base_drc0     = 0x01e70000;
+    para.base_drc1     = 0x01e50000;
+    para.base_cmu0     = 0x01e60000;
+    para.base_cmu1     = 0x01e40000;
+    para.base_dsi0     = 0x01ca0000;
+    para.base_ccmu     = 0x01c20000;
+    para.base_sdram    = 0x01c01000;
+    para.base_pioc     = 0x01c20800;
+    para.base_pwm      = 0x01c21400;
+    para.disp_int_process = disp_int_process;
 
     BSP_disp_init(&para);
     BSP_disp_open();
 
+#if 0
+{
+    __disp_color_t bk_color;
+    int i;
+
+    bk_color.red = 0xff;
+
+    DRV_lcd_open(0);
+    __wrn("open lcd, delay 5000Ms\n");
+    xDelayMS(50);
+    BSP_disp_lcd_set_src(0, DISP_LCDC_SRC_WHITE);
+    __wrn("lcd set white src\n");
+    xDelayMS(20);
+    BSP_disp_lcd_set_src(0, DISP_LCDC_SRC_BLACK);
+    __wrn("lcd set black src\n");
+    xDelayMS(20);
+    BSP_disp_lcd_set_src(0, DISP_LCDC_SRC_DE_CH1);
+    __wrn("lcd set ch1 src\n");
+    bk_color.red = 0xff;
+    bk_color.green = 0x00;
+    bk_color.blue = 0x00;
+    BSP_disp_set_bk_color(0, &bk_color);
+    __wrn("set red back color\n");
+    xDelayMS(20);
+    bk_color.red = 0x00;
+    bk_color.green = 0xff;
+    bk_color.blue = 0x00;
+    BSP_disp_set_bk_color(0, &bk_color);
+    __wrn("set red back color\n");
+    xDelayMS(20);
+    bk_color.red = 0x00;
+    bk_color.green = 0x00;
+    bk_color.blue = 0xff;
+    BSP_disp_set_bk_color(0, &bk_color);
+    __wrn("set red back color\n");
+    xDelayMS(20);
+}
+#endif
     return 0;
 }
 
@@ -503,13 +546,13 @@ __s32 DRV_DE_IOCTRL(__u32 hd, __u32 cmd, __s32 aux, void *pbuffer)
 		return DRV_lcd_close(aux);
 
 	case DISP_CMD_LCD_SET_BRIGHTNESS:
-		return BSP_disp_lcd_set_bright(aux, para0);
+		return BSP_disp_lcd_set_bright(aux, para0, 0);
 
 	case DISP_CMD_LCD_GET_BRIGHTNESS:
 		return BSP_disp_lcd_get_bright(aux);
 
-	case DISP_CMD_LCD_CPUIF_XY_SWITCH:
-		return BSP_disp_lcd_xy_switch(aux, para0);
+	//case DISP_CMD_LCD_CPUIF_XY_SWITCH:
+	//	return BSP_disp_lcd_xy_switch(aux, para0);
 
 	case DISP_CMD_LCD_SET_SRC:
 		return BSP_disp_lcd_set_src(aux, (__disp_lcdc_src_t)para0);
@@ -593,7 +636,7 @@ __s32 DRV_DE_IOCTRL(__u32 hd, __u32 cmd, __s32 aux, void *pbuffer)
 
 	case DISP_CMD_VGA_SET_SRC:
 		return BSP_disp_vga_set_src(aux, (__disp_lcdc_src_t)para0);
-
+/*
 //----sprite----
 	case DISP_CMD_SPRITE_OPEN:
 		return BSP_disp_sprite_open(aux);
@@ -684,7 +727,7 @@ __s32 DRV_DE_IOCTRL(__u32 hd, __u32 cmd, __s32 aux, void *pbuffer)
 
 	case DISP_CMD_SPRITE_BLOCK_GET_PARA:
 		return BSP_disp_sprite_block_get_para(aux, para0,(__disp_sprite_block_para_t*)para1);
-
+*/
 	default:
 	    __wrn("not supported display cmd:%x\n",cmd);
 	    return eGON2_FAIL;

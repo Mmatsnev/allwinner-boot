@@ -190,8 +190,8 @@ void eGon2_Int_Init(void)
 	{
 		eGon2_IRQVectorTable[i].pIsr = esIRQHandler_default;
 	}
-	eGon2_IRQVectorTable[GIC_SRC_TIMER0].pIsr = timer0_int_func;
-	eGon2_IRQVectorTable[GIC_SRC_TIMER1].pIsr = timer1_int_func;
+	eGon2_IRQVectorTable[AW_IRQ_TIMER0].pIsr = timer0_int_func;
+	eGon2_IRQVectorTable[AW_IRQ_TIMER1].pIsr = timer1_int_func;
 
 	gic_distributor_init();
 	gic_cpuif_init();

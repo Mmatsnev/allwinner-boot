@@ -39,7 +39,7 @@ extern void jump_to( __u32 addr );
 */
 void eGon2_jump_to(__u32 addr)
 {
-	eGon2_power_set_data_buffer(0x0e);
+	axp_set_next_poweron_status(0x0e);
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     eGon2_twi_exit();           //关闭TWI设备
@@ -73,7 +73,7 @@ void eGon2_jump_to(__u32 addr)
 void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 kernal_addr)
 {
 	void (*kernel_entry)(int zero, int arch, uint params);
-	eGon2_power_set_data_buffer(0x0e);
+	axp_set_next_poweron_status(0x0e);
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     eGon2_twi_exit();           //关闭TWI设备
@@ -108,7 +108,7 @@ void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 ke
 */
 void eGon2_jump_Fel( void )
 {
-	eGon2_power_set_data_buffer(0);
+	axp_set_next_poweron_status(0);
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     eGon2_twi_exit();           //关闭TWI设备
@@ -185,9 +185,10 @@ void eGon2_simple_jump_Fel( void )
 */
 void eGon2_power_off(void)
 {
-	eGon2_power_set_data_buffer(0);
+	axp_set_next_poweron_status(0);
 	eGon2_block_device_exit();
-	eGon2_set_power_off_vol();
+	axp_set_hardware_poweroff_vol();
+	axp_set_power_off();
 
 	for(;;);
 }

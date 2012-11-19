@@ -114,13 +114,13 @@ void  reposition_arm_start( void )
 */
 void  reposition_boot_standby( void )
 {
-	int *dst = &_standby_start;
-	int *src = &_standby_start_lma;
-
-	while (dst < &_standby_end)
-	{
-		*dst++ = *src++;
-	}
+//	int *dst = &_standby_start;
+//	int *src = &_standby_start_lma;
+//
+//	while (dst < &_standby_end)
+//	{
+//		*dst++ = *src++;
+//	}
 }
 
 
