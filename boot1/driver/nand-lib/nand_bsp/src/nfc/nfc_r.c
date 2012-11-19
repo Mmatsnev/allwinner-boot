@@ -203,7 +203,11 @@ __s32 _check_ecc(__u32 eblock_cnt)
 	for (i = 0; i < eblock_cnt; i++)
 	{
 		if (cfg & (1<<i))
+		{
+			//PRINT("_check_ecc, NandIndex: 0x%x, ecc_cfg: 0x%x, ecc_status: 0x%x\n", NandIndex, (__u32)NFC_READ_REG(NFC_REG_ECC_CTL), (__u32)NFC_READ_REG(NFC_REG_ECC_ST));
 			return -ERR_ECC;
+		}
+			
 	}
 
     //check ecc limit
@@ -765,6 +769,8 @@ __s32 NFC_SetEccMode(__u8 ecc_mode)
 
 	NFC_WRITE_REG(NFC_REG_ECC_CTL, cfg);
 
+	PRINT("NFC_SetEccMode, NandIndex: 0x%x, ecc_mode: 0x%x, reg_val: 0x%x\n", (__u32)NandIndex, (__u32)ecc_mode, (__u32)NFC_READ_REG(NFC_REG_ECC_CTL));
+
 	return 0;
 }
 /*******************************************************************************
@@ -782,7 +788,8 @@ __s32 NFC_Init(NFC_INIT_INFO *nand_info )
     __s32 i;
     
     PRINT("[NAND] nand driver version: 0x%x, 0x%x, data: %x\n", NAND_VERSION_0, NAND_VERSION_1, NAND_DRV_DATE);
-    PRINT("[NAND] nand driver: 2012/11/15, 16:27\n");
+    PRINT("[NAND] nand driver: 2012/11/19, 17:30\n");
+	PRINT("[NAND] nand driver support %u ch\n", MAX_NFC_CH);
     //init ddr_param
     for(i=0;i<8;i++)
         ddr_param[i] = 0;
@@ -1507,25 +1514,30 @@ __s32 NFC_ReadRetryExit(__u32 read_retry_type)
 void NFC_RbIntEnable(void)
 {
     //enable interrupt
-	NFC_WRITE_REG(NFC_REG_INT, NFC_B2R_INT_ENABLE);
+	NFC_WRITE_REG(NFC_REG_INT, NFC_READ_REG(NFC_REG_INT)|NFC_B2R_INT_ENABLE);
 }
 
 void NFC_RbIntDisable(void)
 {
     //disable rb interrupt
-	NFC_WRITE_REG(NFC_REG_INT, 0);
+	NFC_WRITE_REG(NFC_REG_INT, NFC_READ_REG(NFC_REG_INT)&(~NFC_B2R_INT_ENABLE));
 }
 
-void NFC_RbIntClear(void)
+void NFC_RbIntClearStatus(void)
 {
     //clear interrupt
 	NFC_WRITE_REG(NFC_REG_ST,NFC_RB_B2R);
 }
 
-__u32 NFC_RbIntStatus(void)
+__u32 NFC_RbIntGetStatus(void)
 {
     //clear interrupt
 	return (NFC_READ_REG(NFC_REG_ST)&NFC_RB_B2R);
+}
+
+__u32 NFC_RbIntOccur(void)
+{
+	return ((NFC_READ_REG(NFC_REG_ST)&NFC_RB_B2R)&&(NFC_READ_REG(NFC_REG_INT)&NFC_B2R_INT_ENABLE));
 }
 
 __u32 NFC_GetRbSelect(void)
@@ -1542,5 +1554,38 @@ __u32 NFC_GetRbStatus(__u32 rb)
     else 
         return 0;        
 }
+
+void NFC_DmaIntEnable(void)
+{
+    //enable interrupt
+	NFC_WRITE_REG(NFC_REG_INT, NFC_READ_REG(NFC_REG_INT)|NFC_DMA_INT_ENABLE);
+}
+
+
+void NFC_DmaIntDisable(void)
+{
+    //disable dma interrupt
+	NFC_WRITE_REG(NFC_REG_INT, NFC_READ_REG(NFC_REG_INT)&(~NFC_DMA_INT_ENABLE));
+}
+
+void NFC_DmaIntClearStatus(void)
+{
+    //clear interrupt
+	NFC_WRITE_REG(NFC_REG_ST,NFC_DMA_INT_FLAG);
+}
+
+__u32 NFC_DmaIntGetStatus(void)
+{
+    //clear interrupt
+	return (NFC_READ_REG(NFC_REG_ST)&NFC_DMA_INT_FLAG);
+}
+
+__u32 NFC_DmaIntOccur(void)
+{
+	return ((NFC_READ_REG(NFC_REG_ST)&NFC_DMA_INT_FLAG)&&(NFC_READ_REG(NFC_REG_INT)&NFC_DMA_INT_ENABLE));
+}
+
+
+
 
 

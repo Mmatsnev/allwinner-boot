@@ -365,7 +365,8 @@ __s32 _read_single_page_spare(struct boot_physical_param *readop,__u8 dma_wait_m
 
     	if(k>0)
     	{
-    		PHY_DBG("[Read_single_page_spare] NFC_ReadRetry %d cycles, chip = %d, block = %d, page = %d, RetryCount = %d  \n", k ,readop->chip,readop->block, readop->page, RetryCount[NandIndex][readop->chip]);
+    		PHY_DBG("[Read_single_page_spare] NFC_ReadRetry %d cycles, ch =%d, chip = %d \n", (__u32)k, (__u32)NandIndex, (__u32)readop->chip);
+			PHY_DBG("[Read_single_page_spare]	block = %d, page = %d, RetryCount = %d  \n", (__u32)readop->block, (__u32)readop->page, (__u32)RetryCount[NandIndex][readop->chip]);
     		if(ret == -ERR_ECC)
     		    PHY_DBG("ecc error!\n");
     		//PHY_DBG("spare buf: %x, %x, %x, %x, %x, %x, %x, %x\n", sparebuf[0],sparebuf[1],sparebuf[2],sparebuf[3],sparebuf[4],sparebuf[5],sparebuf[6],sparebuf[7]);
@@ -630,7 +631,8 @@ __s32 _read_sectors(struct boot_physical_param *readop,__u8 dma_wait_mode)
          
         if(k>0)
     	{
-    		PHY_DBG("[Read_sectors] NFC_ReadRetry %d cycles, chip = %d, block = %d, page = %d, RetryCount = %d  \n", k ,readop->chip,readop->block, readop->page, RetryCount[NandIndex][readop->chip]);
+    		PHY_DBG("[Read_sectors] NFC_ReadRetry %d cycles, ch =%d, chip = %d \n", (__u32)k, (__u32)NandIndex, (__u32)readop->chip);
+			PHY_DBG("[Read_sectors]	block = %d, page = %d, RetryCount = %d  \n", (__u32)readop->block, (__u32)readop->page, (__u32)RetryCount[NandIndex][readop->chip]);
     		if(ret == -ERR_ECC)
     		    PHY_DBG("ecc error!\n");
     		//PHY_DBG("spare buf: %x, %x, %x, %x, %x, %x, %x, %x\n", sparebuf[0],sparebuf[1],sparebuf[2],sparebuf[3],sparebuf[4],sparebuf[5],sparebuf[6],sparebuf[7]);
@@ -771,23 +773,19 @@ __s32 _two_plane_read(struct __PhysicOpPara_t *pPageAdr,__u8 dma_wait_mode)
 */
 __s32  PHY_PageRead(struct __PhysicOpPara_t *pPageAdr)
 {
-	__s32 ret[2] = {0, 0};
+	__s32 ret[2][2] = { {0, 0}, {0, 0}};
+	__s32 result = 0;
 	__u32 chip;
 	__u32 block_in_chip;
-	__u32 plane_cnt,i;	
+	__u32 plane_cnt,i, j;	
 	__u32 bitmap_in_single_page;
 	struct boot_physical_param readop;	
+	__u8 oob_ch1[2][64];
+
+	MEMSET(&oob_ch1[0][0], 0x3c, 128);
 	
 	for(NandIndex = 0; NandIndex<CHANNEL_CNT;NandIndex++)
 	{
-		/*create cmd list*/	
-		if (SUPPORT_MULTI_READ){
-		/*two plane read */
-			ret[NandIndex] = _two_plane_read(pPageAdr,SUPPORT_DMA_IRQ);
-			goto PHY_PageRead_exit;
-		}
-
-		ret[NandIndex] = 0;
 		plane_cnt = SUPPORT_MULTI_PROGRAM ? PLANE_CNT_OF_DIE : 1;	
 		
 		/*get chip no*/
@@ -810,10 +808,15 @@ __s32  PHY_PageRead(struct __PhysicOpPara_t *pPageAdr)
 			readop.page = pPageAdr->PageNum;
 
 				readop.mainbuf = (__u8 *)(pPageAdr->MDataPtr) + 512*SECTOR_CNT_OF_SINGLE_PAGE*(plane_cnt*NandIndex + i);
-			    if (pPageAdr->SDataPtr)
+				if (pPageAdr->SDataPtr)
+			    {
 				    //readop.oobbuf = (__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*(plane_cnt*NandIndex + i);
-			    	readop.oobbuf = (__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i;
-			    else
+				    if(NandIndex==0)
+			    		readop.oobbuf = (__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i;
+					else if(NandIndex==1)
+						readop.oobbuf = oob_ch1[i];
+			    }
+				else
 				    readop.oobbuf = NULL;
 
 				bitmap_in_single_page = FULL_BITMAP_OF_SINGLE_PAGE &
@@ -824,37 +827,59 @@ __s32  PHY_PageRead(struct __PhysicOpPara_t *pPageAdr)
 				/*bitmap of this plane is valid */
 					if(bitmap_in_single_page == FULL_BITMAP_OF_SINGLE_PAGE)
 					/*align page, use page mode */
-						ret[NandIndex] |= _read_single_page(&readop,SUPPORT_DMA_IRQ);
+						ret[NandIndex][i] |= _read_single_page(&readop,SUPPORT_DMA_IRQ);
 					else
 					/*not align page , normal mode*/
-						ret[NandIndex] |= _read_sectors(&readop,SUPPORT_DMA_IRQ);
+						ret[NandIndex][i] |= _read_sectors(&readop,SUPPORT_DMA_IRQ);
 				}
 
 
 		}
 		
-		if (ret[NandIndex] == -ERR_TIMEOUT)
-    		PHY_ERR("PHY_PageRead %d: read timeout\n", NandIndex);
-    	if (ret[NandIndex] == -ERR_ECC)
-    	{	
-    		PHY_ERR("PHY_PageRead %d: too much ecc err,bank %x block %x,page %x \n",NandIndex, pPageAdr->BankNum,pPageAdr->BlkNum,
-    					pPageAdr->PageNum);
-    		ret[NandIndex] = 0;
-    	}
-    
-    	if(ret[NandIndex] == ECC_LIMIT)
-    	{
-    		PHY_ERR("%s : %d : ecc limit\n",__FUNCTION__,__LINE__);
-    	}
-		
 	}
 	
 	NandIndex = 0;
-	
-	
-PHY_PageRead_exit:
-	
-	return (ret[0]|ret[1]);
+
+	if((CHANNEL_CNT==2)&&(pPageAdr->SDataPtr))
+	{
+		for(i=0; i<plane_cnt; i++)
+		{
+			if((oob_ch1[i][0] != 0xff)&&(oob_ch1[i][0] != 0x3c))
+			{
+				PHY_DBG("PHY_PageRead ch1 bad,bank %x block %x,page %x \n", (__u32)pPageAdr->BankNum,(__u32)pPageAdr->BlkNum,
+    					(__u32)pPageAdr->PageNum);
+				PHY_DBG("oob_ch0 plane %d: 0x%x, 0x%x\n",i, *((__u32 *)((__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i)), *((__u32 *)((__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i +4)));
+				PHY_DBG("oob_ch1 plane %d: 0x%x, 0x%x\n",i, *((__u32 *)(&oob_ch1[i][0])), *((__u32 *)(&oob_ch1[i][4])));
+				*((__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i) = oob_ch1[i][0];
+			}	
+		}
+	}
+
+	if((ret[0][0] == -ERR_TIMEOUT)||(ret[0][1] == -ERR_TIMEOUT)||(ret[1][0] == -ERR_TIMEOUT)||(ret[1][1] == -ERR_TIMEOUT))
+	{
+		
+		PHY_ERR("PHY_PageRead ch %d, plane %d: read timeout\n", (__u32)i, (__u32)j);
+		result = -ERR_TIMEOUT;
+		return result;
+	}
+	else if((ret[0][0] == -ERR_ECC)||(ret[0][1] == -ERR_ECC)||(ret[1][0] == -ERR_ECC)||(ret[1][1] == -ERR_ECC))
+	{
+		
+		PHY_ERR("PHY_PageRead ch %d, plane %d: too much ecc err\n",(__u32)i, (__u32)j);
+		PHY_ERR("bank %x block %x,page %x \n",(__u32)pPageAdr->BankNum, (__u32)pPageAdr->BlkNum,
+					(__u32)pPageAdr->PageNum);
+		PHY_ERR("ret,  00: 0x%x, 01: 0x%x, 10: 0x%x, 11: 0x%x\n");
+		result = 0;
+		return result;
+	}
+	else if((ret[0][0] == -ERR_ECC)||(ret[0][1] == -ERR_ECC)||(ret[1][0] == -ERR_ECC)||(ret[1][1] == -ERR_ECC))
+	{		
+		PHY_ERR("PHY_PageRead ch %d, plane %d: ecc limit\n",(__u32)i, (__u32)j);
+				result = ECC_LIMIT;
+		return result;
+	}
+
+	return (result);
 }
 
 
@@ -1082,7 +1107,8 @@ __s32 _read_sectors_for_spare(struct boot_physical_param *readop,__u8 dma_wait_m
 
     		    if(k>0)
             	{
-            		PHY_DBG("[Read_sectors_for_spare] NFC_ReadRetry %d cycles, chip = %d, block = %d, page = %d, RetryCount = %d, i=%d  \n", k ,readop->chip,readop->block, readop->page, RetryCount[NandIndex][readop->chip], i);
+            		PHY_DBG("[Read_sectors_for_spare] NFC_ReadRetry %d cycles, ch =%d, chip = %d \n", (__u32)k, (__u32)NandIndex, (__u32)readop->chip);
+					PHY_DBG("[Read_sectors_for_spare]	block = %d, page = %d, RetryCount = %d  \n", (__u32)readop->block, (__u32)readop->page, (__u32)RetryCount[NandIndex][readop->chip]);
             		if(ret1 == -ERR_ECC)
             		    PHY_DBG("ecc error!\n");
             		//PHY_DBG("spare buf: %x, %x, %x, %x\n", sparebuf[4*i],sparebuf[4*i+1],sparebuf[4*i+2],sparebuf[4*i+3]);
@@ -1158,12 +1184,16 @@ __s32 _read_sectors_for_spare(struct boot_physical_param *readop,__u8 dma_wait_m
 
 __s32  PHY_PageReadSpare(struct __PhysicOpPara_t *pPageAdr)
 {
-	__s32 ret[2] = {0, 0};
+	__s32 ret[2][2] = {{0, 0}, {0, 0}};
+	__s32 result;
 	__u32 chip;
 	__u32 block_in_chip;
-	__u32 plane_cnt,i;	
+	__u32 plane_cnt,i, j;	
 	__u32 bitmap_in_single_page;
 	struct boot_physical_param readop;	
+	__u8 oob_ch1[2][64];
+
+	MEMSET(&oob_ch1[0][0], 0x3c, 128);
 	
 	plane_cnt = SUPPORT_MULTI_PROGRAM ? PLANE_CNT_OF_DIE : 1;	
 	
@@ -1190,9 +1220,14 @@ __s32  PHY_PageReadSpare(struct __PhysicOpPara_t *pPageAdr)
 
 			readop.mainbuf = (__u8 *)(pPageAdr->MDataPtr) + 512*SECTOR_CNT_OF_SINGLE_PAGE*(plane_cnt*NandIndex + i);
 		    if (pPageAdr->SDataPtr)
+		    {
 			    //readop.oobbuf = (__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*(plane_cnt*NandIndex + i);
-		    	readop.oobbuf = (__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i;
-		    else
+			    if(NandIndex==0)
+		    		readop.oobbuf = (__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i;
+				else if(NandIndex==1)
+					readop.oobbuf = oob_ch1[i];
+		    }
+			else
 			    readop.oobbuf = NULL;
 
 			bitmap_in_single_page = FULL_BITMAP_OF_SINGLE_PAGE &
@@ -1203,33 +1238,61 @@ __s32  PHY_PageReadSpare(struct __PhysicOpPara_t *pPageAdr)
 			/*bitmap of this plane is valid */
 				if(bitmap_in_single_page == FULL_BITMAP_OF_SINGLE_PAGE)
 				/*align page, use page mode */
-					ret[NandIndex] |= _read_single_page(&readop,SUPPORT_DMA_IRQ);
+					ret[NandIndex][i] |= _read_single_page(&readop,SUPPORT_DMA_IRQ);
 				else
 				/*not align page , normal mode*/
-					ret[NandIndex] |= _read_single_page_spare(&readop,SUPPORT_DMA_IRQ);
+					ret[NandIndex][i] |= _read_single_page_spare(&readop,SUPPORT_DMA_IRQ);
+			}
+			else
+			{
+				PHY_ERR("PHY_PageReadSpare, didn't read ch %d, plane %d\n", NandIndex, i);
 			}
 
 		}
 
-        if (ret[NandIndex] == -ERR_TIMEOUT)
-    		PHY_ERR("PHY_PageReadSpare %d: read timeout\n", NandIndex);
-    	if (ret[NandIndex] == -ERR_ECC)
-    	{	
-    		PHY_ERR("PHY_PageReadSpare %d: too much ecc err,bank %x block %x,page %x \n",NandIndex, pPageAdr->BankNum,pPageAdr->BlkNum,
-    					pPageAdr->PageNum);
-    		ret[NandIndex] = 0;
-    	}
-    
-    	if(ret[NandIndex] == ECC_LIMIT)
-    	{
-    		PHY_ERR("%s : %d : ecc limit\n",__FUNCTION__,__LINE__);
-    	}    
-
 	}
 	NandIndex = 0;
-	
 
-	return (ret[0]|ret[1]);
+	if(CHANNEL_CNT==2)
+	{
+		for(i=0; i<plane_cnt; i++)
+		{
+			if((oob_ch1[i][0] != 0xff)&&(oob_ch1[i][0] != 0x3c))
+			{
+				PHY_DBG("PHY_PageReadSpare ch1 bad,bank %x block %x,page %x \n", (__u32)pPageAdr->BankNum,(__u32)pPageAdr->BlkNum,
+    					(__u32)pPageAdr->PageNum);
+				PHY_DBG("oob_ch0 plane %d: 0x%x, 0x%x\n", i, *((__u32 *)((__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i)), *((__u32 *)((__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i +4)));
+				PHY_DBG("oob_ch1 plane %d: 0x%x, 0x%x\n", i, *((__u32 *)(&oob_ch1[i][0])), *((__u32 *)(&oob_ch1[i][4])));
+				*((__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i) = oob_ch1[i][0];
+			}	
+		}
+	}
+
+	if((ret[0][0] == -ERR_TIMEOUT)||(ret[0][1] == -ERR_TIMEOUT)||(ret[1][0] == -ERR_TIMEOUT)||(ret[1][1] == -ERR_TIMEOUT))
+	{
+		
+		PHY_ERR("PHY_PageReadSpare ch %d, plane %d: read timeout\n", (__u32)i, (__u32)j);
+		result = -ERR_TIMEOUT;
+		return result;
+	}
+	else if((ret[0][0] == -ERR_ECC)||(ret[0][1] == -ERR_ECC)||(ret[1][0] == -ERR_ECC)||(ret[1][1] == -ERR_ECC))
+	{
+		
+		PHY_ERR("PHY_PageReadSpare ch %d, plane %d: too much ecc err\n",(__u32)i, (__u32)j);
+		PHY_ERR("bank %x block %x,page %x \n",(__u32)pPageAdr->BankNum, (__u32)pPageAdr->BlkNum,
+					(__u32)pPageAdr->PageNum);
+		PHY_ERR("ret,  00: 0x%x, 01: 0x%x, 10: 0x%x, 11: 0x%x\n");
+		result = 0;
+		return result;
+	}
+	else if((ret[0][0] == -ERR_ECC)||(ret[0][1] == -ERR_ECC)||(ret[1][0] == -ERR_ECC)||(ret[1][1] == -ERR_ECC))
+	{		
+		PHY_ERR("PHY_PageReadSpare ch %d, plane %d: ecc limit\n",(__u32)i, (__u32)j);
+				result = ECC_LIMIT;
+		return result;
+	}
+	
+	return (result);
 }
 
 void PHY_FreePageCheck(struct __PhysicOpPara_t  *pPageAdr)
@@ -1320,6 +1383,20 @@ __s32  PHY_PageWrite(struct __PhysicOpPara_t  *pPageAdr)
 			    	writeop.oobbuf = (__u8 *)(pPageAdr->SDataPtr) + 4*SECTOR_CNT_OF_SINGLE_PAGE*i;
 			    else
 				    writeop.oobbuf = NULL;
+
+			if(pPageAdr->SDataPtr)
+			{
+				if((i>0)||(NandIndex>0))
+				{
+					if((*((__u8 *)writeop.oobbuf))!= (*((__u8 *)pPageAdr->SDataPtr)))
+					{
+						PHY_DBG("PHY_PageWrite, ch:%d, plane: %d, badblk flag is diff in two plane, 0x%x, 0x%x, reset oobbuf\n", (__u32)(NandIndex), (__u32)i,(__u32)(*((__u32 *)writeop.oobbuf)), (__u32)(*((__u32 *)pPageAdr->SDataPtr)));
+
+						writeop.oobbuf = (__u8 *)(pPageAdr->SDataPtr);
+					}
+				}
+				
+			}
 
 			
 			writeop.sectorbitmap = FULL_BITMAP_OF_SINGLE_PAGE;

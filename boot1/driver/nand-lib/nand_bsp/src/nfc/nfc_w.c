@@ -380,7 +380,7 @@ __s32 NFC_Write_1K( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 dm
 	_enable_ecc(1);
 
 	/*set ecc to 64-bit ecc*/
-    ecc_mode_temp = NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000;
+    ecc_mode_temp = (NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000)>>12;
 	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(0x8<<12) ));
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
 
@@ -397,7 +397,7 @@ __s32 NFC_Write_1K( NFC_CMD_LIST  *wcmd, void *mainbuf, void *sparebuf,  __u8 dm
 	_disable_ecc();
 
 	/*set ecc to original value*/
-	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|ecc_mode_temp);
+	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(ecc_mode_temp<<12));
 
       /*set pagesize to original value*/
       NFC_WRITE_REG(NFC_REG_CTL, ((NFC_READ_REG(NFC_REG_CTL)) & (~NFC_PAGE_SIZE)) | (page_size_temp<<8));
@@ -596,7 +596,7 @@ __s32 _read_in_page_mode_seq(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__
 	_disable_ecc();
 
     /*set ecc to original value*/
-	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|ecc_mode_temp);
+	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(ecc_mode_temp<<12));
     
     /*set pagesize to original value*/
     NFC_WRITE_REG(NFC_REG_CTL, ((NFC_READ_REG(NFC_REG_CTL)) & (~NFC_PAGE_SIZE)) | (page_size_temp<<8));
@@ -670,7 +670,7 @@ __s32 _read_in_page_mode_1K(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__u
 	_enable_ecc(1);
 
 	/*set ecc to 64-bit ecc*/
-    ecc_mode_temp = NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000;
+    ecc_mode_temp = (NFC_READ_REG(NFC_REG_ECC_CTL) & 0xf000)>>12;
 	NFC_WRITE_REG(NFC_REG_ECC_CTL, ((NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(0x8<<12) ));
 
 	NFC_WRITE_REG(NFC_REG_CMD,cfg);
@@ -697,7 +697,7 @@ __s32 _read_in_page_mode_1K(NFC_CMD_LIST  *rcmd,void *mainbuf,void *sparebuf,__u
 	_disable_ecc();
 
 	/*set ecc to original value*/
-	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|ecc_mode_temp);
+	NFC_WRITE_REG(NFC_REG_ECC_CTL, (NFC_READ_REG(NFC_REG_ECC_CTL) & (~NFC_ECC_MODE))|(ecc_mode_temp<<12));
 
     /*set pagesize to original value*/
     NFC_WRITE_REG(NFC_REG_CTL, ((NFC_READ_REG(NFC_REG_CTL)) & (~NFC_PAGE_SIZE)) | (page_size_temp<<8));

@@ -1,35 +1,5 @@
-/*
-************************************************************************************************************************
-*                                                      eNand
-*                                     Nand flash driver logic control module define
-*
-*                             Copyright(C), 2008-2009, SoftWinners Microelectronic Co., Ltd.
-*											       All Rights Reserved
-*
-* File Name : bsp_nand.h
-*
-* Author : Kevin.z
-*
-* Version : v0.1
-*
-* Date : 2008.03.25
-*
-* Description : This file define the function interface and some data structure export
-*               for the nand bsp.
-*
-* Others : None at present.
-*
-*
-* History :
-*
-*  <Author>        <time>       <version>      <description>
-*
-* Kevin.z         2008.03.25      0.1          build the file
-*
-************************************************************************************************************************
-*/
-#ifndef __BSP_NAND_H__
-#define __BSP_NAND_H__
+#ifndef __NAND_LIB_H__
+#define __NAND_LIB_H__
 
 //---------------------------------------------------------------
 //  nand driver 版本号
@@ -62,7 +32,7 @@ typedef struct
 	__u32 		good_block_ratio;					//good block ratio get from hwscan
 	__u32		ReadRetryType;						//the read retry type
 	__u32       DDRType;
-	__u32		Reserved[22];
+	__u32		Reserved[32];
 }boot_nand_para_t;
 
 typedef struct boot_flash_info{
@@ -84,6 +54,14 @@ struct boot_physical_param{
 	void   *oobbuf; //oob buf
 };
 
+#define ND_MAX_PART_COUNT		15	 									//max part count
+
+struct nand_disk{
+	unsigned long size;
+	unsigned long offset;
+	unsigned char type;
+};
+
 //---------------------------------------------------------------
 //  函数 定义
 //---------------------------------------------------------------
@@ -94,11 +72,17 @@ extern __s32 LML_Exit(void);
 extern __s32 LML_Read(__u32 nLba, __u32 nLength, void* pBuf);
 extern __s32 LML_Write(__u32 nLba, __u32 nLength, void* pBuf);
 extern __s32 LML_FlushPageCache(void);
+
+extern __s32 BMM_RleaseLogBlock(__u32 log_level);
+extern __s32 BMM_WriteBackAllMapTbl(void);
+
 extern __s32 NAND_CacheFlush(void);
+extern __s32 NAND_CacheFlushDev(__u32 dev_num);
 extern __s32 NAND_CacheRead(__u32 blk, __u32 nblk, void *buf);
 extern __s32 NAND_CacheWrite(__u32 blk, __u32 nblk, void *buf);
 extern __s32 NAND_CacheOpen(void);
 extern __s32 NAND_CacheClose(void);
+
 
 //for format
 extern __s32 FMT_Init(void);
@@ -113,6 +97,7 @@ __s32  SCN_AnalyzeNandSystem(void);
 extern __s32 PHY_Init(void);
 extern __s32 PHY_Exit(void);
 extern __s32 PHY_ChangeMode(__u8 serial_mode);
+extern __s32 PHY_ScanDDRParam(void);
 
 //for simplie(boot0)
 extern __s32 PHY_SimpleErase(struct boot_physical_param * eraseop);
@@ -141,6 +126,26 @@ extern __s32 NFC_LSBDisable(__u32 chip, __u32 read_retry_type);
 extern __s32 NFC_LSBInit(__u32 read_retry_type);
 extern __s32 NFC_LSBExit(__u32 read_retry_type);
 
+//for rb int
+extern void NFC_RbIntEnable(void);
+extern void NFC_RbIntDisable(void);
+extern void NFC_RbIntClearStatus(void);
+extern __u32 NFC_RbIntGetStatus(void);
+extern __u32 NFC_GetRbSelect(void);
+extern __u32 NFC_GetRbStatus(__u32 rb);
+extern __u32 NFC_RbIntOccur(void);
+
+extern void NFC_DmaIntEnable(void);
+extern void NFC_DmaIntDisable(void);
+extern void NFC_DmaIntClearStatus(void);
+extern __u32 NFC_DmaIntGetStatus(void);
+extern __u32 NFC_DmaIntOccur(void);
+
+//for mbr
+extern int mbr2disks(struct nand_disk* disk_array);
+
+
+
 /* 
 *   Description:
 *   1. if u wanna set dma callback hanlder(sleep during dma transfer) to free cpu for other tasks,
@@ -157,4 +162,3 @@ extern __s32 NAND_SetDrqCbMethod(__u32 used);
 
 
 #endif  //ifndef __NAND_LOGIC_H__
-

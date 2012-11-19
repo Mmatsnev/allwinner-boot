@@ -458,7 +458,8 @@ __s32 _read_single_page(struct boot_physical_param *readop,__u8 dma_wait_mode)
 
     	if(k>0)
     	{
-    		PHY_DBG("[Read_single_page] NFC_ReadRetry %d cycles, chip = %d, block = %d, page = %d, RetryCount = %d  \n", k ,readop->chip,readop->block, readop->page, RetryCount[NandIndex][readop->chip]);
+			PHY_DBG("[Read_single_page] NFC_ReadRetry %d cycles, ch =%d, chip = %d\n", (__u32)k, (__u32)NandIndex, (__u32)readop->chip);
+			PHY_DBG("[Read_single_page]	block = %d, page = %d, RetryCount = %d  \n", (__u32)readop->block, (__u32)readop->page, (__u32)RetryCount[NandIndex][readop->chip]);
     		if(ret == -ERR_ECC)
     		    PHY_DBG("ecc error!\n");
     		//PHY_DBG("spare buf: %x, %x, %x, %x, %x, %x, %x, %x\n", sparebuf[0],sparebuf[1],sparebuf[2],sparebuf[3],sparebuf[4],sparebuf[5],sparebuf[6],sparebuf[7]);
@@ -700,11 +701,16 @@ __s32 PHY_GetDefaultParam(__u32 bank)
 	    else
 	    {
 	        NFC_GetDefaultParam(chip, default_value, READ_RETRY_TYPE);
+			if((READ_RETRY_MODE==0)||(READ_RETRY_MODE==1))  //hynix mode
+			{
+	            PHY_DBG("NFC_GetDefaultParam: ch: %d, chip: %d, value: 0x%x \n", NandIndex, chip, *((__u32 *)default_value));
+
+	        }
 		    NFC_SetDefaultParam(chip, default_value, READ_RETRY_TYPE);
 		    if((READ_RETRY_MODE==0)||(READ_RETRY_MODE==1))  //hynix mode
 	        {
-	            PHY_DBG("PHY_SetDefaultParam: chip 0x%x, Read Retry Default Value is 0x%x, 0x%x, 0x%x, 0x%x\n", \
-	            chip, default_value[0], default_value[1], default_value[2],default_value[3]);
+	            PHY_DBG("NFC_SetDefaultParam: ch: %d, chip: %d, value: 0x%x \n", NandIndex, chip, *((__u32 *)default_value));
+
 	        }
 		    
 	    }
@@ -729,6 +735,11 @@ __s32 PHY_SetDefaultParam(__u32 bank)
 	        chip = _cal_real_chip(bank);
 	        NFC_SelectChip(chip);
 	        NFC_SetDefaultParam(chip, default_value, READ_RETRY_TYPE);
+			if((READ_RETRY_MODE==0)||(READ_RETRY_MODE==1))  //hynix mode
+	        {
+	            PHY_DBG("NFC_SetDefaultParam: ch: %d, chip: %d, value: 0x%x \n", NandIndex, chip, *((__u32 *)default_value));
+
+	        }
 	    }
 	}
 	

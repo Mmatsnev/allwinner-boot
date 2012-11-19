@@ -43,7 +43,7 @@
 #define  NAND_VERSION_1                 0x10
 #define  NAND_DRV_DATE                  0x20121115
 
-#define MAX_NFC_CH                          (1)
+#define MAX_NFC_CH                          (2)
 
 //define the max value of the count of chip select
 #define MAX_CHIP_SELECT_CNT                 (4)
@@ -128,27 +128,19 @@
 //define if need pr__s32 the physic operation module debug message
 #ifndef __FPGA_TEST__
 
-#ifndef __OS_NAND_DBG__
-    #define PHY_DBG_MESSAGE_ON                  (0)
-#else
-    #define PHY_DBG_MESSAGE_ON                  (1)
-#endif
+#define PHY_DBG_MESSAGE_ON                  (1)
 
 //define if need pr__s32 the physic operation module error message
 #define PHY_ERR_MESSAGE_ON                  (1)
 
-//define if need pr__s32 the nand hardware scan module debug message
-#ifndef __OS_NAND_DBG__
-    #define SCAN_DBG_MESSAGE_ON                 (1)
-#else
-    #define SCAN_DBG_MESSAGE_ON                 (1)
-#endif
+#define SCAN_DBG_MESSAGE_ON                 (1)
+
 
 //define if need pr__s32 the nand hardware scan module error message
 #define SCAN_ERR_MESSAGE_ON                 (1)
 
 //define if need pr__s32 the nand disk format module debug message
-#define FORMAT_DBG_MESSAGE_ON               (0)
+#define FORMAT_DBG_MESSAGE_ON               (1)
 
 //define if need pr__s32 the nand disk format module error message
 #define FORMAT_ERR_MESSAGE_ON               (1)

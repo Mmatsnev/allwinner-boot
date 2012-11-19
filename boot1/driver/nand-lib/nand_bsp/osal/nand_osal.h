@@ -7,12 +7,12 @@
 #define __OS_LINUX_SYSTEM__
 #define __OS_NAND_DBG__
 
-//#define __OS_NAND_SUPPORT_RB_INT__
+#define __OS_NAND_SUPPORT_RB_INT__
 #ifdef __OS_NAND_SUPPORT_RB_INT__
     #define __OS_NAND_SUPPORT_INT__
 #endif
 
-//#define __OS_NAND_SUPPORT_DMA_INT__
+#define __OS_NAND_SUPPORT_DMA_INT__
 #ifdef __OS_NAND_SUPPORT_DMA_INT__
     #define __OS_NAND_SUPPORT_INT__
 #endif    

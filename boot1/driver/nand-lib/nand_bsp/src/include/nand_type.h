@@ -101,7 +101,7 @@ struct __NandStorageInfo_t
     __u32       OperationOpt;                       //the mask of the operation types which current nand flash can support support
     __u32        FrequencePar;                       //the parameter of the hardware access clock, based on 'MHz'
     __u32       EccMode;                            //the Ecc Mode for the nand flash chip, 0: bch-16, 1:bch-28, 2:bch_32   
-    __u32       NandChipId[8];                      //the nand chip id of current connecting nand chip
+    __u8       NandChipId[8];                      //the nand chip id of current connecting nand chip
     __u32       ValidBlkRatio;                         //the ratio of the valid physical blocks, based on 1024
     __u32		ReadRetryType;						//the read retry type
     __u32       DDRType;

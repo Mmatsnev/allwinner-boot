@@ -993,7 +993,15 @@ static __s32 _GetBlkLogicInfo(struct __ScanDieInfo_t *pDieInfo)
                 tmpPage = tmpPageNum[i] * INTERLEAVE_BANK_CNT + tmpBnkNum;
                 //_VirtualPageRead(pDieInfo->nDie, tmpBlkNum, tmpPage, LOGIC_INFO_BITMAP, FORMAT_PAGE_BUF, (void *)&tmpSpare);
                 spare_bitmap = (SUPPORT_MULTI_PROGRAM ? (0x3 | (0x3 << SECTOR_CNT_OF_SINGLE_PAGE)) : 0x3);
-                _VirtualPageRead(pDieInfo->nDie, tmpBlkNum, tmpPage, spare_bitmap, FORMAT_PAGE_BUF, (void *)&tmpSpare);
+				if(CHANNEL_CNT==2)
+				{
+					if(SUPPORT_MULTI_PROGRAM)
+						spare_bitmap = spare_bitmap | (spare_bitmap<<(SECTOR_CNT_OF_SINGLE_PAGE*2));
+					else
+						spare_bitmap = spare_bitmap | (spare_bitmap<<(SECTOR_CNT_OF_SINGLE_PAGE));
+				}
+					
+		        _VirtualPageRead(pDieInfo->nDie, tmpBlkNum, tmpPage, spare_bitmap, FORMAT_PAGE_BUF, (void *)&tmpSpare);
 
 				//check if the block is a bad block
                 if((tmpSpare[0].BadBlkFlag != 0xff) || (SUPPORT_MULTI_PROGRAM && (tmpSpare[1].BadBlkFlag != 0xff)))

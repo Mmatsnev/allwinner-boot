@@ -25,12 +25,12 @@
 
 #include "nand_drv_cfg.h"
 
-#define ND_MAX_PART_COUNT		15	 									//max part count
+#define ND_MAX_PART_COUNT		120	 									//max part count
 #define ND_MBR_COPY_NUM        4    									//mbr backup count
 
 #define ND_MBR_START_ADDRESS	0x0										//mbr start address
-#define ND_MBR_SIZE			1024									//mbr size
-#define ND_MBR_RESERVED        (ND_MBR_SIZE - 20 - (ND_MAX_PART_COUNT * 64)) //mbr reserved space
+#define ND_MBR_SIZE			   (16*1024)									//mbr size
+#define ND_MBR_RESERVED        (ND_MBR_SIZE - 32 - (ND_MAX_PART_COUNT * sizeof(ND_PARTITION))) //mbr reserved space
 
 extern struct __NandDriverGlobal_t NandDriverInfo;
 
@@ -48,27 +48,29 @@ struct nand_disk{
 
 /* part info */
 typedef struct nand_tag_PARTITION{
-	__u32 addrhi;				//start address high 32 bit
-	__u32 addrlo;				//start address low 32 bit
-	__u32 lenhi;				//size high 32 bit
-	__u32 lenlo;				//size low 32 bit
-	__u8  classname[12];		//major device name
-	__u8  name[12];				//minor device name
-	unsigned  int       user_type;          //标志当前盘符所属于的用户
-	unsigned  int       ro;                 //标志当前盘符的读写属性
-	__u8  res[16];				//reserved
+	unsigned  int       addrhi;				//起始地址, 以扇区为单位	
+	unsigned  int       addrlo;				//	
+	unsigned  int       lenhi;				//长度	
+	unsigned  int       lenlo;				//	
+	unsigned  char      classname[16];		//次设备名	
+	unsigned  char      name[16];			//主设备名	
+	unsigned  int       user_type;          //用户类型	
+	unsigned  int       keydata;            //关键数据，要求量产不丢失	
+	unsigned  int       ro;                 //读写属性	
+	unsigned  char      reserved[68];		//保留数据，匹配分区信息128字节
 }ND_PARTITION;
 
 /* mbr info */
 typedef struct nand_tag_MBR{
-	__u32 crc32;					// crc, from byte 4 to mbr tail
-	__u32 version;					// version
-	__u8  magic[8];					// magic number
-	__u8  copy;						// mbr backup count
-	__u8  index;					// current part	no
-	__u16   PartCount;				// part counter
-	ND_PARTITION array[ND_MAX_PART_COUNT];// part info
-	__u8 res[ND_MBR_RESERVED];         // reserved space
+	unsigned  int       crc32;				        // crc 1k - 4	
+	unsigned  int       version;			        // 版本信息， 0x00000100	
+	unsigned  char 	    magic[8];			        //"softw311"	
+	unsigned  int 	    copy;				        //分数	
+	unsigned  int 	    index;				        //第几个MBR备份	
+	unsigned  int       PartCount;			        //分区个数	
+	unsigned  int       stamp[1];					//对齐	
+	ND_PARTITION           array[ND_MAX_PART_COUNT];	//	
+	unsigned  char      res[ND_MBR_RESERVED];
 }ND_MBR;
 
 int mbr2disks(struct nand_disk* disk_array);
