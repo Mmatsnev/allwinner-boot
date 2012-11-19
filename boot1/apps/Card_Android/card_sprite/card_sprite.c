@@ -99,7 +99,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	//NAND设备初始化
     memset(flash_info, 0, 512);
     __inf("erase flag=%d\n", flash_erase);
-    ret = update_flash_hardware_scan(flash_info, flash_erase);
+    ret = update_flash_hardware_scan(mbr_i,flash_info, flash_erase);
     if(ret == 0)
     {
     	__inf("burn nand\n");
