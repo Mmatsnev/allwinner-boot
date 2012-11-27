@@ -38,12 +38,12 @@
 //  nand driver 版本号
 //---------------------------------------------------------------
 #define  NAND_VERSION_0                 0x02
-#define  NAND_VERSION_1                 0x10
+#define  NAND_VERSION_1                 0x11
 
 //---------------------------------------------------------------
 //  结构体 定义
 //---------------------------------------------------------------
-typedef struct
+typedef struct 
 {
 	__u32		ChannelCnt;
 	__u32        ChipCnt;                            //the count of the total nand flash chips are currently connecting on the CE pin
@@ -59,7 +59,7 @@ typedef struct
     __u32       BlkCntPerDie;                       //the count of the physic blocks in one die, include valid block and invalid block
     __u32       OperationOpt;                       //the mask of the operation types which current nand flash can support support
     __u32        FrequencePar;                       //the parameter of the hardware access clock, based on 'MHz'
-    __u32        EccMode;                            //the Ecc Mode for the nand flash chip, 0: bch-16, 1:bch-28, 2:bch_32
+    __u32        EccMode;                            //the Ecc Mode for the nand flash chip, 0: bch-16, 1:bch-28, 2:bch_32   
     __u8        NandChipId[8];                      //the nand chip id of current connecting nand chip
     __u32       ValidBlkRatio;                      //the ratio of the valid physical blocks, based on 1024
 	__u32 		good_block_ratio;					//good block ratio get from hwscan
@@ -87,6 +87,14 @@ struct boot_physical_param{
 	void   *oobbuf; //oob buf
 };
 
+#define ND_MAX_PART_COUNT		15	 									//max part count
+
+struct nand_disk{
+	unsigned long size;
+	unsigned long offset;
+	unsigned char type;
+};
+
 //---------------------------------------------------------------
 //  函数 定义
 //---------------------------------------------------------------
@@ -97,7 +105,12 @@ extern __s32 LML_Exit(void);
 extern __s32 LML_Read(__u32 nLba, __u32 nLength, void* pBuf);
 extern __s32 LML_Write(__u32 nLba, __u32 nLength, void* pBuf);
 extern __s32 LML_FlushPageCache(void);
+
+extern __s32 BMM_RleaseLogBlock(__u32 log_level);
+extern __s32 BMM_WriteBackAllMapTbl(void);
+
 extern __s32 NAND_CacheFlush(void);
+extern __s32 NAND_CacheFlushDev(__u32 dev_num);
 extern __s32 NAND_CacheRead(__u32 blk, __u32 nblk, void *buf);
 extern __s32 NAND_CacheWrite(__u32 blk, __u32 nblk, void *buf);
 extern __s32 NAND_CacheOpen(void);
@@ -116,10 +129,13 @@ __s32  SCN_AnalyzeNandSystem(void);
 extern __s32 PHY_Init(void);
 extern __s32 PHY_Exit(void);
 extern __s32 PHY_ChangeMode(__u8 serial_mode);
+extern __s32 PHY_ScanDDRParam(void);
 
 //for simplie(boot0)
 extern __s32 PHY_SimpleErase(struct boot_physical_param * eraseop);
+extern __s32 PHY_SimpleErase_2CH(struct boot_physical_param * eraseop);
 extern __s32 PHY_SimpleRead(struct boot_physical_param * readop);
+extern __s32 PHY_SimpleRead_2CH(struct boot_physical_param * readop);
 extern __s32 PHY_SimpleWrite(struct boot_physical_param * writeop);
 extern __s32 PHY_SimpleWrite_1K(struct boot_physical_param * writeop);
 extern __s32 PHY_SimpleWrite_Seq(struct boot_physical_param * writeop);
@@ -144,11 +160,31 @@ extern __s32 NFC_LSBDisable(__u32 chip, __u32 read_retry_type);
 extern __s32 NFC_LSBInit(__u32 read_retry_type);
 extern __s32 NFC_LSBExit(__u32 read_retry_type);
 
-/*
+//for rb int
+extern void NFC_RbIntEnable(void);
+extern void NFC_RbIntDisable(void);
+extern void NFC_RbIntClearStatus(void);
+extern __u32 NFC_RbIntGetStatus(void);
+extern __u32 NFC_GetRbSelect(void);
+extern __u32 NFC_GetRbStatus(__u32 rb);
+extern __u32 NFC_RbIntOccur(void);
+
+extern void NFC_DmaIntEnable(void);
+extern void NFC_DmaIntDisable(void);
+extern void NFC_DmaIntClearStatus(void);
+extern __u32 NFC_DmaIntGetStatus(void);
+extern __u32 NFC_DmaIntOccur(void);
+
+//for mbr
+extern int mbr2disks(struct nand_disk* disk_array);
+
+
+
+/* 
 *   Description:
 *   1. if u wanna set dma callback hanlder(sleep during dma transfer) to free cpu for other tasks,
 *      one must call the interface before nand flash initialization.
-      this option is also protected by dma poll method,wakup(succeed or timeout) then check
+      this option is also protected by dma poll method,wakup(succeed or timeout) then check 
       dma transfer complete or still running.
 *   2. if u use dma poll method,no need to call the interface.
 *

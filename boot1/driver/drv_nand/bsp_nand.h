@@ -5,7 +5,7 @@
 //  nand driver 版本号
 //---------------------------------------------------------------
 #define  NAND_VERSION_0                 0x02
-#define  NAND_VERSION_1                 0x10
+#define  NAND_VERSION_1                 0x11
 
 //---------------------------------------------------------------
 //  结构体 定义
@@ -32,7 +32,7 @@ typedef struct
 	__u32 		good_block_ratio;					//good block ratio get from hwscan
 	__u32		ReadRetryType;						//the read retry type
 	__u32       DDRType;
-	__u32		Reserved[32];
+	__u32		Reserved[22];
 }boot_nand_para_t;
 
 typedef struct boot_flash_info{
@@ -101,7 +101,9 @@ extern __s32 PHY_ScanDDRParam(void);
 
 //for simplie(boot0)
 extern __s32 PHY_SimpleErase(struct boot_physical_param * eraseop);
+extern __s32 PHY_SimpleErase_2CH(struct boot_physical_param * eraseop);
 extern __s32 PHY_SimpleRead(struct boot_physical_param * readop);
+extern __s32 PHY_SimpleRead_2CH(struct boot_physical_param * readop);
 extern __s32 PHY_SimpleWrite(struct boot_physical_param * writeop);
 extern __s32 PHY_SimpleWrite_1K(struct boot_physical_param * writeop);
 extern __s32 PHY_SimpleWrite_Seq(struct boot_physical_param * writeop);

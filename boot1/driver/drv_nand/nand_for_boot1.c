@@ -27,6 +27,13 @@ __s32 NAND_PhyRead (struct boot_physical_param *readop)
 
 }
 
+__s32 NAND_PhyRead_2CH (struct boot_physical_param *readop)
+{
+
+	return(PHY_SimpleRead_2CH (readop));
+
+}
+
 /*
 ************************************************************************************************************************
 *                       READ ONE SINGLE PAGE
@@ -96,6 +103,11 @@ __s32 NAND_PhyWrite_Seq (struct boot_physical_param *writeop)
 __s32 NAND_PhyErase(struct boot_physical_param *eraseop)
 {
 	return (PHY_SimpleErase (eraseop ));
+}
+
+__s32 NAND_PhyErase_2CH(struct boot_physical_param *eraseop)
+{
+	return (PHY_SimpleErase_2CH (eraseop ));
 }
 
 /*
@@ -838,7 +850,7 @@ __s32  NAND_EraseChip( const boot_nand_para_t *nand_param)
 			if(bad_block_flag)
 				continue;
 
-			ret = NAND_PhyErase( &para_read );
+			ret = NAND_PhyErase_2CH( &para_read );
 			if( ret != 0 )
 	    		{
 	    		    NAND_Print("erasing block %u failed.\n", j );
@@ -965,7 +977,7 @@ __s32 NAND_BadBlockScan(const boot_nand_para_t *nand_param)
 				para.page = page_index[k];
 				if(para.page == 0xEE)
 				    continue;
-				NAND_PhyRead(&para );
+				NAND_PhyRead_2CH(&para );
 
 				// find bad blocks
 				if(oob_buf[0] != 0xff)
