@@ -21,20 +21,20 @@
 #include "types.h"
 #include "osal_de.h"
 
-#if 0
+#if 1
 __s32 OSAL_CCMU_SetSrcFreq(__u32 nSclkNo, __u32 nFreq)
 {
     //__inf("OSAL_CCMU_SetSrcFreq,%d,%d\n", nSclkNo, nFreq);
 
-    if(nSclkNo == AW_SYS_CLK_PLL3)
+    if(nSclkNo == SYS_CLK_PLL3)
     {
-        sys_put_wvalue(0x01c20010,0x8010d000 | (nFreq/3000000));
+        sys_put_wvalue(0x01c20010,0x81000007 | ((nFreq/3000000)<<8));
     }
-    else if(nSclkNo == AW_SYS_CLK_PLL7)
+    else if(nSclkNo == SYS_CLK_PLL7)
     {
-        sys_put_wvalue(0x01c20030,0x8010d000 | (nFreq/3000000));
+        sys_put_wvalue(0x01c20030,0x81000007 | ((nFreq/3000000)<<8));
     }
-    else if(nSclkNo == AW_SYS_CLK_PLL6)
+    else if(nSclkNo == SYS_CLK_PLL6)
     {
         __u32 N=0, K=2;
         __u32 value = 0;
@@ -53,40 +53,23 @@ __u32 OSAL_CCMU_GetSrcFreq(__u32 nSclkNo)
 
     //__inf("OSAL_CCMU_GetSrcFreq,%d\n",nSclkNo);
 
-    if(nSclkNo == AW_SYS_CLK_PLL3)
+    if(nSclkNo == SYS_CLK_PLL3)
     {
-        value = sys_get_wvalue(0x01c20010)&0x7f;
+        value = (sys_get_wvalue(0x01c20010) >> 8)&0x7f;
     }
-    else if(nSclkNo == AW_SYS_CLK_PLL7)
+    else if(nSclkNo == SYS_CLK_PLL7)
     {
-        value = sys_get_wvalue(0x01c20030)&0x7f;
+        value = (sys_get_wvalue(0x01c20030) >> 8)&0x7f;
     }
-    else if(nSclkNo == AW_SYS_CLK_PLL5P)
+    else if(nSclkNo == SYS_CLK_PLL6)
     {
         __u32 reg,N,K,P;
 
-        reg = sys_get_wvalue(0x01c20020);
-        N = (reg & (0x1f<<8))>>8;
-        K = ((reg & (0x3<<4))>>4) + 1;
-        P = (reg & (0x3<<16))>>16;
-        if(P==0)
-        {
-            P = 1;
-        }
-        else if(P==1)
-        {
-            P = 2;
-        }
-        else if(P==2)
-        {
-            P = 4;
-        }
-        else
-        {
-            P = 8;
-        }
+        reg = sys_get_wvalue(0x01c20028);
+        N = ((reg >>8)&0x1f) + 1;
+        K = ((reg>>4)&0x3) + 1;
 
-        value = (24 * N * K)/P;
+        value = (24 * N * K)/2;
     }
 
     return value * 3000000;
@@ -109,97 +92,153 @@ __s32 OSAL_CCMU_SetMclkSrc(__hdle hMclk, __u32 nSclkNo)
 
     //__inf("OSAL_CCMU_SetMclkSrc,%d,%d\n", hMclk, nSclkNo);
 
-    if(hMclk == AW_MOD_CLK_LCD0CH0 || hMclk == AW_MOD_CLK_LCD1CH0 || hMclk == AW_MOD_CLK_LCD0CH1_S1 || hMclk == AW_MOD_CLK_LCD0CH1_S2
-        || hMclk == AW_MOD_CLK_LCD1CH1_S1 || hMclk == AW_MOD_CLK_LCD1CH1_S2 || hMclk == AW_MOD_CLK_HDMI)
+    if(hMclk == MOD_CLK_LCD0CH0 || hMclk == MOD_CLK_LCD1CH0)
     {
-        if(nSclkNo == AW_SYS_CLK_PLL3)
+        if(nSclkNo == SYS_CLK_PLL3)
         {
             clk_src = 0;
         }
-        else if(nSclkNo == AW_SYS_CLK_PLL7)
+        else if(nSclkNo == SYS_CLK_PLL7)
         {
             clk_src = 1;
         }
-        else if(nSclkNo == AW_SYS_CLK_PLL3X2)
+        else if(nSclkNo == SYS_CLK_PLL3X2)
         {
             clk_src = 2;
         }
-        else if(nSclkNo == AW_SYS_CLK_PLL7X2)
+        else if(nSclkNo == SYS_CLK_PLL7X2)
+        {
+            clk_src = 3;
+        }else if(nSclkNo == SYS_CLK_MIPIPLL)
+        {
+            clk_src = 4;
+        }
+    }
+    else if(hMclk == MOD_CLK_LCD0CH1 || hMclk == MOD_CLK_LCD0CH1 || hMclk ==  MOD_CLK_HDMI 
+        || hMclk == MOD_CLK_MIPIDSIP || hMclk == MOD_CLK_MIPIDSIS)
+    {
+        if(nSclkNo == SYS_CLK_PLL3)
+        {
+            clk_src = 0;
+        }
+        else if(nSclkNo == SYS_CLK_PLL7)
+        {
+            clk_src = 1;
+        }
+        else if(nSclkNo == SYS_CLK_PLL3X2)
+        {
+            clk_src = 2;
+        }
+        else if(nSclkNo == SYS_CLK_PLL7X2)
         {
             clk_src = 3;
         }
     }
-    else if(hMclk == AW_MOD_CLK_DEBE0 || hMclk == AW_MOD_CLK_DEBE1 || hMclk == AW_MOD_CLK_DEFE0 || hMclk == AW_MOD_CLK_DEFE1)
+    else if(hMclk == MOD_CLK_DEBE0 || hMclk == MOD_CLK_DEBE1 || hMclk == MOD_CLK_DEFE0 
+        || hMclk == MOD_CLK_DEFE1 || hMclk == MOD_CLK_IEPDEU0 || hMclk ==  MOD_CLK_IEPDEU1 
+        || hMclk == MOD_CLK_IEPDRC0 || hMclk == MOD_CLK_IEPDRC1 )
     {
-        if(nSclkNo == AW_SYS_CLK_PLL3)
+        if(nSclkNo == SYS_CLK_PLL3)
         {
             clk_src = 0;
         }
-        else if(nSclkNo == AW_SYS_CLK_PLL7)
+        else if(nSclkNo == SYS_CLK_PLL7)
         {
             clk_src = 1;
         }
-        else if(nSclkNo == AW_SYS_CLK_PLL5P)
+        else if(nSclkNo == SYS_CLK_PLL6x2)
         {
             clk_src = 2;
+        }
+        else if(nSclkNo == SYS_CLK_PLL8)
+        {
+            clk_src = 3;
+        }
+        else if(nSclkNo == SYS_CLK_PLL9)
+        {
+            clk_src = 4;
+        }
+        else if(nSclkNo == SYS_CLK_PLL10)
+        {
+            clk_src = 5;
         }
     }
 
 
-    if(hMclk == AW_MOD_CLK_LCD0CH0)
+    if(hMclk == MOD_CLK_LCD0CH0)
     {
-        value = sys_get_wvalue(0x01c20118) & (~(0x3<<24));
+        value = sys_get_wvalue(0x01c20118) & (~(0x7<<24));
         sys_put_wvalue(0x01c20118, value | (clk_src<<24));
     }
-    else if(hMclk == AW_MOD_CLK_LCD1CH0)
+    else if(hMclk == MOD_CLK_LCD1CH0)
     {
-        value = sys_get_wvalue(0x01c2011c) & (~(0x3<<24));
+        value = sys_get_wvalue(0x01c2011c) & (~(0x7<<24));
         sys_put_wvalue(0x01c2011c, value | (clk_src<<24));
     }
-    else if(hMclk == AW_MOD_CLK_LCD0CH1_S1)
+    else if(hMclk == MOD_CLK_LCD0CH1)
     {
         value = sys_get_wvalue(0x01c2012c) & (~(0x3<<24));
         sys_put_wvalue(0x01c2012c, value | (clk_src<<24));
     }
-    else if(hMclk == AW_MOD_CLK_LCD0CH1_S2)
-    {
-        value = sys_get_wvalue(0x01c2012c) & (~(0x3<<24));
-        sys_put_wvalue(0x01c2012c, value | (clk_src<<24));
-    }
-    else if(hMclk == AW_MOD_CLK_LCD1CH1_S1)
+    else if(hMclk == MOD_CLK_LCD1CH1)
     {
         value = sys_get_wvalue(0x01c20130) & (~(0x3<<24));
         sys_put_wvalue(0x01c20130, value | (clk_src<<24));
     }
-    else if(hMclk == AW_MOD_CLK_LCD1CH1_S2)
-    {
-        value = sys_get_wvalue(0x01c20130) & (~(0x3<<24));
-        sys_put_wvalue(0x01c20130, value | (clk_src<<24));
-    }
-    else if(hMclk == AW_MOD_CLK_HDMI)
+    else if(hMclk == MOD_CLK_HDMI)
     {
         value = sys_get_wvalue(0x01c20150) & (~(0x3<<24));
         sys_put_wvalue(0x01c20150, value | (clk_src<<24));
     }
-    else if(hMclk == AW_MOD_CLK_DEBE0)
+    else if(hMclk == MOD_CLK_DEBE0)
     {
-        value = sys_get_wvalue(0x01c20104) & (~(0x3<<24));
+        value = sys_get_wvalue(0x01c20104) & (~(0x7<<24));
         sys_put_wvalue(0x01c20104, value | (clk_src<<24));
     }
-    else if(hMclk == AW_MOD_CLK_DEBE1)
+    else if(hMclk == MOD_CLK_DEBE1)
     {
-        value = sys_get_wvalue(0x01c20108) & (~(0x3<<24));
+        value = sys_get_wvalue(0x01c20108) & (~(0x7<<24));
         sys_put_wvalue(0x01c20108, value | (clk_src<<24));
     }
-    else if(hMclk == AW_MOD_CLK_DEFE0)
+    else if(hMclk == MOD_CLK_DEFE0)
     {
-        value = sys_get_wvalue(0x01c2010c) & (~(0x3<<24));
+        value = sys_get_wvalue(0x01c2010c) & (~(0x7<<24));
         sys_put_wvalue(0x01c2010c, value | (clk_src<<24));
     }
-    else if(hMclk == AW_MOD_CLK_DEFE1)
+    else if(hMclk == MOD_CLK_DEFE1)
     {
-        value = sys_get_wvalue(0x01c20110) & (~(0x3<<24));
+        value = sys_get_wvalue(0x01c20110) & (~(0x7<<24));
         sys_put_wvalue(0x01c20110, value | (clk_src<<24));
+    }
+    else if(hMclk == MOD_CLK_MIPIDSIS)
+    {
+        value = sys_get_wvalue(0x01c20168) & (~(0x3<<24));
+        sys_put_wvalue(0x01c20168, value | (clk_src<<24));
+    }
+    else if(hMclk == MOD_CLK_MIPIDSIP)
+    {
+        value = sys_get_wvalue(0x01c20168) & (~(0x3<<8));
+        sys_put_wvalue(0x01c20168, value | (clk_src<<8));
+    }
+    else if(hMclk == MOD_CLK_IEPDRC0)
+    {
+        value = sys_get_wvalue(0x01c20180) & (~(0x7<<24));
+        sys_put_wvalue(0x01c20180, value | (clk_src<<24));
+    }
+    else if(hMclk == MOD_CLK_IEPDRC0)
+    {
+        value = sys_get_wvalue(0x01c20184) & (~(0x7<<24));
+        sys_put_wvalue(0x01c20184, value | (clk_src<<24));
+    }
+    else if(hMclk == MOD_CLK_IEPDEU0)
+    {
+        value = sys_get_wvalue(0x01c20188) & (~(0x7<<24));
+        sys_put_wvalue(0x01c20188, value | (clk_src<<24));
+    }
+    else if(hMclk == MOD_CLK_IEPDEU1)
+    {
+        value = sys_get_wvalue(0x01c2018c) & (~(0x7<<24));
+        sys_put_wvalue(0x01c2018c, value | (clk_src<<24));
     }
     return 0;
 }
@@ -215,51 +254,72 @@ __s32 OSAL_CCMU_SetMclkDiv(__hdle hMclk, __s32 nDiv)
 
     //__inf("OSAL_CCMU_SetMclkDiv,%d,%d\n", hMclk, nDiv);
 
-    if(hMclk == AW_MOD_CLK_LCD0CH1_S1)
+    if(hMclk == MOD_CLK_LCD0CH1)
     {
         value = sys_get_wvalue(0x01c2012c) & (~(0xf<<0));
         sys_put_wvalue(0x01c2012c, value | ((nDiv-1)<<0));
     }
-    else if(hMclk == AW_MOD_CLK_LCD0CH1_S2)
-    {
-        value = sys_get_wvalue(0x01c2012c) & (~(0xf<<0));
-        sys_put_wvalue(0x01c2012c, value | ((nDiv-1)<<0));
-    }
-    else if(hMclk == AW_MOD_CLK_LCD1CH1_S1)
+    else if(hMclk == MOD_CLK_LCD1CH1)
     {
         value = sys_get_wvalue(0x01c20130) & (~(0xf<<0));
         sys_put_wvalue(0x01c20130, value | ((nDiv-1)<<0));
     }
-    else if(hMclk == AW_MOD_CLK_LCD1CH1_S2)
-    {
-        value = sys_get_wvalue(0x01c20130) & (~(0xf<<0));
-        sys_put_wvalue(0x01c20130, value | ((nDiv-1)<<0));
-    }
-    else if(hMclk == AW_MOD_CLK_HDMI)
+    else if(hMclk == MOD_CLK_HDMI)
     {
         value = sys_get_wvalue(0x01c20150) & (~(0xf<<0));
         sys_put_wvalue(0x01c20150, value | ((nDiv-1)<<0));
     }
-    else if(hMclk == AW_MOD_CLK_DEBE0)
+    else if(hMclk == MOD_CLK_DEBE0)
     {
         value = sys_get_wvalue(0x01c20104) & (~(0xf<<0));
         sys_put_wvalue(0x01c20104, value | ((nDiv-1)<<0));
     }
-    else if(hMclk == AW_MOD_CLK_DEBE1)
+    else if(hMclk == MOD_CLK_DEBE1)
     {
         value = sys_get_wvalue(0x01c20108) & (~(0xf<<0));
         sys_put_wvalue(0x01c20108, value | ((nDiv-1)<<0));
     }
-    else if(hMclk == AW_MOD_CLK_DEFE0)
+    else if(hMclk == MOD_CLK_DEFE0)
     {
         value = sys_get_wvalue(0x01c2010c) & (~(0xf<<0));
         sys_put_wvalue(0x01c2010c, value | ((nDiv-1)<<0));
     }
-    else if(hMclk == AW_MOD_CLK_DEFE1)
+    else if(hMclk == MOD_CLK_DEFE1)
     {
         value = sys_get_wvalue(0x01c20110) & (~(0xf<<0));
         sys_put_wvalue(0x01c20110, value | ((nDiv-1)<<0));
     }
+    else if(hMclk == MOD_CLK_MIPIDSIS)
+    {
+        value = sys_get_wvalue(0x01c20168) & (~(0xf<<16));
+        sys_put_wvalue(0x01c20168, value | ((nDiv-1)<<16));
+    }
+    else if(hMclk == MOD_CLK_MIPIDSIP)
+    {
+        value = sys_get_wvalue(0x01c20168) & (~(0xf<<0));
+        sys_put_wvalue(0x01c20168, value | ((nDiv-1)<<0));
+    }
+    else if(hMclk == MOD_CLK_IEPDRC0)
+    {
+        value = sys_get_wvalue(0x01c20180) & (~(0xf<<0));
+        sys_put_wvalue(0x01c20180, value | ((nDiv-1)<<0));
+    }
+    else if(hMclk == MOD_CLK_IEPDRC1)
+    {
+        value = sys_get_wvalue(0x01c20184) & (~(0xf<<0));
+        sys_put_wvalue(0x01c20184, value | ((nDiv-1)<<0));
+    }
+    else if(hMclk == MOD_CLK_IEPDEU0)
+    {
+        value = sys_get_wvalue(0x01c20188) & (~(0xf<<0));
+        sys_put_wvalue(0x01c20188, value | ((nDiv-1)<<0));
+    }
+    else if(hMclk == MOD_CLK_IEPDEU1)
+    {
+        value = sys_get_wvalue(0x01c2018c) & (~(0xf<<0));
+        sys_put_wvalue(0x01c2018c, value | ((nDiv-1)<<0));
+    }
+    
     return 0;
 }
 
@@ -274,126 +334,177 @@ __s32 OSAL_CCMU_MclkOnOff(__hdle hMclk, __s32 bOnOff)
 
     //__inf("OSAL_CCMU_MclkOnOff,%d,%d\n", hMclk, bOnOff);
 
-    if(hMclk == AW_MOD_CLK_LCD0CH0)
+    if(hMclk == MOD_CLK_LCD0CH0)
     {
         value = sys_get_wvalue(0x01c20118) & (~(0x1<<31));
         sys_put_wvalue(0x01c20118, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_LCD1CH0)
+    else if(hMclk == MOD_CLK_LCD1CH0)
     {
         value = sys_get_wvalue(0x01c2011c) & (~(0x1<<31));
         sys_put_wvalue(0x01c2011c, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_LCD0CH1_S1)
-    {
-        value = sys_get_wvalue(0x01c2012c) & (~(0x1<<15));
-        sys_put_wvalue(0x01c2012c, value | (bOnOff<<15));
-    }
-    else if(hMclk == AW_MOD_CLK_LCD0CH1_S2)
+    else if(hMclk == MOD_CLK_LCD0CH1)
     {
         value = sys_get_wvalue(0x01c2012c) & (~(0x1<<31));
         sys_put_wvalue(0x01c2012c, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_LCD1CH1_S1)
-    {
-        value = sys_get_wvalue(0x01c20130) & (~(0x1<<15));
-        sys_put_wvalue(0x01c20130, value | (bOnOff<<15));
-    }
-    else if(hMclk == AW_MOD_CLK_LCD1CH1_S2)
+    else if(hMclk == MOD_CLK_LCD1CH1)
     {
         value = sys_get_wvalue(0x01c20130) & (~(0x1<<31));
         sys_put_wvalue(0x01c20130, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_HDMI)
+    else if(hMclk == MOD_CLK_HDMI)
     {
         value = sys_get_wvalue(0x01c20150) & (~(0x1<<31));
         sys_put_wvalue(0x01c20150, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_DEBE0)
+    else if(hMclk == MOD_CLK_DEBE0)
     {
         value = sys_get_wvalue(0x01c20104) & (~(0x1<<31));
         sys_put_wvalue(0x01c20104, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_DEBE1)
+    else if(hMclk == MOD_CLK_DEBE1)
     {
         value = sys_get_wvalue(0x01c20108) & (~(0x1<<31));
         sys_put_wvalue(0x01c20108, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_DEFE0)
+    else if(hMclk == MOD_CLK_DEFE0)
     {
         value = sys_get_wvalue(0x01c2010c) & (~(0x1<<31));
         sys_put_wvalue(0x01c2010c, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_DEFE1)
+    else if(hMclk == MOD_CLK_DEFE1)
     {
         value = sys_get_wvalue(0x01c20110) & (~(0x1<<31));
         sys_put_wvalue(0x01c20110, value | (bOnOff<<31));
     }
-    else if(hMclk == AW_MOD_CLK_SDRAM_DEBE0)
+    else if(hMclk == MOD_CLK_MIPIDSIS)
+    {
+        value = sys_get_wvalue(0x01c20168) & (~(0x1<<31));
+        sys_put_wvalue(0x01c20168, value | (bOnOff<<31));
+    }
+    else if(hMclk == MOD_CLK_MIPIDSIP)
+    {
+        value = sys_get_wvalue(0x01c20168) & (~(0x1<<15));
+        sys_put_wvalue(0x01c20168, value | (bOnOff<<15));
+    }
+    else if(hMclk == MOD_CLK_IEPDRC0)
+    {
+        value = sys_get_wvalue(0x01c20180) & (~(0x1<<31));
+        sys_put_wvalue(0x01c20180, value | (bOnOff<<31));
+    }
+    else if(hMclk == MOD_CLK_IEPDRC1)
+    {
+        value = sys_get_wvalue(0x01c20184) & (~(0x1<<31));
+        sys_put_wvalue(0x01c20184, value | (bOnOff<<31));
+    }
+    else if(hMclk == MOD_CLK_IEPDEU0)
+    {
+        value = sys_get_wvalue(0x01c20188) & (~(0x1<<31));
+        sys_put_wvalue(0x01c20188, value | (bOnOff<<31));
+    }
+    else if(hMclk == MOD_CLK_IEPDEU1)
+    {
+        value = sys_get_wvalue(0x01c2018c) & (~(0x1<<31));
+        sys_put_wvalue(0x01c2018c, value | (bOnOff<<31));
+    }
+    else if(hMclk == DRAM_CLK_DEBE0)
     {
         value = sys_get_wvalue(0x01c20100) & (~(0x1<<26));
         sys_put_wvalue(0x01c20100, value | (bOnOff<<26));
     }
-    else if(hMclk == AW_MOD_CLK_SDRAM_DEBE1)
+    else if(hMclk == DRAM_CLK_DEBE1)
     {
         value = sys_get_wvalue(0x01c20100) & (~(0x1<<27));
         sys_put_wvalue(0x01c20100, value | (bOnOff<<27));
     }
-    else if(hMclk == AW_MOD_CLK_SDRAM_DEFE0)
-    {
-        value = sys_get_wvalue(0x01c20100) & (~(0x1<<25));
-        sys_put_wvalue(0x01c20100, value | (bOnOff<<25));
-    }
-    else if(hMclk == AW_MOD_CLK_SDRAM_DEFE1)
+    else if(hMclk == DRAM_CLK_DEFE0)
     {
         value = sys_get_wvalue(0x01c20100) & (~(0x1<<24));
         sys_put_wvalue(0x01c20100, value | (bOnOff<<24));
     }
-    else if(hMclk == AW_MOD_CLK_AHB_DEFE1)
+    else if(hMclk == DRAM_CLK_DEFE1)
     {
-        value = sys_get_wvalue(0x01c20064) & (~(0x1<<15));
-        sys_put_wvalue(0x01c20064, value | (bOnOff<<15));
+        value = sys_get_wvalue(0x01c20100) & (~(0x1<<25));
+        sys_put_wvalue(0x01c20100, value | (bOnOff<<25));
     }
-    else if(hMclk == AW_MOD_CLK_AHB_DEFE0)
+    else if(hMclk == DRAM_CLK_DEU0)
+    {
+        value = sys_get_wvalue(0x01c20100) & (~(0x1<<18));
+        sys_put_wvalue(0x01c20100, value | (bOnOff<<18));
+    }
+    else if(hMclk == DRAM_CLK_DEU1)
+    {
+        value = sys_get_wvalue(0x01c20100) & (~(0x1<<19));
+        sys_put_wvalue(0x01c20100, value | (bOnOff<<19));
+    }
+    else if(hMclk == DRAM_CLK_DRC0)
+    {
+        value = sys_get_wvalue(0x01c20100) & (~(0x1<<16));
+        sys_put_wvalue(0x01c20100, value | (bOnOff<<16));
+    }
+    else if(hMclk == DRAM_CLK_DRC1)
+    {
+        value = sys_get_wvalue(0x01c20100) & (~(0x1<<17));
+        sys_put_wvalue(0x01c20100, value | (bOnOff<<17));
+    }
+    else if(hMclk == AHB_CLK_DEFE0)
     {
         value = sys_get_wvalue(0x01c20064) & (~(0x1<<14));
         sys_put_wvalue(0x01c20064, value | (bOnOff<<14));
     }
-    else if(hMclk == AW_MOD_CLK_AHB_DEBE1)
+    else if(hMclk == AHB_CLK_DEFE1)
     {
-        value = sys_get_wvalue(0x01c20064) & (~(0x1<<13));
-        sys_put_wvalue(0x01c20064, value | (bOnOff<<13));
+        value = sys_get_wvalue(0x01c20064) & (~(0x1<<15));
+        sys_put_wvalue(0x01c20064, value | (bOnOff<<15));
     }
-    else if(hMclk == AW_MOD_CLK_AHB_DEBE0)
+    else if(hMclk == AHB_CLK_DEBE0)
     {
         value = sys_get_wvalue(0x01c20064) & (~(0x1<<12));
         sys_put_wvalue(0x01c20064, value | (bOnOff<<12));
     }
-    else if(hMclk == AW_MOD_CLK_AHB_HDMI)
+    else if(hMclk == AHB_CLK_DEBE1)
+    {
+        value = sys_get_wvalue(0x01c20064) & (~(0x1<<13));
+        sys_put_wvalue(0x01c20064, value | (bOnOff<<13));
+    }
+    else if(hMclk == AHB_CLK_HDMI)
     {
         value = sys_get_wvalue(0x01c20064) & (~(0x1<<11));
         sys_put_wvalue(0x01c20064, value | (bOnOff<<11));
     }
-    else if(hMclk == AW_MOD_CLK_AHB_LCD1)
-    {
-        value = sys_get_wvalue(0x01c20064) & (~(0x1<<5));
-        sys_put_wvalue(0x01c20064, value | (bOnOff<<5));
-    }
-    else if(hMclk == AW_MOD_CLK_AHB_LCD0)
+    else if(hMclk == AHB_CLK_LCD0)
     {
         value = sys_get_wvalue(0x01c20064) & (~(0x1<<4));
         sys_put_wvalue(0x01c20064, value | (bOnOff<<4));
     }
-    else if(hMclk == AW_MOD_CLK_AHB_TVE1)
+    else if(hMclk == AHB_CLK_LCD1)
     {
-        value = sys_get_wvalue(0x01c20064) & (~(0x1<<3));
-        sys_put_wvalue(0x01c20064, value | (bOnOff<<3));
+        value = sys_get_wvalue(0x01c20064) & (~(0x1<<5));
+        sys_put_wvalue(0x01c20064, value | (bOnOff<<5));
     }
-    else if(hMclk == AW_MOD_CLK_AHB_TVE0)
+    else if(hMclk == AHB_CLK_DRC0)
     {
-        value = sys_get_wvalue(0x01c20064) & (~(0x1<<2));
-        sys_put_wvalue(0x01c20064, value | (bOnOff<<2));
+        value = sys_get_wvalue(0x01c20064) & (~(0x1<<25));
+        sys_put_wvalue(0x01c20064, value | (bOnOff<<25));
     }
+    else if(hMclk == AHB_CLK_DRC1)
+    {
+        value = sys_get_wvalue(0x01c20064) & (~(0x1<<26));
+        sys_put_wvalue(0x01c20064, value | (bOnOff<<26));
+    }
+    else if(hMclk == AHB_CLK_DEU0)
+    {
+        value = sys_get_wvalue(0x01c20064) & (~(0x1<<23));
+        sys_put_wvalue(0x01c20064, value | (bOnOff<<23));
+    }
+    else if(hMclk == AHB_CLK_DEU1)
+    {
+        value = sys_get_wvalue(0x01c20064) & (~(0x1<<24));
+        sys_put_wvalue(0x01c20064, value | (bOnOff<<24));
+    }
+    
     return 0;
 }
 
@@ -405,40 +516,70 @@ __s32 OSAL_CCMU_MclkReset(__hdle hMclk, __s32 bReset)
 
     bReset = 1-bReset;
 
-    if(hMclk == AW_MOD_CLK_LCD0CH0)
+    if(hMclk == MOD_CLK_DEFE0)
     {
-        value = sys_get_wvalue(0x01c20118) & (~(0x1<<30));
-        sys_put_wvalue(0x01c20118, value | (bReset<<30));
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<14));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<14));
     }
-    else if(hMclk == AW_MOD_CLK_LCD1CH0)
+    else if(hMclk == MOD_CLK_DEFE1)
     {
-        value = sys_get_wvalue(0x01c2011c) & (~(0x1<<30));
-        sys_put_wvalue(0x01c2011c, value | (bReset<<30));
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<15));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<15));
     }
-    else if(hMclk == AW_MOD_CLK_DEBE0)
+    else if(hMclk == MOD_CLK_DEBE0)
     {
-        value = sys_get_wvalue(0x01c20104) & (~(0x1<<30));
-        sys_put_wvalue(0x01c20104, value | (bReset<<30));
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<12));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<12));
     }
-    else if(hMclk == AW_MOD_CLK_DEBE1)
+    else if(hMclk == MOD_CLK_DEBE1)
     {
-        value = sys_get_wvalue(0x01c20108) & (~(0x1<<30));
-        sys_put_wvalue(0x01c20108, value | (bReset<<30));
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<13));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<13));
     }
-    else if(hMclk == AW_MOD_CLK_DEFE0)
+    else if(hMclk == MOD_CLK_HDMI)
     {
-        value = sys_get_wvalue(0x01c2010c) & (~(0x1<<30));
-        sys_put_wvalue(0x01c2010c, value | (bReset<<30));
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<11));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<11));
     }
-    else if(hMclk == AW_MOD_CLK_DEFE1)
+    else if(hMclk == MOD_CLK_LCD0CH0)
     {
-        value = sys_get_wvalue(0x01c20110) & (~(0x1<<30));
-        sys_put_wvalue(0x01c20110, value | (bReset<<30));
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<4));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<4));
     }
-    else if(hMclk == AW_MOD_CLK_LVDS)
+    else if(hMclk == MOD_CLK_LCD1CH0)
     {
-        value = sys_get_wvalue(0x01c2014c) & (~(0x1<<0));
-        sys_put_wvalue(0x01c2014c, value | (bReset<<0));
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<5));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<5));
+    }
+    else if(hMclk == MOD_CLK_LVDS)
+    {
+        value = sys_get_wvalue(0x01c202c8) & (~(0x1<<0));
+        sys_put_wvalue(0x01c202c8, value | (bReset<<0));
+    }
+    else if(hMclk == MOD_CLK_IEPDRC0)
+    {
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<25));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<25));
+    }
+    else if(hMclk == MOD_CLK_IEPDRC1)
+    {
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<26));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<26));
+    }
+    else if(hMclk == MOD_CLK_IEPDEU0)
+    {
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<23));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<23));
+    }
+    else if(hMclk == MOD_CLK_IEPDEU1)
+    {
+        value = sys_get_wvalue(0x01c202c4) & (~(0x1<<24));
+        sys_put_wvalue(0x01c202c4, value | (bReset<<24));
+    }
+    else if(hMclk == MOD_CLK_MIPIDSIS)
+    {
+        value = sys_get_wvalue(0x01c202c0) & (~(0x1<<1));
+        sys_put_wvalue(0x01c202c0, value | (bReset<<1));
     }
     return 0;
 }

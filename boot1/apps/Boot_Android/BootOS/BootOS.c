@@ -249,7 +249,8 @@ __s32 PreBootOS(char *os_para, __u32 *kernal_addr, __u32 *para_addr, __s32 *logo
     //此处增加接口，显示开机logo
     *logo_status = os_img->logo_off;
     //boot_show_logo(os_img->logo_name, os_img->logo_show, os_img->logo_address);
-    boot_show_logo("c:\\os_show\\bootlogo.bmp", os_img->logo_show, os_img->logo_address);
+    //boot_show_logo("c:\\os_show\\bootlogo.bmp", os_img->logo_show, os_img->logo_address);
+    boot_show_logo("c:\\os_show\\bootlogo.bmp", os_img->logo_show, BOOT_LOGO_MEM_BASE);
     //os_img->img_set = (char *)os_img + ((boot_sys_img_set_t *)0)->img_set;
     //填充所有参数
     //依次加载OS各个部分到内存中

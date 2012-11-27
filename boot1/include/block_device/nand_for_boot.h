@@ -31,6 +31,9 @@
 #ifndef __BSP_FOR_BOOT1_H__
 #define __BSP_FOR_BOOT1_H__
 
+#define SUCCESS	0
+#define FAIL	-1
+#define BADBLOCK -2
 //---------------------------------------------------------------
 //  nand driver °æ±¾ºÅ
 //---------------------------------------------------------------

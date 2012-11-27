@@ -29,6 +29,8 @@
 #include "part_info//part_info.h"
 #include "usb_device//usb_storage_init.h"
 
+#define BOOT_LOGO_MEM_BASE            (EGON2_DRAM_BASE + SZ_512M - SZ_64M - SZ_32M)
+#define BOOT_LOGO_MEM_SIZE            (SZ_16M)
 
 #endif   //__INCLUDE_H__
 

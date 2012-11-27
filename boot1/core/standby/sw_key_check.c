@@ -87,6 +87,12 @@ __s32 eGon2_key_get_value(void)
         {
             KEYC_REG_INT_STATUS |= (reg_val & 0x1f);//按下时间足够长，则认为按键合法
             key_val = KEYC_REG_DATA0 & 0x3f;
+
+            if(!key_val)		//错误的按键键值，认为没有按键
+            {
+            	return -1;
+            }
+
             return key_val;
         }
                                //否，按下时间不够长，不处理这个动作
@@ -95,6 +101,11 @@ __s32 eGon2_key_get_value(void)
     {
         KEYC_REG_INT_STATUS |= (1 << 0);
         key_val = KEYC_REG_DATA0 & 0x3f;
+
+        if(!key_val)			//错误的按键键值，认为没有按键
+        {
+        	return -1;
+        }
 
         return key_val;              //代表重复键
     }

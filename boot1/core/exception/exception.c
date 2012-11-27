@@ -80,7 +80,48 @@
 */
 static __s32 check_key_to_fel(void)
 {
-#if 0
+#if 1
+	int ret, key_value;
+	int fel_key_max, fel_key_min;
+
+	eGon2_printf("key\n");
+    eGon2_key_get_status();
+    eGon2_timer_delay(10);
+
+    key_value = eGon2_key_get_value();  			//读取按键信息
+    if(key_value < 0)             				//没有按键按下
+    {
+        eGon2_printf("no key found\n");
+        return -1;
+    }
+	ret = eGon2_script_parser_fetch("fel_key", "fel_key_max", &fel_key_max, 1);
+    if(ret)
+    {
+    	eGon2_printf("fel key max not found\n");
+
+    	return key_value;
+    }
+
+	ret = eGon2_script_parser_fetch("fel_key", "fel_key_min", &fel_key_min, 1);
+    if(ret)
+    {
+    	eGon2_printf("fel key min not found\n");
+
+    	return key_value;
+    }
+
+	if((key_value <= fel_key_max) && (key_value >= fel_key_min))
+	{
+		eGon2_printf("fel key detected\n");
+
+		return 0;
+	}
+
+	eGon2_printf("fel key value %d is not in the range from %d to %d\n", key_value, fel_key_min, fel_key_max);
+
+	return key_value;
+
+#else
     __s32 ret, count, time_tick;
     __s32 value_old, value_new, value_cnt;
     __s32 new_key, new_key_flag;
@@ -174,7 +215,6 @@ static __s32 check_key_to_fel(void)
         }
     }
 #endif
-	return 1;
 }
 /*
 ************************************************************************************************************

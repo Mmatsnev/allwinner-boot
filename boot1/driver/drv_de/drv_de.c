@@ -26,6 +26,7 @@ void DRV_lcd_open_callback(void *parg)
     __s32 i = lcd_flow_cnt[sel]++;
 
     flow = BSP_disp_lcd_get_open_flow(sel);
+    __wrn("lcd open callback, step %d, timeout=%d\n", i, flow->func[i].delay);
 
 	if(i < flow->func_num)
     {
@@ -45,7 +46,7 @@ void DRV_lcd_open_callback(void *parg)
         lcd_op_finished[sel] = 1;
     }
 }
-
+#if 1
 __s32 DRV_lcd_open(__u32 sel)
 {
     lcd_flow_cnt[sel] = 0;
@@ -58,6 +59,33 @@ __s32 DRV_lcd_open(__u32 sel)
 
     return 0;
 }
+#else
+__s32 DRV_lcd_open(__u32 sel)
+{
+    __u32 i = 0;
+    __lcd_flow_t *flow;
+
+	if(BSP_disp_lcd_used(sel))
+	{
+	    BSP_disp_lcd_open_before(sel);
+
+	    flow = BSP_disp_lcd_get_open_flow(sel);
+	    for(i=0; i<flow->func_num; i++)
+	    {
+	        __u32 timeout = flow->func[i].delay;
+
+	        flow->func[i].func(sel);
+
+	    	xDelayMS(timeout);
+
+	    }
+
+	    BSP_disp_lcd_open_after(sel);
+	}
+
+    return 0;
+}
+#endif
 
 __bool DRV_lcd_check_open_finished(__u32 sel)
 {
@@ -68,6 +96,7 @@ __bool DRV_lcd_check_open_finished(__u32 sel)
     }
     return lcd_op_finished[sel];
 }
+
 
 // [before][step_0][delay_0][step_1][delay_1]......[step_n-2][delay_n-2][step_n-1][delay_n-1][after]
 void DRV_lcd_close_callback(void *parg)
@@ -149,6 +178,8 @@ __s32 DRV_DE_INIT(void)
 {
     __disp_bsp_init_para para;
 
+    __wrn("==DRV_DE_INIT==\n");
+
     para.base_image0   = 0x01e60000;
     para.base_image1   = 0x01e40000;
     para.base_scaler0  = 0x01e00000;
@@ -171,7 +202,7 @@ __s32 DRV_DE_INIT(void)
     BSP_disp_init(&para);
     BSP_disp_open();
 
-#if 0
+if(0)
 {
     __disp_color_t bk_color;
     int i;
@@ -180,13 +211,13 @@ __s32 DRV_DE_INIT(void)
 
     DRV_lcd_open(0);
     __wrn("open lcd, delay 5000Ms\n");
-    xDelayMS(50);
+    xDelayMS(10);
     BSP_disp_lcd_set_src(0, DISP_LCDC_SRC_WHITE);
     __wrn("lcd set white src\n");
-    xDelayMS(20);
+    xDelayMS(10);
     BSP_disp_lcd_set_src(0, DISP_LCDC_SRC_BLACK);
     __wrn("lcd set black src\n");
-    xDelayMS(20);
+    xDelayMS(10);
     BSP_disp_lcd_set_src(0, DISP_LCDC_SRC_DE_CH1);
     __wrn("lcd set ch1 src\n");
     bk_color.red = 0xff;
@@ -194,21 +225,24 @@ __s32 DRV_DE_INIT(void)
     bk_color.blue = 0x00;
     BSP_disp_set_bk_color(0, &bk_color);
     __wrn("set red back color\n");
-    xDelayMS(20);
+    xDelayMS(10);
     bk_color.red = 0x00;
     bk_color.green = 0xff;
     bk_color.blue = 0x00;
     BSP_disp_set_bk_color(0, &bk_color);
     __wrn("set red back color\n");
-    xDelayMS(20);
+    xDelayMS(10);
     bk_color.red = 0x00;
     bk_color.green = 0x00;
     bk_color.blue = 0xff;
     BSP_disp_set_bk_color(0, &bk_color);
     __wrn("set red back color\n");
-    xDelayMS(20);
+    xDelayMS(10);
+    BSP_disp_print_reg(1, DISP_REG_LCDC0);
+    BSP_disp_print_reg(1, DISP_REG_PIOC);
+
+    __wrn("==DRV_DE_INIT finish==\n");
 }
-#endif
     return 0;
 }
 

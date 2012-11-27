@@ -207,12 +207,11 @@ typedef enum
 {
     DISP_LCDC_SRC_DE_CH1    = 0,
     DISP_LCDC_SRC_DE_CH2    = 1,
-    DISP_LCDC_SRC_DMA       = 2,
-    DISP_LCDC_SRC_WHITE     = 3,
-    DISP_LCDC_SRC_BLACK     = 4,
-    DISP_LCDC_SRC_BLUT      = 5,
-    DISP_LCDC_SRC_DMA888    = 6,
-    DISP_LCDC_SRC_DMA565    = 7,
+    DISP_LCDC_SRC_DMA888    = 2,
+    DISP_LCDC_SRC_DMA565    = 3,    
+    DISP_LCDC_SRC_WHITE     = 4,
+    DISP_LCDC_SRC_BLACK     = 5,
+    DISP_LCDC_SRC_BLUE      = 6,
 }__disp_lcdc_src_t;
 
 typedef enum
@@ -269,16 +268,16 @@ typedef enum
 
 typedef enum
 {
-    DISP_ENHANCE_MODE_RED,//0
-    DISP_ENHANCE_MODE_GREEN,// 1
-    DISP_ENHANCE_MODE_BLUE,// 2
-    DISP_ENHANCE_MODE_CYAN,// 3
-    DISP_ENHANCE_MODE_MAGENTA,// 4
-    DISP_ENHANCE_MODE_YELLOW,// 5
-    DISP_ENHANCE_MODE_FLESH,// 6
-    DISP_ENHANCE_MODE_STANDARD,// 7
-    DISP_ENHANCE_MODE_VIVID,// 8
-    DISP_ENHANCE_MODE_SCENERY,//9
+    DISP_ENHANCE_MODE_RED       = 0x0,
+    DISP_ENHANCE_MODE_GREEN     = 0x1,
+    DISP_ENHANCE_MODE_BLUE      = 0x2,
+    DISP_ENHANCE_MODE_CYAN      = 0x3,
+    DISP_ENHANCE_MODE_MAGENTA   = 0x4,
+    DISP_ENHANCE_MODE_YELLOW    = 0x5,
+    DISP_ENHANCE_MODE_FLESH     = 0x6,
+    DISP_ENHANCE_MODE_STANDARD  = 0x7,
+    DISP_ENHANCE_MODE_VIVID     = 0x8,
+    DISP_ENHANCE_MODE_SCENERY   = 0xa,
 }__disp_enhance_mode_t;
 
 
@@ -316,11 +315,11 @@ typedef enum
 
 typedef enum
 {
-    LCD_HV_IF_PRGB_1CYC		= 0,
-    LCD_HV_IF_SRGB_3CYC		= 8,
-    LCD_HV_IF_DRGB_4CYC		= 10,
-    LCD_HV_IF_RGBD_4CYC		= 11,
-    LCD_HV_IF_CCIR656_2CYC	= 12,
+    LCD_HV_IF_PRGB_1CYC		= 0,  //parallel hv
+    LCD_HV_IF_SRGB_3CYC		= 8,  //serial hv
+    LCD_HV_IF_DRGB_4CYC		= 10, //Dummy RGB
+    LCD_HV_IF_RGBD_4CYC		= 11, //RGB Dummy
+    LCD_HV_IF_CCIR656_2CYC	= 12, 
 }__lcd_hv_if_t;
 
 typedef enum
@@ -347,8 +346,8 @@ typedef enum
 typedef enum
 {
     LCD_HV_SYUV_FDLY_0LINE	= 0,
-    LCD_HV_SRGB_FDLY_2LINE	= 1,
-    LCD_HV_SRGB_FDLY_3LINE	= 2,
+    LCD_HV_SRGB_FDLY_2LINE	= 1, //ccir ntsc
+    LCD_HV_SRGB_FDLY_3LINE	= 2, //ccir pal
 }__lcd_hv_syuv_fdly_t;
 
 typedef enum
@@ -362,9 +361,10 @@ typedef enum
 
 typedef enum
 {
-    LCD_CPU_TE_DISABLE		= 0,
-    LCD_CPU_TE_ENABLE		= 1,
-}__lcd_cpu_te_t;
+    LCD_TE_DISABLE		= 0,
+    LCD_TE_RISING		= 1,
+    LCD_TE_FALLING      = 2,
+}__lcd_te_t;
 
 typedef enum
 {
@@ -374,9 +374,9 @@ typedef enum
 
 typedef enum
 {
-    LCD_LVDS_4CHANNEL		= 0,
-    LCD_LVDS_3CHANNEL		= 1,
-}__lcd_lvds_channel_t;
+    LCD_LVDS_8bit		= 0,
+    LCD_LVDS_6bit		= 1,
+}__lcd_lvds_colordepth_t;
 
 typedef enum
 {
@@ -427,6 +427,7 @@ typedef struct
     __bool                  b_trd_src; //if 3d source, used for scaler mode layer
     __disp_3d_src_mode_t    trd_mode; //source 3d mode, used for scaler mode layer
     __u32                   trd_right_addr[3];//used when in frame packing 3d mode
+    __bool                  pre_multiply; //TRUE: pre-multiply fb
 }__disp_fb_t;
 
 typedef struct
@@ -542,18 +543,19 @@ typedef struct
 	__lcd_hv_syuv_fdly_t	lcd_hv_syuv_fdly;
 
 	__lcd_lvds_if_t   		lcd_lvds_if;
-	__lcd_lvds_channel_t	lcd_lvds_channel;
+	__lcd_lvds_colordepth_t	lcd_lvds_colordepth; //color depth
 	__lcd_lvds_mode_t   	lcd_lvds_mode;
-	__u32   				lcd_lvds_io_cross;
+	__u32   				lcd_lvds_io_polarity;
 
 	__lcd_cpu_if_t			lcd_cpu_if;
-	__lcd_cpu_te_t			lcd_cpu_te;
+	__lcd_te_t			    lcd_cpu_te;
 
 	__lcd_dsi_if_t			lcd_dsi_if;
 	__lcd_dsi_lane_t		lcd_dsi_lane;
 	__lcd_dsi_format_t		lcd_dsi_format;
 	__u32					lcd_dsi_eotp;
     __u32					lcd_dsi_vc;
+    __lcd_te_t              lcd_dsi_te;
     
 	__u32						lcd_dsi_dphy_timing_en; //todo? maybe not used
 	__disp_dsi_dphy_timing_t*	lcd_dsi_dphy_timing_p;
@@ -563,8 +565,6 @@ typedef struct
 	__u32   lcd_x;
 	__u32   lcd_y;
 
-	__u32   lcd_pwm_not_used;
-	__u32   lcd_pwm_ch;
 	__u32  	lcd_pwm_freq;
 	__u32  	lcd_pwm_pol;
 
@@ -578,7 +578,7 @@ typedef struct
 	__u32   lcd_vspw;
 	__u32   lcd_hspw;
 
-	__u32   lcd_io_cfg0;
+	__u32   lcd_dclk_phase;
 
 	__u32   lcd_frm;
 	__u32   lcd_gamma_en;
@@ -643,7 +643,6 @@ typedef struct
     __u32 active_state;
     __u32 duty_ns;
     __u32 period_ns;
-    __u32 mode;//0: single, 1: pair
 }__pwm_info_t;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -703,6 +702,8 @@ typedef struct
     __disp_pixel_fmt_t      format[2];
     __disp_pixel_seq_t      seq[2];
     __bool                  br_swap[2];
+    __u32                   fb_width[2];
+    __u32                   fb_height[2];
 }__disp_init_t;
 
 

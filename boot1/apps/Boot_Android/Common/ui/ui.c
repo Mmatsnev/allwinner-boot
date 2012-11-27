@@ -60,6 +60,7 @@ display_layer_info_t *ui_AllocLayerPara(Picture_t *PictureInfo)
 
     layer_para->fb.size.width 		= (PictureInfo->RowSize * 8) / PictureInfo->BitCount;
     layer_para->fb.addr[0] 			= (__u32)PictureInfo->Buffer;
+    __inf("frame buffer address = %x\n", (__u32)PictureInfo->Buffer);
     layer_para->fb.mode = DISP_MOD_INTERLEAVED;
     layer_para->fb.format = DISP_FORMAT_ARGB8888;
     layer_para->fb.br_swap = 0;

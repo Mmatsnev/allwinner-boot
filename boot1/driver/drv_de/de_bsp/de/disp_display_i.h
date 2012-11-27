@@ -11,7 +11,7 @@
 #define DE_WRN __wrn
 #define OSAL_IRQ_RETURN IRQ_HANDLED
 #else
-#define DE_INF(msg...)
+#define DE_INF __inf
 #define DE_MSG __msg
 #define DE_WRN __wrn
 #ifndef OSAL_IRQ_RETURN
@@ -25,13 +25,9 @@
 #define INTC_IRQNO_SCALER0  AW_IRQ_DEFE0
 #define INTC_IRQNO_LCDC0    AW_IRQ_LCD0
 #define INTC_IRQNO_DSI      AW_IRQ_MIPIDSI
-#ifndef __FPGA_DEBUG__
 #define INTC_IRQNO_LCDC1    AW_IRQ_LCD1
 #define INTC_IRQNO_SCALER1  AW_IRQ_DEFE1
-#else
-#define INTC_IRQNO_LCDC1    100
-#define INTC_IRQNO_SCALER1  100
-#endif
+
 #define MAX_SPRITE_BLOCKS	32
 
 

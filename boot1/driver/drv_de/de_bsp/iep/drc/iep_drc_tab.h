@@ -2841,7 +2841,7 @@ __u16 pwrsv_lgc_tab[1408][256] =
 
 };
 #else
-__u16 pwrsv_lgc_tab[1][1] = {0};
+__u16 pwrsv_lgc_tab[1][1];
 #endif
 
 __u8 spatial_coeff[9]={228,241,228,241,255,241,228,241,228};
