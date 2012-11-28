@@ -79,6 +79,28 @@ void set_dram_para(void *dram_addr )
 __s32 BOOT_NandGetPara(boot_nand_para_t *param)
 {
 #if 1
+#ifdef NAND_DEBUG
+	msg("ChannelCnt = %x\n", param->ChannelCnt);
+	msg("ChipCnt = %x\n", param->ChipCnt);
+    msg("ChipConnectInfo = %x\n", param->ChipConnectInfo);
+	msg("RbCnt = %x\n", param->RbCnt);
+	msg("RbConnectInfo= %x\n", param->RbConnectInfo);
+    msg("RbConnectMode = %x\n", param->RbConnectMode);
+	msg("BankCntPerChip = %x\n", param->BankCntPerChip);
+    msg("DieCntPerChip = %x\n", param->DieCntPerChip);
+    msg("PlaneCntPerDie = %x\n", param->PlaneCntPerDie);
+    msg("SectorCntPerPage = %x\n", param->SectorCntPerPage);
+    msg("PageCntPerPhyBlk = %x\n", param->PageCntPerPhyBlk);
+    msg("BlkCntPerDie = %x\n", param->BlkCntPerDie);
+    msg("OperationOpt = %x\n", param->OperationOpt);
+    msg("FrequencePar = %x\n", param->FrequencePar);
+    msg("EccMode = %x\n", param->EccMode);
+    msg("NandChipId = %x, %x\n", param->NandChipId[0], param->NandChipId[4]);
+    msg("ValidBlkRatio = %x\n", param->ValidBlkRatio);
+	msg("good_block_ratio = %x\n", param->good_block_ratio);
+	msg("ReadRetryType = %x\n", param->ReadRetryType);
+	msg("DDRType = %x\n", param->DDRType);
+#endif
 	memcpy( (void *)param, BT0_head.prvt_head.storage_data, sizeof(boot_nand_para_t));
 #else
 	param->ChipCnt = 2;

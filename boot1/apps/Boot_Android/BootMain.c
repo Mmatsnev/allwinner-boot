@@ -100,6 +100,7 @@ int BootMain(int argc, char **argv)
 	    }
 	}
 
+	//while((*(volatile __u32 *)0x40000000) != 0x12345678);
 	//数据初始化
 	memset(&board_res, 0, sizeof(boot_hardware_res));
 	memset(&boot1_priv_para, 0, sizeof(boot1_private_head_t));
@@ -124,7 +125,7 @@ int BootMain(int argc, char **argv)
     {
         goto jump_to_power_off;
     }
-    power_set_init();
+    //power_set_init();
 //    memset(product, 0, 64);
 //    ret = wBoot_script_parser_fetch("target", "product", (int *)product, 64/4);
 //    if(!ret)
@@ -181,7 +182,7 @@ int BootMain(int argc, char **argv)
 //	check_private_part(boot1_priv_para.uart_port);
 //	check_private_part(11);
 	__inf("init to usb pc\n");
-	power_set_usbpc();
+	//power_set_usbpc();
     //申请内存，填充第一个启动脚本
     global_info = (boot_global_info_t *)wBoot_malloc(sizeof(boot_global_info_t));
     if(!global_info)
@@ -216,7 +217,8 @@ int BootMain(int argc, char **argv)
     		ret = -2;
     	}
     }
-    BoardExit(logo_status, ret);
+    //BoardExit(logo_status, ret);
+	BoardExit(0, ret);
 
 	power_int_rel();
 	usb_detect_exit();

@@ -608,8 +608,8 @@ int sunxi_mmc_init(int sdc_no, unsigned bus_width)
 	struct mmc *mmc;
 	int ret;
 
-	memset(&mmc_dev[sdc_no], 0, sizeof(struct mmc)*MAX_MMC_NUM);
-	memset(&mmc_host[sdc_no], 0, sizeof(struct sunxi_mmc_host)*MAX_MMC_NUM);
+	memset(&mmc_dev[sdc_no], 0, sizeof(struct mmc));
+	memset(&mmc_host[sdc_no], 0, sizeof(struct sunxi_mmc_host));
 	mmc = &mmc_dev[sdc_no];
 
 	strcpy(mmc->name, "SUNXI SD/MMC");

@@ -69,10 +69,10 @@ initialize
 	bic r0, r0, #( ARMV7_C1_A_BIT)                    ;// disable align
 	mcr p15, 0, r0, c1, c0
 
-	bl  set_pll
-
 ;// set SP for C language
 	ldr sp, =BOOT0_STACK_BOTTOM
+
+	bl  set_pll
 ;/**********************************the end of initializing system*********************************/
 	bl  Boot0_C_part
 

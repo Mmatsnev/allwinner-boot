@@ -29,13 +29,6 @@ static int script_relocation(void);
 
 __u32 timer_hd;
 static int  eGon2_storage_type_set(void);
-static void timer_init(void)
-{
-	*(volatile unsigned int *)(0x01c20000 + 0x144) |= (1U << 31);
-	*(volatile unsigned int *)(0x01c20C00 + 0x80 )  = 1;
-	*(volatile unsigned int *)(0x01c20C00 + 0x8C )  = 0x2EE0;
-	*(volatile unsigned int *)(0x01c20C00 + 0x84 )  = 0;
-}
 /*******************************************************************************
 *函数名称: eGon2_start
 *函数原型：void Boot1_C_part( void )
@@ -55,7 +48,6 @@ void eGon2_start( void )
 	H_FILE  hfile = NULL;
 	FS_PART_OPTS_t   fs_ops;
 
-	timer_init();
 	/* init enviroment for running app */
 //	move_RW( );
 //	reposition_boot_standby();
@@ -93,7 +85,7 @@ void eGon2_start( void )
     //初始化IIC, 现在还没有调整过频率，运行在384M
     p2wi_init();
     //初始化POWER，调整核心电压
-    if(!power_init(BT1_head.prvt_head.core_para.user_set_clock, BT1_head.prvt_head.core_para.user_set_core_vol))
+    if(!power_init(BT1_head.prvt_head.core_para.user_set_core_vol))
     {
         //开始调整频率，电压已经调整完毕
         if(default_clock != BT1_head.prvt_head.core_para.user_set_clock)
@@ -135,7 +127,7 @@ void eGon2_start( void )
     }
 
 	eGon2_printf("flash init start\n");
-    eGon2_block_device_init();
+	eGon2_block_device_init();
     eGon2_printf("flash init finish\n");
     fs_ops.Write = eGon2_block_device_write;
     fs_ops.Read  = eGon2_block_device_read;

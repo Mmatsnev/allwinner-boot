@@ -198,7 +198,7 @@ void p2wi_set_pmu_mode(u32 slave_addr, u32 reg, u32 data)
 void p2wi_set_clk(u32 sck)
 {
 #ifndef	CONFIG_SUN6I_FPGA
-	u32 src_clk = ccu_get_sclk_freq(CCU_SYS_CLK_APB0);
+	u32 src_clk = _get_apb1_clock();
 	u32 div = src_clk / sck / 2 - 1;
 	u32 sda_odly = div >> 1;
 	u32 rval = div | (sda_odly << 8);

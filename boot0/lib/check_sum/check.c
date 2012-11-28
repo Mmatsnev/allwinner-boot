@@ -52,6 +52,7 @@ __s32 check_magic( __u32 *mem_base, const char *magic )
 
 	bfh = (boot_file_head_t *)mem_base;
 	p = bfh->magic;
+	msg("magic = %s\n", p);
 	for( i = 0, sz = sizeof( bfh->magic );  i < sz;  i++ )
 	{
 		if( *p++ != *magic++ )

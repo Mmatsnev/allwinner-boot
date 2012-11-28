@@ -99,6 +99,7 @@ __s32  Nand_Burn_Boot0(__u32 Boot0_buf, __u32 length )
 
        		}
        	}
+       	__inf("burn block %d ok\n", i);
     }
 
 	ret = 0;

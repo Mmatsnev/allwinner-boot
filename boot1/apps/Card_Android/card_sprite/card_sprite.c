@@ -103,7 +103,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 		boot_ui_progressbar_active(progressbar_hd);
 	}
 	//读取原有的uboot环境变量
-	private_fetch_from_flash();
+	//private_fetch_from_flash();
 	//NAND设备初始化
     memset(flash_info, 0, 512);
     __inf("erase flag=%d\n", flash_erase);

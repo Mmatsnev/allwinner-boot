@@ -33,9 +33,9 @@
 #endif
 
 #ifdef MMC_DEBUG
-#define mmcinfo(fmt...)	OSAL_printf("[mmc]: "fmt)
-#define mmcdbg(fmt...)	OSAL_printf("[mmc]: "fmt)
-#define mmcmsg(fmt...)	OSAL_printf(fmt)
+#define mmcinfo(fmt...)	msg("[mmc]: "fmt)
+#define mmcdbg(fmt...)	msg("[mmc]: "fmt)
+#define mmcmsg(fmt...)	msg(fmt)
 #else
 #define mmcinfo(fmt...)
 #define mmcdbg(fmt...)

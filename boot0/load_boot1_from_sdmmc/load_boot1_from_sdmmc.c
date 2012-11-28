@@ -49,16 +49,18 @@ __s32 load_boot1_from_sdmmc( char *buf)
 	boot_sdcard_info_t  *sdcard_info = (boot_sdcard_info_t *)buf;
 
 	i = BT0_head.boot_head.platform[0];
-	for(i=0;i<4;i++)
+	msg("card boot number = %d\n", i);
+
+	//for(i=0;i<4;i++)
 	{
 		/* open sdmmc */
-		card_no = sdcard_info->card_no[i];
+		card_no = i;
 		msg("card no is %d\n", card_no);
 		if(card_no < 0)
 		{
 			msg("bad card number %d in card boot\n", card_no);
 
-			continue;
+			goto __card_op_fail__;
 		}
 		msg("sdcard %d line count %d\n", card_no, sdcard_info->line_count[i] );
 		if(!sdcard_info->line_count[i])
@@ -121,8 +123,6 @@ __s32 load_boot1_from_sdmmc( char *buf)
 
 __card_op_fail__:
 		SDMMC_PhyExit(card_no );
-
-		continue;
 	}
 
 	return ERROR;

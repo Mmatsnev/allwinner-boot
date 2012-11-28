@@ -158,15 +158,22 @@ void set_pll( void )
 	//设置PLL1到408M
 	reg_val = (0x00001000) | (0x80000000);
 	CCMU_REG_PLL1_CTRL = reg_val;
-	//延时
-	for(i=0;i<200;i++);
+	//等待lock
+#ifndef CONFIG_SUN6I_FPGA
+	do
+	{
+		reg_val = CCMU_REG_PLL1_CTRL;
+	}
+	while(reg_val & (0x1 << 28));
+#endif
 	//切换到PLL1
 	reg_val = CCMU_REG_AXI_MOD;
 	reg_val &= ~(3 << 16);
 	reg_val |=  (2 << 16);
 	CCMU_REG_AXI_MOD = reg_val;
 	//打开DMA
-	*(volatile unsigned int *)(0x01c20000 + 0x60) |= 1 << 6;
+	*(volatile unsigned int *)(0x01c20000 + 0x60)  |= 1 << 6;
+	*(volatile unsigned int *)(0x01c20000 + 0x2C0) |= 1 << 6;
 
 	return ;
 }

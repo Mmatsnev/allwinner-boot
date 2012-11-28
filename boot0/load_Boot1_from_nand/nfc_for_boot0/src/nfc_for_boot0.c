@@ -743,13 +743,11 @@ __s32 NFC_Init(NFC_INIT_INFO *nand_info )
     NandIOBase[1] = (__u32)NAND_IORemap(NAND_IO_BASE_ADDR1, 4096);
     NandIndex = 0;
     //init clk
-    NAND_ClkRequest();
-    NAND_AHBEnable();
-    NAND_SetClk(10);
-    NAND_ClkEnable();
+    NAND_ClkRequest(NandIndex);
+    NAND_SetClk(NandIndex,10);
     
     //init pin
-    NAND_PIORequest();
+    NAND_PIORequest(NandIndex);
     
 
 	NFC_SetEccMode(0);
@@ -781,12 +779,10 @@ void NFC_Exit( void )
 	NFC_WRITE_REG(NFC_REG_CTL,cfg);
 
 	 //init clk
-	NAND_ClkDisable();
-    NAND_AHBDisable();
-    NAND_ClkRelease();
+    NAND_ClkRelease(NandIndex);
 
     //init pin
-    NAND_PIORelease();
+    NAND_PIORelease(NandIndex);
     
 }
 

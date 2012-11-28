@@ -35,7 +35,7 @@ sdmmc:$(LOCALTARGET)
 	$(LOAD) $(LDFLAGS) -O binary -S -g -R .note -R .comment $(LOCALTARGET) $(TMPTARGET)
 	-$(WORKTOOLS)/gen_check_code $(TMPTARGET)
 	cp $(TMPTARGET)  $(TARGET)
-#	-rm $(OBJS) $(TMPTARGET)
+	-rm $(OBJS) $(TMPTARGET)
 	@echo ----------------------------
 	@echo target make finish
 	@echo ----------------------------
