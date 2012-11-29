@@ -199,6 +199,7 @@ void p2wi_set_clk(u32 sck)
 {
 #ifndef	CONFIG_SUN6I_FPGA
 	u32 src_clk = _get_apb1_clock();
+	eGon2_printf("p2wi apb1 clock = %d\n", src_clk);
 	u32 div = src_clk / sck / 2 - 1;
 	u32 sda_odly = div >> 1;
 	u32 rval = div | (sda_odly << 8);

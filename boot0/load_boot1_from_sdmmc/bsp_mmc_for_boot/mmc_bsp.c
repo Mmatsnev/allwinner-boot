@@ -165,7 +165,7 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff)
 	u32 n, k, m;
 	u32 gpioc_base = 0x01c20800 + 0x48;
 	u32 gpiof_base = 0x01c20800 + 0xb4;
-	u32 pll5_base = CCMU_PLL5_CLK_BASE;
+//	u32 pll5_base = CCMU_PLL5_CLK_BASE;
 
 	mmcdbg("init mmc %d clock and io\n", sdc_no);
 	/* config gpio */
@@ -220,17 +220,18 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff)
 
 	/* config mod clock */
 	if (onoff) {
-		rval = readl(pll5_base);
-		n = (rval >> 8) &  0x1f;
-		k = ((rval >> 4) & 3) + 1;
-		m = (rval & 3) + 1;
-		pll5_clk = 24 * n * k / m;
-		divider = (pll5_clk + 25) / 50 - 1;
-
-		mmcdbg("init mmc n %d, k %d, m %d, pll5clk %d, mbase %x\n", n, k, m, pll5_clk, mmchost->mclkbase);
-		writel((1U << 31) | (2U << 24) | divider, mmchost->mclkbase);
-		mmchost->mclk = pll5_clk * 1000000 / (divider + 1);
-		mmcdbg("init mmc mclk %d\n", mmchost->mclk);
+//		rval = readl(pll5_base);
+//		n = (rval >> 8) &  0x1f;
+//		k = ((rval >> 4) & 3) + 1;
+//		m = (rval & 3) + 1;
+//		pll5_clk = 24 * n * k / m;
+//		divider = (pll5_clk + 25) / 50 - 1;
+//
+//		mmcdbg("init mmc n %d, k %d, m %d, pll5clk %d, mbase %x\n", n, k, m, pll5_clk, mmchost->mclkbase);
+//		writel((1U << 31) | (2U << 24) | divider, mmchost->mclkbase);
+//		mmchost->mclk = pll5_clk * 1000000 / (divider + 1);
+//		mmcdbg("init mmc mclk %d\n", mmchost->mclk);
+		writel(0x80000000, mmchost->mclkbase);
 	} else {
 		writel(0, mmchost->mclkbase);
 	}

@@ -228,7 +228,7 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff)
 		divider = (pll5_clk + 25) / 50 - 1;
 
 		mmcdbg("init mmc n %d, k %d, m %d, pll5clk %d, mbase %x\n", n, k, m, pll5_clk, mmchost->mclkbase);
-		writel((1U << 31) | (2U << 24) | divider, mmchost->mclkbase);
+		writel((1U << 31) | (1U << 24) | divider, mmchost->mclkbase);
 		mmchost->mclk = pll5_clk * 1000000 / (divider + 1);
 		mmcdbg("init mmc mclk %d\n", mmchost->mclk);
 	} else {

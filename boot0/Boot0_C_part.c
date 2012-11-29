@@ -153,8 +153,8 @@ void set_pll( void )
 {
 	__u32 reg_val, i;
 
-	//切换到24M
-	CCMU_REG_AXI_MOD = 0x00010000;
+	//切换到24M，设置AXI分频为2
+	CCMU_REG_AXI_MOD = 0x00010001;
 	//设置PLL1到408M
 	reg_val = (0x00001000) | (0x80000000);
 	CCMU_REG_PLL1_CTRL = reg_val;
@@ -166,6 +166,8 @@ void set_pll( void )
 	}
 	while(reg_val & (0x1 << 28));
 #endif
+	//设置CPU:AXI:AHB:APB分频 4:2:2:1
+	CCMU_REG_APB1_APB1 = 0x02 << 12;
 	//切换到PLL1
 	reg_val = CCMU_REG_AXI_MOD;
 	reg_val &= ~(3 << 16);

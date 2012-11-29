@@ -85,6 +85,7 @@ void eGon2_start( void )
     //初始化IIC, 现在还没有调整过频率，运行在384M
     p2wi_init();
     //初始化POWER，调整核心电压
+#ifndef CONFIG_SUN6I_FPGA
     if(!power_init(BT1_head.prvt_head.core_para.user_set_core_vol))
     {
         //开始调整频率，电压已经调整完毕
@@ -96,13 +97,20 @@ void eGon2_start( void )
         }
         else
         {
-        	eGon2_printf("set default clock=384\n");
+        	eGon2_printf("set default clock=408M\n");
         }
     }
     else
     {
-    	eGon2_printf("set dcdc2 failed, set default clock 384M\n");
+    	eGon2_printf("set dcdc2 failed, set default clock 408M\n");
     }
+#else
+	power_init(BT1_head.prvt_head.core_para.user_set_core_vol);
+	eGon2_printf("try to set clock %d\n", BT1_head.prvt_head.core_para.user_set_clock);
+	default_clock = eGon2_clock_set_ext(BT1_head.prvt_head.core_para.user_set_clock, BT1_head.prvt_head.core_para.user_set_core_vol);
+	eGon2_printf("set dcdc2=%d, clock=%d successed\n", BT1_head.prvt_head.core_para.user_set_core_vol, default_clock);
+#endif
+    eGon2_clock_set_pll6();
     eGon2_key_init();
     //检查是否需要直接进入fel，通常用于异常出现的情况
     exception = eGon2_boot_detect();

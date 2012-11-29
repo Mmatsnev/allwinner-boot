@@ -406,6 +406,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	    }
 	    if(item_rest_sectors)
 	    {
+	    	__u32 last_bytes;
 //	        if(!Img_ReadItemData(imghd, imgitemhd, (void *)src_buf, item_rest_size))   //¶Á³ö32kÊý¾Ý
 //	        {
 //	            sprite_wrn("sprite update error: fail to read data from %s\n", dl_info->one_part_info[i].dl_filename);
@@ -421,7 +422,15 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	            goto _update_error_;
 			}
 			//__inf("%x %x %x %x\n", *((__u32 *)src_buf + 0), *((__u32 *)src_buf + 1), *((__u32 *)src_buf + 2), *((__u32 *)src_buf + 3));
-	        decode((__u32)src_buf, (__u32)dest_buf, item_rest_sectors<<9, &actual_buf_addr);
+	        if(!item_rest_bytes)
+			{
+				last_bytes = item_rest_sectors<<9;
+			}
+			else
+			{
+				last_bytes = ((item_rest_sectors - 1)<<9) + item_rest_bytes;
+			}
+	        decode((__u32)src_buf, (__u32)dest_buf, last_bytes, &actual_buf_addr);
 			//__inf("item rest item_rest_bytes = %x\n", item_rest_bytes);
 //			if(!item_rest_bytes)
 //			{
@@ -434,7 +443,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	        //__inf("verify sum = %x\n", once_sum);
 	        //calc_sum += once_sum;
 			//__inf("total sum = %x\n", calc_sum);
-	        if(update_flash_write((void *)actual_buf_addr, item_rest_sectors<<9))
+			if(update_flash_write((void *)actual_buf_addr, last_bytes))
 	        {
 	        	sprite_wrn("sprite update error: fail to write last data in %s\n", dl_info->one_part_info[i].dl_filename);
 

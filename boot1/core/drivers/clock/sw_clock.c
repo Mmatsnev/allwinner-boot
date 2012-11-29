@@ -652,6 +652,44 @@ static int clk_get_pll_para(struct core_pll_freq_tbl *factor, __u32 pll_clk)
 *
 ************************************************************************************************************
 */
+int eGon2_clock_set_pll6(void)
+{
+	int factor_n, factor_k;
+	__u32 reg_val, pll6;
+
+	CCMU_REG_PLL6_CTRL = 0x10041811;
+#ifndef CONFIG_SUN6I_FPGA
+	do
+	{
+		reg_val = CCMU_REG_PLL6_CTRL;
+	}
+	while(reg_val & (0x1 << 28));
+#endif
+	reg_val = CCMU_REG_PLL6_CTRL;
+	factor_n = ((reg_val >> 8) & 0x1f) + 1;
+	factor_k = ((reg_val >> 4) & 0x03) + 1;
+	pll6 = 24 * factor_n * factor_k/2;
+
+	eGon2_printf("PLL6 CTRL %x, pll = %d\n", reg_val, pll6);
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 int _set_divd(int pll)
 {
 	__u32 reg_val;
@@ -829,6 +867,7 @@ __u32 eGon2_clock_set_ext(__u32 clock_frequency, __u32 core_vol)
     CCMU_REG_AXI_MOD = reg_val;
 //    tmp = (reg_val>>8)&0x03;
 //    eGon2_printf("axi:ahb:apb=%d:%d:%d\n", ((reg_val>>0)&0x03) + 1, 1<<((reg_val>>4)&0x03), tmp?2:(1<<tmp));
+	eGon2_printf("PLL1 %x, AXI %x, AHBAPB %x\n", CCMU_REG_PLL1_CTRL, CCMU_REG_AXI_MOD, CCMU_REG_APB1_APB1);
 
     return  _get_pll1_clock();
 }
