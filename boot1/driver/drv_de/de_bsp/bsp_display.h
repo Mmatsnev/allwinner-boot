@@ -2,7 +2,6 @@
 #ifndef __EBSP_DISPLAY_H__
 #define __EBSP_DISPLAY_H__
 
-#define __FPGA_DEBUG__
 
 //#define __LINUX_OSAL__
 //#define __MELIS_OSAL__
@@ -75,13 +74,17 @@ typedef unsigned int __hdle;
 #endif
 
 #ifdef __BOOT_OSAL__
-#define OSAL_PRINTF wlibc_uprintf
 
 #include "egon2.h"
+
+#ifdef  CONFIG_SUN6I_FPGA
+#define __FPGA_DEBUG__
+#endif
+
+#define   OSAL_PRINTF   wlibc_uprintf
 #include "string.h"
 #include "../osal/osal_de.h"
 #include "iep/iep.h"
-
 #define   sprintf		wlibc_sprintf
 
 #endif
@@ -251,7 +254,7 @@ extern __s32 pwm_get_para(__u32 channel, __pwm_info_t * pwm_info);
 extern __s32 BSP_disp_get_timming(__u32 sel, __disp_tcon_timing_t * tt);
 extern __u32 BSP_disp_get_cur_line(__u32 sel);
 extern __s32 BSP_disp_close_lcd_backlight(__u32 sel);
-extern __s32 BSP_disp_lcd_set_bright_dimming(__u32 sel, __u32 bright_dimming);  //for drc 
+extern __s32 BSP_disp_lcd_set_bright_dimming(__u32 sel, __u32 bright_dimming);  //for drc
 extern __s32 BSP_disp_lcd_used(__u32 sel);
 extern __s32 BSP_disp_restore_lcdc_reg(__u32 sel);
 

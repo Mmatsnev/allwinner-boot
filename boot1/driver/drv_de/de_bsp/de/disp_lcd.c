@@ -230,7 +230,7 @@ void Lcd_Panel_Parameter_Check(__u32 sel)
 #endif
 }
 
-__s32 LCD_get_panel_para(__u32 sel, __panel_para_t * info)
+__s32 LCD_parse_panel_para(__u32 sel, __panel_para_t * info)
 {
     __s32 ret = 0;
     char primary_key[25];
@@ -516,15 +516,49 @@ __s32 LCD_get_panel_para(__u32 sel, __panel_para_t * info)
         DE_INF("lcd_dsi_te = %d\n", value);
     }
 
-    ret = OSAL_Script_FetchParser_Data(primary_key, "lcd_dclk_phase", &value, 1);
+    ret = OSAL_Script_FetchParser_Data(primary_key, "lcd_edp_tx_rate", &value, 1);
+    if(ret < 0)
+    {
+        DE_INF("fetch script data %s.lcd_edp_tx_rate fail\n", primary_key);
+    }
+    else
+    {
+        info->lcd_edp_tx_rate = value;
+        DE_INF("lcd_edp_tx_rate = %d\n", value);
+    }
+
+    ret = OSAL_Script_FetchParser_Data(primary_key, "lcd_edp_tx_ic", &value, 1);
+    if(ret < 0)
+    {
+        DE_INF("fetch script data %s.lcd_edp_tx_ic fail\n", primary_key);
+    }
+    else
+    {
+        info->lcd_edp_tx_ic= value;
+        DE_INF("lcd_edp_tx_ic = %d\n", value);
+    }
+
+
+    ret = OSAL_Script_FetchParser_Data(primary_key, "lcd_edp_tx_lane", &value, 1);
+    if(ret < 0)
+    {
+        DE_INF("fetch script data %s.lcd_edp_tx_lane fail\n", primary_key);
+    }
+    else
+    {
+        info->lcd_edp_tx_lane= value;
+        DE_INF("lcd_edp_tx_lane = %d\n", value);
+    }
+
+    ret = OSAL_Script_FetchParser_Data(primary_key, "lcd_io_phase", &value, 1);
     if(ret < 0)
     {
         DE_INF("fetch script data %s.lcd_dclk_phase fail\n", primary_key);
     }
     else
     {
-        info->lcd_dclk_phase = value;
-        DE_INF("lcd_dclk_phase = 0x%08x\n", value);
+        info->lcd_io_phase = value;
+        DE_INF("lcd_io_phase = %x\n", value);
     }
 
     ret = OSAL_Script_FetchParser_Data(primary_key, "lcd_gamma_en", &value, 1);
@@ -667,7 +701,34 @@ void LCD_get_sys_config(__u32 sel, __disp_lcd_cfg_t *lcd_cfg)
             lcd_cfg->lcd_gpio_used[i]= 1;
         }
     }
+//lcd_gpio_clk,lcd_gpio_sda
+    sprintf(sub_name, "lcd_gpio_scl", i);  
+    gpio_info = &(lcd_cfg->lcd_gpio[LCD_GPIO_SCL]);
+    ret = OSAL_Script_FetchParser_Data(primary_key,sub_name, (int *)gpio_info, sizeof(user_gpio_set_t)/sizeof(int));
+    if(ret < 0)
+    {
+        DE_INF("%s.%s not exist\n",primary_key, sub_name);
+        lcd_cfg->lcd_gpio_used[LCD_GPIO_SCL]= 0;
+    }
+    else
+    {
+        DE_INF("%s.%s gpio_port=%d,gpio_port_num:%d, mul_sel:%d\n",primary_key, sub_name, gpio_info->port, gpio_info->port_num, gpio_info->mul_sel);
+        lcd_cfg->lcd_gpio_used[LCD_GPIO_SCL]= 1;
+    }
 
+    sprintf(sub_name, "lcd_gpio_sda", i);  
+    gpio_info = &(lcd_cfg->lcd_gpio[LCD_GPIO_SDA]);
+    ret = OSAL_Script_FetchParser_Data(primary_key,sub_name, (int *)gpio_info, sizeof(user_gpio_set_t)/sizeof(int));
+    if(ret < 0)
+    {
+        DE_INF("%s.%s not exist\n",primary_key, sub_name);
+        lcd_cfg->lcd_gpio_used[LCD_GPIO_SDA]= 0;
+    }
+    else
+    {
+        DE_INF("%s.%s gpio_port=%d,gpio_port_num:%d, mul_sel:%d\n",primary_key, sub_name, gpio_info->port, gpio_info->port_num, gpio_info->mul_sel);
+        lcd_cfg->lcd_gpio_used[LCD_GPIO_SDA]= 1;
+    }
 
 //lcd io
     for(i=0; i<28; i++)
@@ -1155,7 +1216,7 @@ __s32 LCD_GPIO_init(__u32 sel)
 {
     __u32 i = 0;
 
-    for(i=0; i<4; i++)
+    for(i=0; i<6; i++)
     {
         gdisp.screen[sel].gpio_hdl[i] = 0;
 
@@ -1175,7 +1236,7 @@ __s32 LCD_GPIO_exit(__u32 sel)
 {
     __u32 i = 0;
 
-    for(i=0; i<4; i++)
+    for(i=0; i<6; i++)
     {
         if(gdisp.screen[sel].gpio_hdl[i])
         {
@@ -1343,15 +1404,38 @@ __s32 Disp_lcdc_init(__u32 sel)
 {
     LCD_get_sys_config(sel, &(gdisp.screen[sel].lcd_cfg));
 
+    if(gdisp.screen[sel].lcd_cfg.lcd_used)
+    {
+        if(lcd_panel_fun[sel].cfg_panel_info)
+        {
+            lcd_panel_fun[sel].cfg_panel_info(&gpanel_info[sel]);
+        }
+        else
+        {
+            LCD_parse_panel_para(sel, &gpanel_info[sel]);
+        }
+        gpanel_info[sel].tcon_index = 0;
+    }
+    
     lcdc_clk_init(sel);
-    lvds_clk_init();
+    if(gpanel_info[sel].lcd_if == LCD_IF_LVDS)
+    {
+        lvds_clk_init();
+    }
+    else if(gpanel_info[sel].lcd_if == LCD_IF_DSI)
+    {
+        dsi_clk_init();
+    }
     lcdc_clk_on(sel);	//??need to be open
     tcon_init(sel);
     lcdc_clk_off(sel);
     if(sel == 0)
     {        
         OSAL_RegISR(INTC_IRQNO_LCDC0,0,Disp_lcdc_event_proc,(void*)sel,0,0);
-		OSAL_RegISR(INTC_IRQNO_DSI,0,Disp_lcdc_event_proc,(void*)sel,0,0);
+		if(gpanel_info[sel].lcd_if == LCD_IF_DSI)
+        {
+            OSAL_RegISR(INTC_IRQNO_DSI,0,Disp_lcdc_event_proc,(void*)sel,0,0);
+        }
         LCD_get_panel_funs_0(&lcd_panel_fun[sel]);
 #ifndef __LINUX_OSAL__
         OSAL_InterruptEnable(INTC_IRQNO_LCDC0);
@@ -1368,15 +1452,6 @@ __s32 Disp_lcdc_init(__u32 sel)
     }
     if(gdisp.screen[sel].lcd_cfg.lcd_used)
     {
-        if(lcd_panel_fun[sel].cfg_panel_info)
-        {
-            lcd_panel_fun[sel].cfg_panel_info(&gpanel_info[sel]);
-        }
-        else
-        {
-            LCD_get_panel_para(sel, &gpanel_info[sel]);
-        }
-        gpanel_info[sel].tcon_index = 0;
         if(gdisp.screen[sel].lcd_cfg.lcd_pwm_used == 1)
         {
             __pwm_info_t pwm_info;
@@ -1793,6 +1868,14 @@ __s32 BSP_disp_lcd_open_before(__u32 sel)
 {    
     disp_clk_cfg(sel, DISP_OUTPUT_TYPE_LCD, DIS_NULL);
     lcdc_clk_on(sel);
+    if(gpanel_info[sel].lcd_if == LCD_IF_LVDS)
+    {
+        lvds_clk_on();
+    }
+    else if(gpanel_info[sel].lcd_if == LCD_IF_DSI)
+    {
+        dsi_clk_on();
+    }
     image_clk_on(sel);
     Image_open(sel);//set image normal channel start bit , because every de_clk_off( )will reset this bit
     Disp_lcdc_pin_cfg(sel, DISP_OUTPUT_TYPE_LCD, 1);
@@ -1859,6 +1942,14 @@ __s32 BSP_disp_lcd_close_after(__u32 sel)
     Disp_lcdc_pin_cfg(sel, DISP_OUTPUT_TYPE_LCD, 0);
 	image_clk_off(sel);
 	lcdc_clk_off(sel);
+    if(gpanel_info[sel].lcd_if == LCD_IF_LVDS)
+    {
+        lvds_clk_off();
+    }
+    else if(gpanel_info[sel].lcd_if == LCD_IF_DSI)
+    {
+        dsi_clk_off();
+    }
 
 	gdisp.screen[sel].pll_use_status &= ((gdisp.screen[sel].pll_use_status == VIDEO_PLL0_USED)? VIDEO_PLL0_USED_MASK : VIDEO_PLL1_USED_MASK);
 	
@@ -1917,9 +2008,11 @@ __s32 BSP_disp_set_gamma_table(__u32 sel, __u32 *gamtbl_addr,__u32 gamtbl_size)
         return DIS_FAIL;
     }
     
-    tcon_gamma(sel,1,gamtbl_addr);
-    
-    memcpy(gpanel_info[sel].lcd_gamma_tbl, gamtbl_addr, gamtbl_size);
+    if(BSP_disp_lcd_used(sel))
+    {
+        tcon_gamma(sel,1,gamtbl_addr);
+        memcpy(gpanel_info[sel].lcd_gamma_tbl, gamtbl_addr, gamtbl_size);
+    }
     
     return DIS_SUCCESS;
 }
@@ -1927,17 +2020,21 @@ __s32 BSP_disp_set_gamma_table(__u32 sel, __u32 *gamtbl_addr,__u32 gamtbl_size)
 __s32 BSP_disp_gamma_correction_enable(__u32 sel)
 {    
 //	TCON1_set_gamma_Enable(sel,TRUE);
-
-    gpanel_info[sel].lcd_gamma_en = TRUE;
+    if(BSP_disp_lcd_used(sel))
+    {
+        gpanel_info[sel].lcd_gamma_en = TRUE;
+    }
         
 	return DIS_SUCCESS;
 }
 
 __s32 BSP_disp_gamma_correction_disable(__u32 sel)
 {    
-	tcon_gamma(sel, 0, 0);
-
-    gpanel_info[sel].lcd_gamma_en = FALSE;
+	if(BSP_disp_lcd_used(sel))
+    {
+        tcon_gamma(sel, 0, 0);
+        gpanel_info[sel].lcd_gamma_en = FALSE;
+    }
     
 	return DIS_SUCCESS;
 }
@@ -2111,6 +2208,14 @@ __s32 BSP_disp_lcd_used(__u32 sel)
 {
     return gdisp.screen[sel].lcd_cfg.lcd_used;
 }
+
+__s32 lcd_get_panel_para(__u32 sel, __panel_para_t * info)
+{
+    memcpy(info, &gpanel_info[sel], sizeof(__panel_para_t));
+
+    return DIS_SUCCESS;
+}
+
 
 __s32 LCD_CPU_WR(__u32 sel,__u32 index,__u32 data)
 {

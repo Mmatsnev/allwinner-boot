@@ -311,6 +311,7 @@ typedef enum
     LCD_IF_CPU			= 1,
     LCD_IF_LVDS			= 3,
     LCD_IF_DSI			= 4,
+    LCD_IF_EDP          = 5,
 }__lcd_if_t;
 
 typedef enum
@@ -392,10 +393,10 @@ typedef enum
 
 typedef enum
 {
-    LCD_DSI_1LANE			= 0,
-    LCD_DSI_2LANE			= 1,
-    LCD_DSI_3LANE			= 2,
-    LCD_DSI_4LANE			= 3,
+    LCD_DSI_1LANE			= 1,
+    LCD_DSI_2LANE			= 2,
+    LCD_DSI_3LANE			= 3,
+    LCD_DSI_4LANE			= 4,
 }__lcd_dsi_lane_t;
 
 typedef enum
@@ -560,6 +561,9 @@ typedef struct
 	__u32						lcd_dsi_dphy_timing_en; //todo? maybe not used
 	__disp_dsi_dphy_timing_t*	lcd_dsi_dphy_timing_p;
 
+    __u32                  lcd_edp_tx_ic;   //0:anx9804;  1:anx6345
+    __u32                  lcd_edp_tx_rate; //1(1.62G); 2(2.7G); 3(5.4G)
+    __u32                  lcd_edp_tx_lane; //  1/2/4lane
 
 	__u32   lcd_dclk_freq;
 	__u32   lcd_x;
@@ -578,7 +582,7 @@ typedef struct
 	__u32   lcd_vspw;
 	__u32   lcd_hspw;
 
-	__u32   lcd_dclk_phase;
+	__u32   lcd_io_phase;
 
 	__u32   lcd_frm;
 	__u32   lcd_gamma_en;

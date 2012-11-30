@@ -1,5 +1,10 @@
 
 #include "lcd_panel_cfg.h"
+#include "lcd_bak/lcd_edp_anx9804.h"
+#include "lcd_bak/lcd_edp_anx6345.h"
+
+static void LCD_panel_init(__u32 sel);
+static void LCD_panel_exit(__u32 sel);
 
 //delete this line if you want to use the lcd para define in sys_config1.fex
 //#define LCD_PARA_USE_CONFIG
@@ -95,6 +100,7 @@ static void LCD_cfg_panel_info(__panel_para_t * info)
 static __s32 LCD_open_flow(__u32 sel)
 {
 	LCD_OPEN_FUNC(sel, LCD_power_on, 50);   //open lcd power, and delay 50ms
+	LCD_OPEN_FUNC(sel, LCD_panel_init,	200);   //open lcd power, than delay 200ms
 	LCD_OPEN_FUNC(sel, TCON_open, 500);     //open lcd controller, and delay 500ms
 	LCD_OPEN_FUNC(sel, LCD_bl_open, 0);     //open lcd backlight, and delay 0ms
 
@@ -105,6 +111,7 @@ static __s32 LCD_close_flow(__u32 sel)
 {	
 	LCD_CLOSE_FUNC(sel, LCD_bl_close, 0);       //close lcd backlight, and delay 0ms
 	LCD_CLOSE_FUNC(sel, TCON_close, 0);         //close lcd controller, and delay 0ms
+	LCD_CLOSE_FUNC(sel, LCD_panel_exit,	200);   //open lcd power, than delay 200ms
 	LCD_CLOSE_FUNC(sel, LCD_power_off, 1000);   //close lcd power, and delay 1000ms
 
 	return 0;
@@ -132,6 +139,36 @@ static void LCD_bl_close(__u32 sel)
     LCD_PWM_EN(sel, 0);//close pwm module
 }
 
+static void LCD_panel_init(__u32 sel)
+{
+    __panel_para_t *info = OSAL_malloc(sizeof(__panel_para_t));
+    
+    lcd_get_panel_para(sel, info);
+    if((info->lcd_if == LCD_IF_EDP) && (info->lcd_edp_tx_ic == 0))
+    {
+        __inf("edp select anx9804 ic\n");
+        anx9804_init(info);
+    }
+    else if((info->lcd_if == LCD_IF_EDP) && (info->lcd_edp_tx_ic == 1))
+    {
+        __inf("edp select anx6345 ic\n");
+        anx6345_init(info);
+    }
+    else
+    {
+        __inf("== panel is not edp interface ===!\n");
+    }
+
+    OSAL_free(info);
+    
+    return;
+}
+
+static void LCD_panel_exit(__u32 sel)
+{
+	return ;
+}
+
 //sel: 0:lcd0; 1:lcd1
 static __s32 LCD_user_defined_func(__u32 sel, __u32 para1, __u32 para2, __u32 para3)
 {
@@ -140,6 +177,7 @@ static __s32 LCD_user_defined_func(__u32 sel, __u32 para1, __u32 para2, __u32 pa
 
 void LCD_get_panel_funs_1(__lcd_panel_fun_t * fun)
 {
+    __inf("LCD_get_panel_funs_1\n");
 #ifdef LCD_PARA_USE_CONFIG
     fun->cfg_panel_info = LCD_cfg_panel_info;//delete this line if you want to use the lcd para define in sys_config1.fex
 #endif
