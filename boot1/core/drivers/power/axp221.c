@@ -385,6 +385,48 @@ int axp221_probe_poweron_cause(void)
 
     return reg_value & 0x01;
 }
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp221_set_dc1sw(int on_off)
+{
+    u8   reg_value;
+
+	if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_OUTPUT_CTL2, &reg_value))
+    {
+		eGon2_printf("%d\n", __LINE__);
+        return -1;
+    }
+    if(on_off)
+    {
+		reg_value |= (1 << 7);
+	}
+	else
+	{
+		reg_value &= ~(1 << 7);
+	}
+	if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_OUTPUT_CTL2, reg_value))
+	{
+		eGon2_printf("sunxi pmu error : unable to set dcdc1\n");
+
+		return -1;
+	}
+
+	return 0;
+}
 
 /*
 ************************************************************************************************************

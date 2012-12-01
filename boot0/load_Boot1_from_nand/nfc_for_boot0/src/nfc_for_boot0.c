@@ -742,13 +742,14 @@ __s32 NFC_Init(NFC_INIT_INFO *nand_info )
     NandIOBase[0] = (__u32)NAND_IORemap(NAND_IO_BASE_ADDR0, 4096);
     NandIOBase[1] = (__u32)NAND_IORemap(NAND_IO_BASE_ADDR1, 4096);
     NandIndex = 0;
-    //init clk
-    NAND_ClkRequest(NandIndex);
-    NAND_SetClk(NandIndex,10);
     
     //init pin
     NAND_PIORequest(NandIndex);
     
+    //init clk
+    NAND_ClkRequest(NandIndex);
+    NAND_SetClk(NandIndex,10);
+   
 
 	NFC_SetEccMode(0);
 

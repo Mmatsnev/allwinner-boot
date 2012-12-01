@@ -39,6 +39,7 @@ extern void jump_to( __u32 addr );
 */
 void eGon2_jump_to(__u32 addr)
 {
+    eGon2_printf("eGon2_jump_to\n");
 	axp_set_next_poweron_status(0x0e);
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
@@ -72,20 +73,35 @@ void eGon2_jump_to(__u32 addr)
 */
 void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 kernal_addr)
 {
-	void (*kernel_entry)(int zero, int arch, uint params);
+    __u32 kernal_addr_base;
+    
+    void (*kernel_entry)(int zero, int arch, uint params);
+	
+	eGon2_printf("jump %x %x %x %x\n", zero, mod_id, paddr, kernal_addr);
 	axp_set_next_poweron_status(0x0e);
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     eGon2_twi_exit();           //关闭TWI设备
+    eGon2_printf("nand before %x %x %x %x\n", zero, mod_id, paddr, kernal_addr);
     eGon2_block_device_exit(); //关闭用到的存储设备
+    eGon2_printf("nand after %x %x %x %x\n", zero, mod_id, paddr, kernal_addr);
+    eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr);
     close_sys_int( );      // close system interrupt
+    eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr);
 	eGon2_Int_Exit( );     // 关闭所有中断
+	eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr);
 	disable_icache();      // 关闭icache
+	eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr);
 	mmu_disable();		   // 关闭mmu
+	eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr);
     flush_dcache();		   // 关闭dcache
+    eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr);
     disable_dcache();
-
-	kernel_entry = (void (*)(int, int, __u32))(kernal_addr);
+    eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr);
+	eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr_base);
+	kernal_addr_base = 0x4a000000;
+	kernel_entry = (void (*)(int, int, __u32))(kernal_addr_base);
+	eGon2_printf("%s %d %x\n", __FILE__, __LINE__, kernal_addr);
 	kernel_entry(zero, mod_id, paddr);
 
     return;
@@ -108,6 +124,7 @@ void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 ke
 */
 void eGon2_jump_Fel( void )
 {
+    eGon2_printf("eGon2_jump_Fel\n");
 	axp_set_next_poweron_status(0);
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
@@ -147,6 +164,7 @@ void eGon2_jump_Fel( void )
 */
 void eGon2_simple_jump_Fel( void )
 {
+    eGon2_printf("eGon2_simple_jump_Fel\n");
 	eGon2_timer_exit();	   //关闭timer
     eGon2_key_exit();      //关闭按键
     eGon2_twi_exit();      //关闭TWI设备

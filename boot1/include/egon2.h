@@ -23,8 +23,8 @@
 #ifndef _EGON2_H_
 #define _EGON2_H_
 
-#define  CONFIG_SUN6I_FPGA
-//#undef   CONFIG_SUN6I_FPGA
+//#define  CONFIG_SUN6I_FPGA
+#undef   CONFIG_SUN6I_FPGA
 #define  AW_FPGA_V4_PLATFORM
 
 #include "types.h"

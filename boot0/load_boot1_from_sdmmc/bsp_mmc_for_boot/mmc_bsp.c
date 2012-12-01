@@ -12,38 +12,38 @@
 
 /* winner's mmc controller definition */
 struct sunxi_mmc {
-	u32 gctrl;         /* (0x00) SMC Global Control Register */
-	u32 clkcr;         /* (0x04) SMC Clock Control Register */
-	u32 timeout;       /* (0x08) SMC Time Out Register */
-	u32 width;         /* (0x0C) SMC Bus Width Register */
-	u32 blksz;         /* (0x10) SMC Block Size Register */
-	u32 bytecnt;       /* (0x14) SMC Byte Count Register */
-	u32 cmd;           /* (0x18) SMC Command Register */
-	u32 arg;           /* (0x1C) SMC Argument Register */
-	u32 resp0;         /* (0x20) SMC Response Register 0 */
-	u32 resp1;         /* (0x24) SMC Response Register 1 */
-	u32 resp2;         /* (0x28) SMC Response Register 2 */
-	u32 resp3;         /* (0x2C) SMC Response Register 3 */
-	u32 imask;         /* (0x30) SMC Interrupt Mask Register */
-	u32 mint;          /* (0x34) SMC Masked Interrupt Status Register */
-	u32 rint;          /* (0x38) SMC Raw Interrupt Status Register */
-	u32 status;        /* (0x3C) SMC Status Register */
-	u32 ftrglevel;     /* (0x40) SMC FIFO Threshold Watermark Register */
-	u32 funcsel;       /* (0x44) SMC Function Select Register */
-	u32 cbcr;          /* (0x48) SMC CIU Byte Count Register */
-	u32 bbcr;          /* (0x4C) SMC BIU Byte Count Register */
-	u32 dbgc;          /* (0x50) SMC Debug Enable Register */
-	u32 res0[9];       /* (0x54~0x74) */
-	u32 hwrst;         /* (0x78) SMC eMMC Hardware Reset Register */
-	u32 res1;          /* (0x7c) */
-	u32 dmac;          /* (0x80) SMC IDMAC Control Register */
-	u32 dlba;          /* (0x84) SMC IDMAC Descriptor List Base Address Register */
-	u32 idst;          /* (0x88) SMC IDMAC Status Register */
-	u32 idie;          /* (0x8C) SMC IDMAC Interrupt Enable Register */
-	u32 chda;          /* (0x90) */
-	u32 cbda;          /* (0x94) */
-	u32 res2[26];      /* (0x98~0xff) */
-	u32 fifo;          /* (0x100) SMC FIFO Access Address */
+	volatile u32 gctrl;         /* (0x00) SMC Global Control Register */
+	volatile u32 clkcr;         /* (0x04) SMC Clock Control Register */
+	volatile u32 timeout;       /* (0x08) SMC Time Out Register */
+	volatile u32 width;         /* (0x0C) SMC Bus Width Register */
+	volatile u32 blksz;         /* (0x10) SMC Block Size Register */
+	volatile u32 bytecnt;       /* (0x14) SMC Byte Count Register */
+	volatile u32 cmd;           /* (0x18) SMC Command Register */
+	volatile u32 arg;           /* (0x1C) SMC Argument Register */
+	volatile u32 resp0;         /* (0x20) SMC Response Register 0 */
+	volatile u32 resp1;         /* (0x24) SMC Response Register 1 */
+	volatile u32 resp2;         /* (0x28) SMC Response Register 2 */
+	volatile u32 resp3;         /* (0x2C) SMC Response Register 3 */
+	volatile u32 imask;         /* (0x30) SMC Interrupt Mask Register */
+	volatile u32 mint;          /* (0x34) SMC Masked Interrupt Status Register */
+	volatile u32 rint;          /* (0x38) SMC Raw Interrupt Status Register */
+	volatile u32 status;        /* (0x3C) SMC Status Register */
+	volatile u32 ftrglevel;     /* (0x40) SMC FIFO Threshold Watermark Register */
+	volatile u32 funcsel;       /* (0x44) SMC Function Select Register */
+	volatile u32 cbcr;          /* (0x48) SMC CIU Byte Count Register */
+	volatile u32 bbcr;          /* (0x4C) SMC BIU Byte Count Register */
+	volatile u32 dbgc;          /* (0x50) SMC Debug Enable Register */
+	volatile u32 res0[9];       /* (0x54~0x74) */
+	volatile u32 hwrst;         /* (0x78) SMC eMMC Hardware Reset Register */
+	volatile u32 res1;          /* (0x7c) */
+	volatile u32 dmac;          /* (0x80) SMC IDMAC Control Register */
+	volatile u32 dlba;          /* (0x84) SMC IDMAC Descriptor List Base Address Register */
+	volatile u32 idst;          /* (0x88) SMC IDMAC Status Register */
+	volatile u32 idie;          /* (0x8C) SMC IDMAC Interrupt Enable Register */
+	volatile u32 chda;          /* (0x90) */
+	volatile u32 cbda;          /* (0x94) */
+	volatile u32 res2[26];      /* (0x98~0xff) */
+	volatile u32 fifo;          /* (0x100) SMC FIFO Access Address */
 };
 
 #ifdef MMC_DEBUG
@@ -232,6 +232,7 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff)
 //		mmchost->mclk = pll5_clk * 1000000 / (divider + 1);
 //		mmcdbg("init mmc mclk %d\n", mmchost->mclk);
 		writel(0x80000000, mmchost->mclkbase);
+		mmchost->mclk = 24000000;
 	} else {
 		writel(0, mmchost->mclkbase);
 	}
@@ -508,6 +509,7 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		if (bytecnt > 64) {
 #else
 		if (0) {
+		    printf("read without dma\n");
 #endif
 			usedma = 1;
 			writel(readl(&mmchost->reg->gctrl)&(~0x80000000), &mmchost->reg->gctrl);
@@ -527,7 +529,8 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	timeout = 0xfffff;
 	do {
 		status = readl(&mmchost->reg->rint);
-		if (!timeout-- || (status & 0xbbc2)) {
+		//if (!timeout-- || (status & 0xbbc2)) {
+		if (!timeout || (status & 0xbbc2)) {
 			error = status & 0xbbc2;
 			mmcinfo("cmd %d timeout, err %x\n", cmd->cmdidx, error);
 			goto out;
@@ -539,7 +542,8 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		timeout = usedma ? 0xffff*bytecnt : 0xffff;
 		do {
 			status = readl(&mmchost->reg->rint);
-			if (!timeout-- || (status & 0xbbc2)) {
+			//if (!timeout-- || (status & 0xbbc2)) {
+			if (!timeout || (status & 0xbbc2)) {
 				error = status & 0xbbc2;
 				mmcinfo("data timeout, err %x\n", error);
 				goto out;
@@ -626,9 +630,9 @@ int sunxi_mmc_init(int sdc_no, unsigned bus_width)
 		mmc->host_caps |= MMC_MODE_4BIT;
 
 	mmc->f_min = 300000;
-	mmc->f_max = 52000000;
+	mmc->f_max = 25000000;
 
-    mmc_host[sdc_no].pdes = (struct sunxi_mmc_des*)0x42000000;
+    mmc_host[sdc_no].pdes = (struct sunxi_mmc_des*)0x40000000;
 	if (mmc_resource_init(sdc_no))
 		return -1;
 

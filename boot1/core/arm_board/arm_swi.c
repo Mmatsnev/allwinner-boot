@@ -79,9 +79,10 @@ void eGon2_swi_handler_entry(__u32 swi_number, struct swi_regs * swi_reg)
 		break;
 		case EGON2_SWI_JUMP_TO_LINUX:
 		{
+		    eGon2_printf("%x %x %x %x\n", swi_reg->reg[0], swi_reg->reg[1], swi_reg->reg[2], swi_reg->reg[3]);
 			eGon2_jump_to_android_linux(swi_reg->reg[0], swi_reg->reg[1], swi_reg->reg[2], swi_reg->reg[3]);
 		}
-
+        break;
  /* ÖÐ¶Ï·þÎñ */
 		case EGON2_SWI_IRQ_REG:
 		{

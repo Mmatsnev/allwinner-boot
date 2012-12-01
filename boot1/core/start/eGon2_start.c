@@ -133,7 +133,6 @@ void eGon2_start( void )
 
     	force_to_card0 = 1;
     }
-
 	eGon2_printf("flash init start\n");
 	eGon2_block_device_init();
     eGon2_printf("flash init finish\n");

@@ -32,8 +32,8 @@
 
 #define  UBOOT_BASE  0x4a000000
 #define  FPGA_PLATFORM   1
-#define  CONFIG_SUN6I_FPGA
-//#undef   CONFIG_SUN6I_FPGA
+//#define  CONFIG_SUN6I_FPGA
+#undef   CONFIG_SUN6I_FPGA
 
 #include "types.h"
 #include "storage_media_cfg.h"

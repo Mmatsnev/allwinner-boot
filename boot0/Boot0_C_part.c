@@ -73,13 +73,14 @@ void Boot0_C_part( void )
 	mmu_enable();
 
 	//dram_size = init_DRAM(BT0_head.boot_head.platform[7]);                                // 初始化DRAM
-#ifdef  CONFIG_SUN6I_FPGA
-	ddr_aotu_scan = 1;
-	msg("config fpga\n");
-#else
-	ddr_aotu_scan = BT0_head.boot_head.platform[7];
-	msg("not config fpga\n");
-#endif
+//#ifdef  CONFIG_SUN6I_FPGA
+//	ddr_aotu_scan = 1;
+//	msg("config fpga\n");
+//#else
+//	ddr_aotu_scan = BT0_head.boot_head.platform[7];
+//	msg("not config fpga\n");
+//#endif
+    ddr_aotu_scan = 1;
 	msg("ddr init arg = %d\n", ddr_aotu_scan);
 	dram_size = init_DRAM(ddr_aotu_scan, (void *)BT0_head.prvt_head.dram_para);
 	if(dram_size)
@@ -164,10 +165,10 @@ void set_pll( void )
 	{
 		reg_val = CCMU_REG_PLL1_CTRL;
 	}
-	while(reg_val & (0x1 << 28));
+	while(!(reg_val & (0x1 << 28)));
 #endif
 	//设置CPU:AXI:AHB:APB分频 4:2:2:1
-	CCMU_REG_APB1_APB1 = 0x02 << 12;
+	CCMU_REG_AHB1_APB1 = 0x02 << 12;
 	//切换到PLL1
 	reg_val = CCMU_REG_AXI_MOD;
 	reg_val &= ~(3 << 16);

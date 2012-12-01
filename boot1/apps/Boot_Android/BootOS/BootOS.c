@@ -208,6 +208,7 @@ static __s32 boot_dsipatch_kernal(boot_sys_img_set_t  *os_img, __u32 *kernal_add
     *kernal_addr = os_img->img_set[0].img_base;
     *para_addr 	 = os_img->img_set[1].img_base;
     __inf("load kernel successed\n");
+    __inf("kernal_addr = %x\n", *kernal_addr);
 
     return 0;
 
@@ -378,6 +379,7 @@ _boot_pre_err:
 void BootOS(__u32 para_addr, __u32 kernal_addr)
 {
     __inf("jump to\n");
+    __inf("BOOTOS %x %x %x %x\n", 0, 3495, para_addr, kernal_addr);
     wBoot_jump_to_linux(0, 3495, para_addr, kernal_addr);
 
     {
