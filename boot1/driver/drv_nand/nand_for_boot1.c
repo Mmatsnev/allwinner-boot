@@ -303,27 +303,24 @@ __s32 NAND_Exit(void)
 {
 	__s32   result;
 
-    __inf("%s %d\n", __FILE__, __LINE__);
 #ifdef BOOT_CACHE_OPEN
-    __inf("%s %d\n", __FILE__, __LINE__);
-     NAND_Print("NB1 : NAND_Exit!!!!\n");
+     NAND_Print("NB1 : NAND_CacheClose!!!!\n");
     NAND_CacheClose();
 #endif
-    __inf("%s %d\n", __FILE__, __LINE__);
+
     //exit nand flahs logic module
     result = LML_Exit();
     if(result < 0)
     {
         return -1;
     }
-    __inf("%s %d\n", __FILE__, __LINE__);
+
     //exit nand flash physical module
     result = NAND_PhyExit();
     if(result < 0)
     {
         return -2;
     }
-    __inf("%s %d\n", __FILE__, __LINE__);
     return result;
 }
 

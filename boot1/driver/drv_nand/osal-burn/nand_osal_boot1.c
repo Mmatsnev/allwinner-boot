@@ -49,6 +49,21 @@ int NAND_WaitDmaFinish(void)
 
 __u32 _Getpll6Clk(void)
 {
+	__u32 reg_val;
+	__u32 factor_n;
+	__u32 factor_k, div_m;
+	__u32 clock;
+
+	reg_val  = 0x01c20000 + 0x28;
+	factor_n = ((reg_val >> 8) & 0x1f) + 1;
+	factor_k = ((reg_val >> 4) & 0x3) + 1;
+	div_m = ((reg_val >> 0) & 0x3) + 1;
+
+	clock = 24 * factor_n * factor_k/2;
+	NAND_Print("pll6 clock is %dM\n", clock);
+	if(clock!=600)
+		NAND_Print("pll6 clock rate error!!!!!!!\n");
+	
 	return 600;
 }
 
@@ -58,7 +73,10 @@ int NAND_ClkRequest(__u32 nand_index)
 	__u32 m, n;
 	__u32 clk_src;
 	
-	clk_src = 0;
+	clk_src = 1;
+	if(clk_src)
+		  NAND_Print("NAND_ClkRequest, select pll6: %dM\n", _Getpll6Clk());
+	
 	if(nand_index == 0)
 	{
 		//10M
@@ -204,7 +222,7 @@ int NAND_SetClk(__u32 nand_index, __u32 nand_clock)
 	__u32 clk_src;
 	
 
-	clk_src = 0;
+	clk_src = 1;
 	
 	if(clk_src == 0)
 	{
