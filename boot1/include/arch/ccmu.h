@@ -61,6 +61,11 @@
 #define CCMU_REG_o_SD_MMC0              0x88
 #define CCMU_REG_o_SD_MMC2              0x90
 
+#define CCMU_REG_o_MBUS0                0x15c
+#define CCMU_REG_o_MBUS1                0x160
+
+
+
 /* registers */
 #define CCMU_REG_PLL1_CTRL              __REG( CCMU_REGS_BASE + CCMU_REG_o_PLL1_CTRL   )
 #define CCMU_REG_PLL2_CTRL              __REG( CCMU_REGS_BASE + CCMU_REG_o_PLL2_CTRL   )
@@ -91,5 +96,7 @@
 #define CCMU_REG_SPI0                   __REG( CCMU_REGS_BASE + CCMU_REG_o_SPI0        )
 #define CCMU_REG_SPI1                   __REG( CCMU_REGS_BASE + CCMU_REG_o_SPI1        )
 
+#define CCMU_REG_MBUS0                  __REG( CCMU_REGS_BASE + CCMU_REG_o_MBUS0       )
+#define CCMU_REG_MBUS1                  __REG( CCMU_REGS_BASE + CCMU_REG_o_MBUS1       )
 
 #endif    // #ifndef _CCMU_H_

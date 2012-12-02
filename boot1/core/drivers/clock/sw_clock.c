@@ -663,6 +663,36 @@ int eGon2_clock_set_pll6(void)
 
 	return 0;
 }
+
+int eGon2_clock_set_mbus(void)
+{
+	int factor_n, factor_k;
+	__u32 reg_val, pll6;
+
+    /* set voltage and ldo for pll */
+	reg_val = CCMU_REG_PLL6_CTRL;
+	factor_n = ((reg_val >> 8) & 0x1f) + 1;
+	factor_k = ((reg_val >> 4) & 0x03) + 1;
+	pll6 = 24 * factor_n * factor_k/2;
+
+    if(pll6 > 300 * 4) {
+        factor_n = 5;
+    } else if(pll6 > 300*3){
+        factor_n = 4;
+    } else if(pll6 > 300*2){
+        factor_n = 3;
+    } else if(pll6 > 300*1){
+        factor_n = 2;
+    } else {
+        factor_n = 1;
+    }
+
+    /* config mbus0 */
+    CCMU_REG_MBUS0 = 0x81000000|(factor_n-1);
+    CCMU_REG_MBUS1 = 0x81000000|(factor_n-1);
+}
+
+
 /*
 ************************************************************************************************************
 *
