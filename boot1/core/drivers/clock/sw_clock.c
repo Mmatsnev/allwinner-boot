@@ -628,9 +628,24 @@ static int clk_get_pll_para(struct core_pll_freq_tbl *factor, __u32 pll_clk)
 */
 int eGon2_clock_set_pll6(void)
 {
+    int i;
 	int factor_n, factor_k;
 	__u32 reg_val, pll6;
 
+    /* set voltage and ldo for pll */
+    reg_val = __REG(R_PRCM_REGS_BASE+0x44);
+    reg_val &= ~(0xff << 24);
+    reg_val |= 0xa7 << 24;
+    __REG(R_PRCM_REGS_BASE+0x44) = reg_val;
+    reg_val = __REG(R_PRCM_REGS_BASE+0x44);
+    reg_val &= ~(0x1 << 15);
+    reg_val &= ~(0x7 << 16);
+    reg_val |= 0x7 << 16;
+    __REG(R_PRCM_REGS_BASE+0x44) = reg_val;
+    /* delaly some time*/
+    for(i=0; i<100000; i++);
+
+    /* set pll6 frequency to 600Mhz, and enable it */
 	CCMU_REG_PLL6_CTRL = 0x80041811;
 #ifndef CONFIG_SUN6I_FPGA
 	do
