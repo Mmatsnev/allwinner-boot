@@ -138,12 +138,14 @@ int axp_probe_power_supply_condition(void)
 
 	//检测电压，决定是否开机
     dcin_exist = axp221_probe_dcin_exist();
-    eGon2_printf("dcin_exist = %d\n", dcin_exist);
+    eGon2_printf("dcin_exist = %x\n", dcin_exist);
     //先判断条件，如果上次关机记录的电量百分比<=5%,同时库仑计值小于5mAh，则关机，否则继续判断
     bat_vol = axp221_probe_battery_vol();
 	eGon2_printf("bat vol = %d\n", bat_vol);
 	if((bat_vol < 3400) && (!dcin_exist))
 	{
+		eGon2_printf("bat vol is lower than 3400 and dcin is not exist\n");
+		eGon2_printf("we have to close it\n");
 	    axp_set_hardware_poweroff_vol();
 		axp221_set_power_off();
 		for(;;);

@@ -91,6 +91,7 @@ void eGon2_start( void )
         //开始调整频率，电压已经调整完毕
         if(default_clock != BT1_head.prvt_head.core_para.user_set_clock)
         {
+        	eGon2_printf("try to set clock to %d Mhz\n", BT1_head.prvt_head.core_para.user_set_clock);
         	default_clock = eGon2_clock_set_ext(BT1_head.prvt_head.core_para.user_set_clock, BT1_head.prvt_head.core_para.user_set_core_vol);
     		//default_clock = eGon2_clock_set_ext(k, BT1_head.prvt_head.core_para.user_set_core_vol);
     		eGon2_printf("set dcdc2=%d, clock=%d successed\n", BT1_head.prvt_head.core_para.user_set_core_vol, default_clock);

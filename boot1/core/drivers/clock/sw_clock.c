@@ -329,7 +329,7 @@ __u32 _get_pll1_clock(void)
 	factor_k = ((reg_val >> 4) & 0x3) + 1;
 	div_m = ((reg_val >> 0) & 0x3) + 1;
 
-	clock = 24000000 * factor_n * factor_k/div_m;
+	clock = 24 * factor_n * factor_k/div_m;
 
 	return clock;
 }
@@ -375,7 +375,7 @@ __u32 _get_axi_clock(void)
 			clock = 32000;
 			break;
 		case 1:
-			clock = 24000000;
+			clock = 24000;
 			break;
 		case 2:
 			clock =  _get_pll1_clock();

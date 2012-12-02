@@ -203,7 +203,7 @@ int axp221_probe_battery_exist(void)
 int axp221_probe_battery_vol(void)
 {
 	u8  reg_value_h, reg_value_l;
-	int bat_vol;
+	int bat_vol, tmp_value;
 
 	if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_BAT_AVERVOL_H8, &reg_value_h))
     {
@@ -213,7 +213,9 @@ int axp221_probe_battery_vol(void)
     {
         return -1;
     }
-    bat_vol = ((reg_value_h << 4) | reg_value_l) * 1.1;
+    tmp_value = (reg_value_h << 4) | reg_value_l;
+    bat_vol = tmp_value * 11;
+    bat_vol /= 10;
 
 	return bat_vol;
 }

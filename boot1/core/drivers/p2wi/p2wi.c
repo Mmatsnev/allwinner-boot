@@ -28,6 +28,9 @@ __s32 p2wi_init(void)
 	//PG[24][25] used as p2wi SCK and SDA under FPGA platform.
 	egon2_writel(0x33, 0x01c20800 + 0xE4);
 #endif
+	reg_val = egon2_readl(0x1f01400 + 0x28);
+	reg_val |= (1 << 0);
+	egon2_writel(reg_val, 0x1f01400 + 0x28);
 
 	reg_val = egon2_readl(0x1f02C00 + 0x00);
 	reg_val &= ~((0x07 << 0) | (0x07 << 4));
@@ -198,12 +201,19 @@ void p2wi_set_pmu_mode(u32 slave_addr, u32 reg, u32 data)
 void p2wi_set_clk(u32 sck)
 {
 #ifndef	CONFIG_SUN6I_FPGA
-	u32 src_clk = _get_apb1_clock();
+	u32 src_clk = 12000000;
+	u32 div, sda_odly, rval;
+
 	eGon2_printf("p2wi apb1 clock = %d\n", src_clk);
-	u32 div = src_clk / sck / 2 - 1;
-	u32 sda_odly = div >> 1;
-	u32 rval = div | (sda_odly << 8);
+	div = src_clk / sck / 2 - 1;
+	eGon2_printf("div = %d\n", div);
+	sda_odly = div >> 1;
+	eGon2_printf("sda_odly = %d\n", sda_odly);
+	rval = div | (sda_odly << 8);
+	eGon2_printf("rval = %x\n", rval);
 	egon2_writel(rval, P2WI_REG_CCR);
+
+	eGon2_printf("P2WI_REG_CCR = %x\n", egon2_readl(P2WI_REG_CCR));
 #else
 	//fpga platform: apb clock = 24M, p2wi clock = 3M.
 	egon2_writel(0x103, P2WI_REG_CCR);
