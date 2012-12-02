@@ -15,7 +15,7 @@
 
 #define MMC_SUN6I
 #define MAX_MMC_NUM			4
-//#define MMC_TRANS_BY_DMA
+#define MMC_TRANS_BY_DMA
 //#define MMC_DEBUG
 
 #define MMC_REG_BASE		0x01c0f000
@@ -24,7 +24,7 @@
 #define CCMU_HCLKRST0_BASE 	0x01c202c0
 #define CCMU_MMC0_CLK_BASE 	0x01c20088
 #define CCMU_MMC2_CLK_BASE 	0x01c20090
-#define CCMU_PLL5_CLK_BASE 	0x01c20020
+#define CCMU_PLL6_CLK_BASE 	0x01c20028
 #define __be32_to_cpu(x)	((0x000000ff&((x)>>24)) | (0x0000ff00&((x)>>8)) | 			\
 							 (0x00ff0000&((x)<< 8)) | (0xff000000&((x)<<24)))
 
@@ -33,11 +33,11 @@
 #endif
 
 #ifdef MMC_DEBUG
-#define mmcinfo(fmt...)	OSAL_printf("[mmc]: "fmt)
-#define mmcdbg(fmt...)	OSAL_printf("[mmc]: "fmt)
-#define mmcmsg(fmt...)	OSAL_printf(fmt)
+#define mmcinfo(fmt...)	wlibc_uprintf("[mmc]: "fmt)
+#define mmcdbg(fmt...)	wlibc_uprintf("[mmc]: "fmt)
+#define mmcmsg(fmt...)	wlibc_uprintf(fmt)
 #else
-#define mmcinfo(fmt...)
+#define mmcinfo(fmt...) wlibc_uprintf("[mmc]: "fmt)
 #define mmcdbg(fmt...)
 #define mmcmsg(fmt...)
 #endif

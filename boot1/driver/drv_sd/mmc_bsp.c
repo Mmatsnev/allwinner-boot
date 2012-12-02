@@ -160,12 +160,8 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff)
 {
 	struct sunxi_mmc_host* mmchost = &mmc_host[sdc_no];
 	u32 rval;
-	u32 pll5_clk;
-	u32 divider;
-	u32 n, k, m;
 	u32 gpioc_base = 0x01c20800 + 0x48;
 	u32 gpiof_base = 0x01c20800 + 0xb4;
-	u32 pll5_base = CCMU_PLL5_CLK_BASE;
 
 	mmcdbg("init mmc %d clock and io\n", sdc_no);
 	/* config gpio */
@@ -220,18 +216,7 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff)
 
 	/* config mod clock */
 	if (onoff) {
-		rval = readl(pll5_base);
-		n = (rval >> 8) &  0x1f;
-		k = ((rval >> 4) & 3) + 1;
-		m = (rval & 3) + 1;
-		pll5_clk = 24 * n * k / m;
-		divider = (pll5_clk + 25) / 50 - 1;
-
-		mmcdbg("init mmc n %d, k %d, m %d, pll5clk %d, mbase %x\n", n, k, m, pll5_clk, mmchost->mclkbase);
-		//writel((1U << 31) | (1U << 24) | divider, mmchost->mclkbase);
-		//mmchost->mclk = pll5_clk * 1000000 / (divider + 1);
 		writel(0x80000000, mmchost->mclkbase);
-		mmchost->mclk = 24000000;
 		mmcdbg("init mmc mclk %d\n", mmchost->mclk);
 	} else {
 		writel(0, mmchost->mclkbase);
@@ -260,29 +245,58 @@ static int mmc_update_clk(struct mmc *mmc)
 	return 0;
 }
 
-static int mmc_config_clock(struct mmc *mmc, unsigned div)
+static int mmc_config_clock(struct mmc *mmc, unsigned clk)
 {
 	struct sunxi_mmc_host* mmchost = (struct sunxi_mmc_host *)mmc->priv;
 	unsigned rval = readl(&mmchost->reg->clkcr);
+	unsigned int clkdiv = 0;
+
+	/* Disable Clock */
+	rval &= ~(1 << 16);
+	writel(rval, &mmchost->reg->clkcr);
+	if(mmc_update_clk(mmc))
+		return -1;
+
+	if (clk <=400000) {
+	    mmchost->mclk = 400000;
+	    writel(0x8012010f, mmchost->mclkbase);
+	} else {
+	    u32 pll6clk = 0;
+	    u32 m, n, k;
+	    u32 pll6v = readl(CCMU_PLL6_CLK_BASE);
+	    mmchost->mclk = clk;
+    	pll6v = readl(CCMU_PLL6_CLK_BASE);
+    	n = (0x1f & (pll6v >> 8)) + 1;
+    	k = (0x3 & (pll6v >> 4)) + 1;
+    	pll6clk = (24000000 * n * k)>>1;
+        clkdiv = pll6clk / clk - 1;
+        if (clkdiv < 16) {
+            n = 0;
+            m = clkdiv;
+        } else if (clkdiv < 32) {
+            n = 1;
+            m = clkdiv>>1;
+        } else {
+            n = 2;
+            m = clkdiv>>2;
+        }
+	    mmchost->mclk = clk;
+	    writel(0x81200200 | (n << 16) | m, mmchost->mclkbase);
+        mmcinfo("init mmc pll6clk %d, clk %d, mclkbase %x\n", pll6clk, mmchost->mclk, readl(mmchost->mclkbase));
+	}
 
 	/*
 	 * CLKCREG[7:0]: divider
 	 * CLKCREG[16]:  on/off
 	 * CLKCREG[17]:  power save
 	 */
-	/* Disable Clock */
-	rval &= ~(1 << 16);
-	writel(rval, &mmchost->reg->clkcr);
-	if(mmc_update_clk(mmc))
-		return -1;
 	/* Change Divider Factor */
 	rval &= ~(0xFF);
-	rval |= div;
 	writel(rval, &mmchost->reg->clkcr);
 	if(mmc_update_clk(mmc))
 		return -1;
 	/* Re-enable Clock */
-	rval |= (1 << 16);
+	rval |= (3 << 16);
 	writel(rval, &mmchost->reg->clkcr);
 	if(mmc_update_clk(mmc))
 		return -1;
@@ -292,17 +306,14 @@ static int mmc_config_clock(struct mmc *mmc, unsigned div)
 static void mmc_set_ios(struct mmc *mmc)
 {
 	struct sunxi_mmc_host* mmchost = (struct sunxi_mmc_host *)mmc->priv;
-	unsigned int clkdiv = 0;
+
 
 	mmcdbg("ios: bus: %d, clock: %d\n", mmc->bus_width, mmc->clock);
 
-	/* Change clock first */
-	clkdiv = (mmchost->mclk + (mmc->clock>>1))/mmc->clock/2;
-	if (mmc->clock)
-		if (mmc_config_clock(mmc, clkdiv)) {
-			mmchost->fatal_err = 1;
-			return;
-		}
+	if (mmc->clock && mmc_config_clock(mmc, mmc->clock)) {
+	    wlibc_uprintf("[mmc]: " "*** update clock failed\n");
+		mmchost->fatal_err = 1;
+	}
 	/* Change bus width */
 	if (mmc->bus_width == 8)
 		writel(2, &mmchost->reg->width);
@@ -626,7 +637,7 @@ int sunxi_mmc_init(int sdc_no, unsigned bus_width)
 	if (bus_width==4)
 		mmc->host_caps |= MMC_MODE_4BIT;
 
-	mmc->f_min = 300000;
+	mmc->f_min = 400000;
 	mmc->f_max = 52000000;
 
     mmc_host[sdc_no].pdes = (struct sunxi_mmc_des*)0x42000000;
