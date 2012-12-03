@@ -71,7 +71,7 @@ __s32  update_boot0(void *buf0, char *buf, int sprite_type)
 		update_boot0_info(buf0, buf);
 	}
 	//memcpy(&boot0->prvt_head.nand_connect_info, &nand_info->nand_para, sizeof(boot_nand_para_t));
-	memcpy((void *)&boot0->prvt_head.dram_para, (void *)&boot1->prvt_head.dram_para, sizeof(boot_dram_para_t));
+	//memcpy((void *)&boot0->prvt_head.dram_para, (void *)&boot1->prvt_head.dram_para, sizeof(boot_dram_para_t));
 	boot0->boot_head.platform[7] = 1;
 	/* regenerate check sum */
 	gen_check_sum( (void *)boot0 );

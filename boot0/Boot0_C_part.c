@@ -85,6 +85,15 @@ void Boot0_C_part( void )
 //#endif
     ddr_aotu_scan = 1;
 	msg("ddr init arg = %d\n", ddr_aotu_scan);
+	msg("ddr para base = %x\n", (__u32)BT0_head.prvt_head.dram_para);
+	{
+		int k;
+
+		for(k=0;k<16;k++)
+		{
+			msg("%x\n", BT0_head.prvt_head.dram_para[k]);
+		}
+	}
 	dram_size = init_DRAM(ddr_aotu_scan, (void *)BT0_head.prvt_head.dram_para);
 	if(dram_size)
 	{
