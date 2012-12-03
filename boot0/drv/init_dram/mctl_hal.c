@@ -4,7 +4,7 @@
 //	File: 				mctl_hal.c
 //
 //	Description:  This file implements basic functions for AW1633 DRAM controller
-//		 
+//
 //	History:
 //              2012/02/06      Berg Xing       0.10    Initial version
 //              2012/02/24      Berg Xing       0.20    Support 2 channel
@@ -20,21 +20,261 @@
 //				2012/11/27		CPL				0.93	add master configuration
 //				2012/11/28		CPL				0.94	modify for boot and burn interface compatible
 //				2012/11/29		CPL				0.95	modify lock parameters configuration
+//				2012/12/3		CPL				0.96	add dll&pll delay and simple test ; add voltage adjust
 //*****************************************************************************
 #include "mctl_reg.h"
 #include "mctl_hal.h"
 
+#include "boot0_i.h"
 #ifdef LINUX_CONFIG
 	 #include <mach/sys_config.h>
 #endif
 
 //=============structure & macro definition===================
 __dram_para_t *dram_para;
+//========timing parameters===========
+static	unsigned int trefi;
+static	unsigned int tmrd;
+static	unsigned int trfc;
+static	unsigned int trp;
+static	unsigned int tprea;
+static	unsigned int trtw;
+static	unsigned int tal;
+static	unsigned int tcl;
+static	unsigned int tcwl;
+static	unsigned int tras;
+static	unsigned int trc;
+static	unsigned int trcd;
+static	unsigned int trrd;
+static	unsigned int trtp;
+static	unsigned int twr;
+static	unsigned int twtr;
+static	unsigned int texsr;
+static	unsigned int txp;
+static	unsigned int txpdll;
+static	unsigned int tzqcs;
+static	unsigned int tzqcsi;
+static	unsigned int tdqs;
+static	unsigned int tcksre;
+static	unsigned int tcksrx;
+static	unsigned int tcke;
+static	unsigned int tmod;
+static	unsigned int trstl;
+static	unsigned int tzqcl;
+static	unsigned int tmrr;
+static	unsigned int tckesr;
+static	unsigned int tdpd;
+static	unsigned int tccd;
+static	unsigned int taond;
+static	unsigned int tfaw;
+static	unsigned int trtodt;
+static	unsigned int tdqsck;
+static	unsigned int tdqsckmax;
+static	unsigned int tdllk;
+static	unsigned int titmsrst;
+static	unsigned int tdlllock;
+static	unsigned int tdllsrst;
+static	unsigned int tdinit0;
+static	unsigned int tdinit1;
+static	unsigned int tdinit2;
+static	unsigned int tdinit3;
 
 static void aw_delay (unsigned int n)
 {
 	while(n--);
 }
+
+//=====================p2wi adjust pmu dc5 voltage===========================
+#define P2WI_CTRL	(0x01f03400 + 0x00)
+#define P2WI_CCR	(0x01f03400 + 0x04)
+#define P2WI_INTE	(0x01f03400 + 0x08)
+#define P2WI_STAT	(0x01f03400 + 0x0c)
+#define P2WI_DADDR0	(0x01f03400 + 0x10)
+#define P2WI_DADDR1	(0x01f03400 + 0x14)
+#define P2WI_DLEN	(0x01f03400 + 0x18)
+#define P2WI_DATA0	(0x01f03400 + 0x1c)
+#define P2WI_DATA1	(0x01f03400 + 0x20)
+#define P2WI_LCR	(0x01f03400 + 0x24)
+#define P2WI_PMCR	(0x01f03400 + 0x28)
+int p2wi_init(void)
+{
+	unsigned rval;
+	int time = 0xfffff;
+
+	/* enable gpio clock and reset*/
+	rval = mctl_read_w(0x01f01400 + 0x28);
+	rval |= (1 << 3) | (1 << 0);
+	mctl_write_w(0x01f01400 + 0x28, rval);
+	rval = mctl_read_w(0x01f01400 + 0xb0);
+	rval |= (1 << 3) | (1 << 0);
+	mctl_write_w(0x01f01400 + 0xb0, rval);
+
+	/* config io */
+	rval = mctl_read_w(0x1f02c00 + 0x00);
+	rval &= ~0x77;
+	rval |= 0x33;
+	mctl_write_w(0x1f02c00 + 0x00, rval);
+
+	/* config clock to 1.5MHz */
+	mctl_write_w(P2WI_CCR, 0x103);
+
+	/* switch pmu to p2wi mode */
+	mctl_write_w(P2WI_PMCR, 0x803e3e68);
+	while((mctl_read_w(P2WI_PMCR) & 0x80000000) && time--);
+	if (mctl_read_w(P2WI_PMCR) & 0x80000000) {
+	#ifdef PW2I_PRINK
+			msg("Switching PMU to P2WI mode failed\n");
+	#endif
+		return -1;
+	}
+	return 0;
+}
+
+int p2wi_exit(void)
+{
+//	unsigned rval;
+//
+//	/* disable gpio clock and reset*/
+//	rval = mctl_read_w(0x01f01400 + 0x28);
+//	rval &= ~((1 << 3) | (1 << 0));
+//	mctl_write_w(0x01f01400 + 0x28, rval);
+//	rval = mctl_read_w(0x01f01400 + 0xb0);
+//	rval &= ~((1 << 3) | (1 << 0));
+//	mctl_write_w(0x01f01400 + 0xb0, rval);
+//
+//	/* disable io */
+//	rval = mctl_read_w(0x1f02c00 + 0x00);
+//	rval &= ~0x77;
+//	rval |= 0x77;
+//	mctl_write_w(0x1f02c00 + 0x00, rval);
+//
+	return 0;
+}
+
+int p2wi_read(unsigned int addr, unsigned int *val)
+{
+	unsigned time = 0xfffff;
+	unsigned istat = 0;
+
+	mctl_write_w(P2WI_DADDR0, addr);
+	mctl_write_w(P2WI_DLEN, 0x10);
+	mctl_write_w(P2WI_CTRL, 0x80);
+	do {
+		istat = mctl_read_w(P2WI_STAT);
+	} while (!(istat & 3) && time--);
+
+	mctl_write_w(P2WI_STAT, istat);
+	if (istat & 2)
+		return -1;
+
+	*val = mctl_read_w(P2WI_DATA0) & 0xff;
+	return 0;
+}
+
+int p2wi_write(unsigned int addr, unsigned int val)
+{
+	unsigned time = 0xfffff;
+	unsigned istat = 0;
+
+	mctl_write_w(P2WI_DADDR0, addr);
+	mctl_write_w(P2WI_DATA0, val);
+	mctl_write_w(P2WI_DLEN, 0);
+	mctl_write_w(P2WI_CTRL, 0x80);
+	do {
+		istat = mctl_read_w(P2WI_STAT);
+	} while (!(istat & 3) && time--);
+	mctl_write_w(P2WI_STAT, istat);
+	if (istat & 2)
+		return -1;
+
+	return 0;
+}
+
+#define AW1636_IC_ID_REG	(0x3)
+#define AW1636_DCDC5_VOL_CTRL	(0x25)
+int set_ddr_voltage(void)
+{
+	int ret = -1;
+	unsigned int pmu_id = 0;
+	unsigned int vol_set = 0;
+	unsigned voltage_mV = 1200;
+
+	ret = p2wi_init();
+	if (ret)
+		return -1;
+	ret = p2wi_read(AW1636_IC_ID_REG, &pmu_id);
+	if (ret) {
+#ifdef PW2I_PRINK
+		msg("Get pmu ID failed\n");
+#endif
+		return -1;
+	}
+	if (pmu_id == 6 || pmu_id == 7)
+	{
+#ifdef PW2I_PRINK
+		msg("Found PMU:AXP221\n");
+#endif
+	}else {
+#ifdef PW2I_PRINK
+		msg("Unknown PMU type, id %d\n", pmu_id);
+#endif
+		return -1;
+	}
+
+	//adjust dc5
+	//DDR2 || DDR3 || DDR3L
+	if((dram_para->dram_type == 2) || (dram_para->dram_type == 3) || (dram_para->dram_type == 31))
+	{
+		voltage_mV = 1350;
+		vol_set = (voltage_mV - 1000) / 50;
+		ret = p2wi_write(AW1636_DCDC5_VOL_CTRL, vol_set);
+		if (ret) {
+#ifdef PW2I_PRINK
+			msg("set ddr voltage 1350mV failed\n");
+#endif
+			return -1;
+		}
+		aw_delay(0x100);
+	}
+
+	//DDR2 || DDR3
+	if((dram_para->dram_type == 2)  || (dram_para->dram_type == 3))
+	{
+		voltage_mV = 1500;
+		vol_set = (voltage_mV - 1000) / 50;
+		ret = p2wi_write(AW1636_DCDC5_VOL_CTRL, vol_set);
+		if (ret) {
+#ifdef PW2I_PRINK
+			msg("set ddr voltage 1500mV failed\n");
+#endif
+			return -1;
+		}
+		aw_delay(0x100);
+	}
+
+	//DDR2
+	if(dram_para->dram_type == 2)
+	{
+		voltage_mV = 1800;
+		vol_set = (voltage_mV - 1000) / 50;
+		ret = p2wi_write(AW1636_DCDC5_VOL_CTRL, vol_set);
+		if (ret) {
+#ifdef PW2I_PRINK
+			msg("set ddr voltage 1800mV failed\n");
+#endif
+			return -1;
+		}
+		aw_delay(0x100);
+	}
+
+#ifdef PW2I_PRINK
+	msg("Set DDR Voltage to %dmV\n", voltage_mV);
+#endif
+
+	p2wi_exit();
+	return 0;
+}
+//===========================================================================
 
 //--------------------------------------------external function definition-------------------------------------------
 //*****************************************************************************
@@ -73,9 +313,18 @@ unsigned int DRAMC_init(__dram_para_t *para)
 	{
 		mctl_dll_init(0, para);
 	}
-	
+
 	//release mctl reset
 	mctl_reset_release();
+
+	//set COM sclk enable register
+	reg_val = mctl_read_w(SDR_COM_CCR);
+	//reg_val |= (0x4 | (0x1<<ch_index));//modify 12/2
+	reg_val |= 0x7;//modify 12/2
+	mctl_write_w(SDR_COM_CCR, reg_val);
+
+	if(set_ddr_voltage())
+		return 0;
 
    //***********************************************
    // dram mctl & phy init
@@ -98,10 +347,20 @@ unsigned int DRAMC_init(__dram_para_t *para)
    // dram port configure
    //***********************************************
 	mctl_port_cfg();
-   
+
+/*
+	mctl_write_w(SDR_PIR, 0x81);//modify 12/3
+	if(mctl_read_w(SDR_COM_CR)&(0x1<<19))
+		mctl_write_w(SDR_PIR + 0x1000, 0x81);
+*/
 	//data training error
    	if(mctl_read_w(SDR_PGSR) & (0x3<<5))
 		return 0;
+   	if(mctl_read_w(SDR_COM_CR)&(0x1<<19))
+   	{
+   		if(mctl_read_w(SDR_PGSR + 0x1000) & (0x3<<5))
+   			return 0;
+   	}
 /*
 	//mbus configuration
 	reg_val = 0x1<<24;
@@ -115,7 +374,7 @@ unsigned int DRAMC_init(__dram_para_t *para)
 	mctl_write_w(0x01c20000 + 0x160, reg_val);
 	reg_val = mctl_read_w(0x01c20000 + 0x15c);
 	reg_val |= 0x1u<<31;
-	mctl_write_w(0x01c20000 + 0x160, reg_val);	
+	mctl_write_w(0x01c20000 + 0x160, reg_val);
 */
 
     //NAND_Print("****************************************************************\n");
@@ -126,7 +385,7 @@ unsigned int DRAMC_init(__dram_para_t *para)
 	//NAND_Print("Reg 0x01c2015c: 0x%x\n", *(volatile __u32 *)(0x01c2015c));
 	//NAND_Print("Reg 0x01c20160: 0x%x\n", *(volatile __u32 *)(0x01c20160));
 	//NAND_Print("****************************************************************\n");
-	
+
 	dram_size = (para->dram_para1>>16)&0xF;
 	dram_size *= (1<<(((para->dram_para1>>20)&0xFF)-10));
 	dram_size *= (4<<(((para->dram_para1)>>28)&0xF));
@@ -145,6 +404,7 @@ unsigned int DRAMC_init(__dram_para_t *para)
 //*****************************************************************************
 unsigned int DRAMC_init_auto(__dram_para_t *para)
 {
+#if 0
 	unsigned int i, j;
 	unsigned int ch_lock = 0;
 	unsigned int bus_lock = 0;
@@ -188,7 +448,7 @@ unsigned int DRAMC_init_auto(__dram_para_t *para)
 			paraconfig(&(para->dram_para2), 0xF<<8, 2<<8);
 		}
 	}else if((para->dram_tpr13 & (0x3<<3)) == 0x1)//A31S
-	{	
+	{
 		//dram size restrict to 1GB
 		if(para->dram_tpr13 & 0x8)
 		{
@@ -234,7 +494,7 @@ unsigned int DRAMC_init_auto(__dram_para_t *para)
 		{
 			//para->dram_ch_num = 1;
 			paraconfig(&(para->dram_para2), 0xF<<8, 1<<8);
-		}	
+		}
 	}
 
 	//bus width detect
@@ -254,7 +514,7 @@ unsigned int DRAMC_init_auto(__dram_para_t *para)
 		}
 	}
 
-	
+
 	//rank number detect
 	paraconfig(&(para->dram_para2), 0xF<<12, 2<<12);
 	{
@@ -264,7 +524,7 @@ unsigned int DRAMC_init_auto(__dram_para_t *para)
 			paraconfig(&(para->dram_para2), 0xF<<12, 1<<12);
 		}
 	}
-	
+
 
 	//row width detect
 	//para->dram_row_num = row;
@@ -298,7 +558,7 @@ unsigned int DRAMC_init_auto(__dram_para_t *para)
 		if(ret == 1)
 			break;
 	}
-	
+
 	//para->dram_size = size_max;
 	paraconfig(&(para->dram_para1), 0xFFFF<<0, dram_size<<0);
 	dram_size >>= ((para->dram_para2>>8)&0xf);
@@ -312,6 +572,9 @@ unsigned int DRAMC_init_auto(__dram_para_t *para)
 	if(!DRAMC_init(para))
 		return 0;
 	return ((para->dram_para1)&0xFFFF);
+#else
+	return 0;
+#endif
 }
 
 
@@ -342,6 +605,8 @@ unsigned int mctl_sys_init(void)
   	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
 
 #ifndef SYSTEM_SIMULATION
+  	aw_delay(0x20000);
+#else
   	aw_delay(0x20);
 #endif
 
@@ -386,15 +651,15 @@ unsigned int mctl_reset_release(void)
 unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 {
 	unsigned int ch_id;
-	
+
 	if(ch_index == 1)
-		ch_id = 0x1000;	
+		ch_id = 0x1000;
 	else
 		ch_id = 0x0;
-	
-   //*********************************************** 
+
+   //***********************************************
    // set dram PHY register
-   //*********************************************** 
+   //***********************************************
 	//reset dll
 	mctl_write_w(ch_id + SDR_ACDLLCR,0x80000000);
 	mctl_write_w(ch_id + SDR_DX0DLLCR,0x80000000);
@@ -407,6 +672,8 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 	}
 
 #ifndef SYSTEM_SIMULATION
+	aw_delay(0x10000);
+#else
 	aw_delay(0x10);
 #endif
 
@@ -422,7 +689,9 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 	}
 
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x10);	
+	aw_delay(0x10000);
+#else
+	aw_delay(0x10);
 #endif
 
 	//release reset dll
@@ -436,9 +705,11 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 		mctl_write_w(ch_id + SDR_DX3DLLCR,0x40000000);
 	}
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x10);	
+	aw_delay(0x10000);
+#else
+	aw_delay(0x10);
 #endif
-	
+
 	return (1);
 }
 
@@ -449,7 +720,7 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	unsigned int ch_id;
 	unsigned int hold_flag;
 	//========timing parameters===========
-	unsigned int trefi;
+	/*unsigned int trefi;
 	unsigned int tmrd;
 	unsigned int trfc;
 	unsigned int trp;
@@ -493,13 +764,13 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	unsigned int tdinit0;
 	unsigned int tdinit1;
 	unsigned int tdinit2;
-	unsigned int tdinit3;
+	unsigned int tdinit3;*/
 
 	if((para->dram_tpr13 & 0x1) == 0)//auto detect
 	{
 		if(para->dram_type == 6)//LPDDR2
 		{
-			
+
 		}else if(para->dram_type == 3)//DDR3
 		{
 			trefi 	= 78;
@@ -510,7 +781,7 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 			trtw	= 2;
 			tal		= 0;
 			tcl		= 9;
-			tcwl    = 6;
+			tcwl    = 8;
 			tras	= 24;
 			trc		= 33;
 			trcd	= 9;
@@ -576,8 +847,8 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 				}else
 				{
 					para->dram_mr0 |= (tcl-4)<<4;
-				}				
-			}	
+				}
+			}
 			para->dram_mr1		=	0;
 			if(tal != 0)
 			{
@@ -585,7 +856,7 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 			}
 			para->dram_mr2		=	(tcwl-5)<<3;
 			para->dram_mr3		=	0;
-			
+
 			para->dram_tpr0		=	tzqcsi;
 			para->dram_tpr1		= 	(texsr<<22)|(tdpd<<12)|(tzqcl<<2)|(tprea<<0);
 			para->dram_tpr2		=	(trfc<<23)|(trefi<<15)|(tmrr<<7)|(tzqcs<<0);
@@ -653,7 +924,7 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	}
 	//====================================
 
-	//get flag of pad hold status 
+	//get flag of pad hold status
 #if 0
 	reg_val = 0;
 #else
@@ -672,14 +943,15 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	}
 
 	//set COM sclk enable register
-	reg_val = mctl_read_w(SDR_COM_CCR);
-	reg_val |= (0x4 | (0x1<<ch_index));
-	mctl_write_w(SDR_COM_CCR, reg_val);
+//	reg_val = mctl_read_w(SDR_COM_CCR);
+	//reg_val |= (0x4 | (0x1<<ch_index));//modify 12/2
+//	reg_val |= 0x7;//modify 12/2
+//	mctl_write_w(SDR_COM_CCR, reg_val);
 
 	//send NOP command to active CKE
-	reg_val = 0x80000000;		
-	mctl_write_w(ch_id + SDR_MCMD, reg_val);	
-   
+	reg_val = 0x80000000;
+	mctl_write_w(ch_id + SDR_MCMD, reg_val);
+
    //set PHY genereral configuration register
    reg_val = 0x01042202;
    reg_val |= 0x2<<22;
@@ -687,7 +959,7 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
    if(((para->dram_para2>>12)&0xF) == 2)
    		reg_val |= (0x1<<19);
    mctl_write_w(ch_id + SDR_PGCR, reg_val);
-   
+
    //set mode register
 	mctl_write_w(ch_id + SDR_MR0, para->dram_mr0);
 	mctl_write_w(ch_id + SDR_MR1, para->dram_mr1);
@@ -734,7 +1006,9 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	reg_val |= txpdll<<10;
 	reg_val |= texsr<<0; //txs
 	mctl_write_w(ch_id + SDR_DTPR2, reg_val);
-   
+
+	mctl_write_w(ch_id + SDR_DFITPHYUPDTYPE0, 1);	//modify 12/2
+
 	//set PHY DDR mode
 	if(para->dram_type == 2)		//DDR2
 		reg_val = 0xa;
@@ -743,17 +1017,17 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	else if(para->dram_type == 5)	//LPDDR
 		reg_val = 0x8;
 	else							//LPDDR2
-		reg_val = 0xc;			
-	mctl_write_w(ch_id + SDR_DCR, reg_val);	
-	
+		reg_val = 0xc;
+	mctl_write_w(ch_id + SDR_DCR, reg_val);
+
 #if 1
 	//set DDR system general configuration register
-	reg_val = 0xd200001a;
+	reg_val = 0xd200001b;	//modify 12/2
 	mctl_write_w(ch_id + SDR_DSGCR, reg_val);
-	
+
 	//set DATX8 common configuration register
 	reg_val = 0x800;
-	mctl_write_w(ch_id + SDR_DXCCR, reg_val);	
+	mctl_write_w(ch_id + SDR_DXCCR, reg_val);
 
 	mctl_write_w(ch_id + SDR_DX0GCR, 0x881);
 	mctl_write_w(ch_id + SDR_DX1GCR, 0x881);
@@ -761,18 +1035,18 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	mctl_write_w(ch_id + SDR_DX3GCR, 0x881);
 #endif
 
-   //*********************************************** 
+   //***********************************************
    // check dram PHY status
-   //*********************************************** 
-	while( (mctl_read_w(ch_id + SDR_PGSR)&0x3)!= 0x3 ) {};	
+   //***********************************************
+	while( (mctl_read_w(ch_id + SDR_PGSR)&0x3)!= 0x3 ) {};
 
 	//set odt impendance divide ratio
-	mctl_write_w(ch_id + SDR_ZQ0CR1, para->dram_zq);	
-	
+	mctl_write_w(ch_id + SDR_ZQ0CR1, para->dram_zq);
+
 	//init external dram
 #if 0
-	reg_val = 0x69;	
-#else	
+	reg_val = 0x69;
+#else
 	if(hold_flag)
 	{
 		reg_val = 0x41;
@@ -781,25 +1055,25 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	{
 		reg_val = 0xe9;
 	}
-#endif	
+#endif
 	mctl_write_w(ch_id + SDR_PIR, reg_val);
-	
+
 #ifndef SYSTEM_SIMULATION
 	aw_delay(0x10);
 #endif
-	
-	//wait init done
-	while( (mctl_read_w(ch_id + SDR_PGSR)&0x1) == 0x0) {};	
 
-   //*********************************************** 
+	//wait init done
+	while( (mctl_read_w(ch_id + SDR_PGSR)&0x1F) != 0x1F) {};//modify 12/3
+
+   //***********************************************
    // set dram MCTL register
-   //*********************************************** 	
+   //***********************************************
 	//move to configure state
 	reg_val = 0x1;
-	mctl_write_w(ch_id + SDR_SCTL, reg_val);	
-	while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x1 ) {};	
-	
-	//set memory timing regitsers	
+	mctl_write_w(ch_id + SDR_SCTL, reg_val);
+	while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x1 ) {};
+
+	//set memory timing regitsers
 	clkmhz = para->dram_clk;
 	//clkmhz = clkmhz/1000000;
 	reg_val = clkmhz;
@@ -836,14 +1110,14 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	mctl_write_w(ch_id + SDR_TMRR 	,tmrr);
 	mctl_write_w(ch_id + SDR_TCKESR ,tckesr);
 	mctl_write_w(ch_id + SDR_TDPD 	,tdpd);
-	
+
 	//select 16/32-bits mode for MCTL
 	reg_val = 0x0;
 	//if(para->dram_bus_width == 16)
 	if(((para->dram_para2>>0)&0xF) == 0)
 		reg_val = 0x1;
 	mctl_write_w(ch_id + SDR_PPCFG, reg_val);
-	
+
 	//set DFI timing registers
 //	mctl_write_w(ch_id + SDR_DFITPHYWRL, 1);
 	//if((para->dram_timing.dram_2t_mode == 0) && (para->dram_type != 6))
@@ -862,7 +1136,7 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 		mctl_write_w(ch_id + SDR_DFITRDDEN, reg_val);
 	}
 	mctl_write_w(ch_id + SDR_DFITPHYRDL, 15);
-		
+
 	reg_val = 0x5;
 	mctl_write_w(ch_id + SDR_DFISTCFG0, reg_val);
 
@@ -876,24 +1150,24 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	else								//LPDDR2
 		reg_val = 0xd70040;
 	mctl_write_w(ch_id + SDR_MCFG, reg_val);
-	
+
 	//DFI update configuration register
-	reg_val = 0x2;		
+	reg_val = 0x2;
 	mctl_write_w(ch_id + SDR_DFIUPDCFG, reg_val);
-	
+
 	//move to access state
 	reg_val = 0x2;
-	mctl_write_w(ch_id + SDR_SCTL, reg_val);	
+	mctl_write_w(ch_id + SDR_SCTL, reg_val);
 
-	while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x3 ) {};	
+	while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x3 ) {};
 
 	if(hold_flag)
 	{
 		//move to sleep state
 		reg_val = 0x3;
-		mctl_write_w(ch_id + SDR_SCTL, reg_val);		
+		mctl_write_w(ch_id + SDR_SCTL, reg_val);
 		while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x5 ) {};
-		
+
 		//close pad hold function
 		reg_val = mctl_read_w(R_VDD_SYS_PWROFF_GATE);
 		if(ch_index == 1)
@@ -901,30 +1175,30 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 		else
 			reg_val &= ~(0x1<<1);
 		mctl_write_w(R_VDD_SYS_PWROFF_GATE, reg_val);
-		
+
 		//set WAKEUP command
 		reg_val = 0x4;
-		mctl_write_w(ch_id + SDR_SCTL, reg_val);		
+		mctl_write_w(ch_id + SDR_SCTL, reg_val);
 		while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x3 ) {};
-		
+
 		//calibration and dqs training
 		reg_val = 0x89;
-		mctl_write_w(ch_id + SDR_PIR, reg_val);	
-		while( (mctl_read_w(ch_id + SDR_PGSR)&0x1) == 0x0) {};			
+		mctl_write_w(ch_id + SDR_PIR, reg_val);
+		while( (mctl_read_w(ch_id + SDR_PGSR)&0x1) == 0x0) {};
 	}
-	
+
 	//set power down period
 	reg_val = mctl_read_w(ch_id + SDR_MCFG);
 	reg_val |= 0x10 << 8;
 	mctl_write_w(ch_id + SDR_MCFG, reg_val);
-	
-	return (1);	
+
+	return (1);
 }
 
 unsigned int mctl_com_init(__dram_para_t *para)
 {
 	unsigned int reg_val;
-	
+
 	//set COM memory organization register
 	reg_val = 0;
 	//if(para->dram_rank_num == 2)
@@ -961,33 +1235,33 @@ unsigned int mctl_com_init(__dram_para_t *para)
 	else
 		reg_val |= 0x6<<8;
 
-/*	
+/*
 	if(para->dram_bus_width == 32)
 		reg_val |= 0x3<<12;
 	else
-		reg_val |= 0x1<<12;	
+		reg_val |= 0x1<<12;
 */
 	if(((para->dram_para2>>0)&0xF) == 1)
 		reg_val |= 0x3<<12;
 	else
-		reg_val |= 0x1<<12;		
+		reg_val |= 0x1<<12;
 
-/*	
+/*
 	if(para->dram_access_mode == 0)
-		reg_val |= 0x1<<15;	
+		reg_val |= 0x1<<15;
 */
 	if(((para->dram_para2>>4)&0xF) == 0)
-		reg_val |= 0x1<<15;	
-	
+		reg_val |= 0x1<<15;
+
 	reg_val |= (para->dram_type)<<16;
 
-/*	
+/*
 	if(para->dram_ch_num == 2)
 		reg_val |= 0x1<<19;
 */
 	if(((para->dram_para2>>8)&0xF) == 2)
 		reg_val |= 0x1<<19;
-		
+
 	reg_val |= 0x1<<20;
 #if 0
 	if(para->dram_type != 6)
@@ -1008,7 +1282,7 @@ unsigned int mctl_com_init(__dram_para_t *para)
 		reg_val |= 1U << 6;
 		mctl_write_w(SDR_COM_DBGCR, reg_val);
 	}
-	
+
 //#ifdef FPGA_PLATFORM
 #if 0
 	//set preset readpipe value
@@ -1025,12 +1299,12 @@ unsigned int mctl_com_init(__dram_para_t *para)
 	mctl_write_w(SDR_COM_DBGCR1, reg_val);
 
 #endif
-	
+
 	//set COM sclk enable register
 //	reg_val = 0x7;
 //	mctl_write_w(SDR_COM_CCR, reg_val);
 
-	return (1);	
+	return (1);
 }
 
 unsigned int mctl_port_cfg(void)
@@ -1089,9 +1363,9 @@ unsigned int mctl_port_cfg(void)
 	reg_val = 0x00000317;
 	mctl_write_w(0x01c62080, reg_val);
 	reg_val = 0x00000307;
-	mctl_write_w(0x01c62084, reg_val);	
+	mctl_write_w(0x01c62084, reg_val);
 
-  	return (1);	
+  	return (1);
 }
 
 
@@ -1110,12 +1384,12 @@ signed int init_DRAM(int type, void *para)
 	unsigned int id = 0;
 
 	dram_para = (__dram_para_t *)para;
-	
+
 #ifdef LINUX_CONFIG
 	script_item_u val;
 	script_item_value_type_e type;
-	
-	type = script_get_item("dram_para", "dram_clk", &val);	
+
+	type = script_get_item("dram_para", "dram_clk", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1123,7 +1397,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_clk = val.val;
 
-	type = script_get_item("dram_para", "dram_type", &val);	
+	type = script_get_item("dram_para", "dram_type", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1131,7 +1405,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_type = val.val;
 
-	type = script_get_item("dram_para", "dram_zq", &val);	
+	type = script_get_item("dram_para", "dram_zq", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1139,7 +1413,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_zq = val.val;
 
-	type = script_get_item("dram_para", "dram_odt_en", &val);	
+	type = script_get_item("dram_para", "dram_odt_en", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1147,7 +1421,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_odt_en = val.val;
 
-	type = script_get_item("dram_para", "dram_para1", &val);	
+	type = script_get_item("dram_para", "dram_para1", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1155,7 +1429,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_para1 = val.val;
 
-	type = script_get_item("dram_para", "dram_para2", &val);	
+	type = script_get_item("dram_para", "dram_para2", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1163,7 +1437,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_para2 = val.val;
 
-	type = script_get_item("dram_para", "dram_mr0", &val);	
+	type = script_get_item("dram_para", "dram_mr0", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1171,7 +1445,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_mr0 = val.val;
 
-	type = script_get_item("dram_para", "dram_mr1", &val);	
+	type = script_get_item("dram_para", "dram_mr1", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1179,7 +1453,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_mr1 = val.val;
 
-	type = script_get_item("dram_para", "dram_mr2", &val);	
+	type = script_get_item("dram_para", "dram_mr2", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1187,7 +1461,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_mr2 = val.val;
 
-	type = script_get_item("dram_para", "dram_mr3", &val);	
+	type = script_get_item("dram_para", "dram_mr3", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1195,7 +1469,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_mr3 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr0", &val);	
+	type = script_get_item("dram_para", "dram_tpr0", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1203,7 +1477,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr0 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr1", &val); 
+	type = script_get_item("dram_para", "dram_tpr1", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1211,7 +1485,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr1 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr2", &val); 
+	type = script_get_item("dram_para", "dram_tpr2", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1219,7 +1493,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr2 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr3", &val); 
+	type = script_get_item("dram_para", "dram_tpr3", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1227,7 +1501,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr3 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr4", &val); 
+	type = script_get_item("dram_para", "dram_tpr4", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1235,7 +1509,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr4 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr5", &val); 
+	type = script_get_item("dram_para", "dram_tpr5", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1243,7 +1517,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr5 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr6", &val); 
+	type = script_get_item("dram_para", "dram_tpr6", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1251,7 +1525,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr6 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr7", &val); 
+	type = script_get_item("dram_para", "dram_tpr7", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1259,7 +1533,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr7 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr8", &val); 
+	type = script_get_item("dram_para", "dram_tpr8", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1267,7 +1541,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr8 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr9", &val); 
+	type = script_get_item("dram_para", "dram_tpr9", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1275,7 +1549,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr9 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr10", &val); 
+	type = script_get_item("dram_para", "dram_tpr10", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1283,7 +1557,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr10 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr11", &val); 
+	type = script_get_item("dram_para", "dram_tpr11", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1291,7 +1565,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr11 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr12", &val); 
+	type = script_get_item("dram_para", "dram_tpr12", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1299,7 +1573,7 @@ signed int init_DRAM(int type, void *para)
 	printk("value is %#x\n", val.val);
 	dram_para->dram_tpr12 = val.val;
 
-	type = script_get_item("dram_para", "dram_tpr13", &val); 
+	type = script_get_item("dram_para", "dram_tpr13", &val);
 	if(SCIRPT_ITEM_VALUE_TYPE_INT != type)
 	{
 		printk("type err!");
@@ -1308,15 +1582,16 @@ signed int init_DRAM(int type, void *para)
 	dram_para->dram_tpr13 = val.val;
 #endif
 
-#if 1
-	dram_para->dram_clk        = 240;
+#if 0
+#if 0
+	dram_para->dram_clk        = 480;
 	dram_para->dram_type       = 3;
 	dram_para->dram_zq         = 0x17b;
 	dram_para->dram_odt_en     = 0;
 	dram_para->dram_para1      = 0x10F40800;
-	dram_para->dram_para2      = 0x1211;
+	dram_para->dram_para2      = 0x1111;
 	dram_para->dram_mr0        = 0x1A50;
-	dram_para->dram_mr1        = 0;
+	dram_para->dram_mr1        = 0x4;
 	dram_para->dram_mr2        = 0x8;
 	dram_para->dram_mr3        = 0;
 	dram_para->dram_tpr0       = 0;
@@ -1334,9 +1609,9 @@ signed int init_DRAM(int type, void *para)
 	dram_para->dram_tpr12      = 0;
 	dram_para->dram_tpr13      = 0x7;
 #else
-	dram_para->dram_clk        = 528;
+	dram_para->dram_clk        = 360;
 	dram_para->dram_type       = 3;
-	dram_para->dram_zq         = 0x17b;
+	dram_para->dram_zq         = 0x0bb;
 	dram_para->dram_odt_en     = 0;
 	dram_para->dram_para1      = 0x10F40800;
 	dram_para->dram_para2      = 0x1211;
@@ -1359,27 +1634,54 @@ signed int init_DRAM(int type, void *para)
 	dram_para->dram_tpr12      = 0;
 	dram_para->dram_tpr13      = 0;
 #endif
+#endif
 
+	msg("dram_para->dram_clk        = %x\n", dram_para->dram_clk  );
+#if 0
+	msg("dram_para->dram_type       = %x\n", dram_para->dram_type );
+	msg("dram_para->dram_zq         = %x\n", dram_para->dram_zq   );
+	msg("dram_para->dram_odt_en     = %x\n", dram_para->dram_odt_en);
+	msg("dram_para->dram_para1      = %x\n", dram_para->dram_para1);
+	msg("dram_para->dram_para2      = %x\n", dram_para->dram_para2);
+	msg("dram_para->dram_mr0        = %x\n", dram_para->dram_mr0  );
+	msg("dram_para->dram_mr1        = %x\n", dram_para->dram_mr1  );
+	msg("dram_para->dram_mr2        = %x\n", dram_para->dram_mr2  );
+	msg("dram_para->dram_mr3        = %x\n", dram_para->dram_mr3  );
+	msg("dram_para->dram_tpr0       = %x\n", dram_para->dram_tpr0 );
+	msg("dram_para->dram_tpr1       = %x\n", dram_para->dram_tpr1 );
+	msg("dram_para->dram_tpr2       = %x\n", dram_para->dram_tpr2 );
+	msg("dram_para->dram_tpr3       = %x\n", dram_para->dram_tpr3 );
+	msg("dram_para->dram_tpr4       = %x\n", dram_para->dram_tpr4 );
+	msg("dram_para->dram_tpr5       = %x\n", dram_para->dram_tpr5 );
+	msg("dram_para->dram_tpr6       = %x\n", dram_para->dram_tpr6 );
+	msg("dram_para->dram_tpr7       = %x\n", dram_para->dram_tpr7 );
+	msg("dram_para->dram_tpr8       = %x\n", dram_para->dram_tpr8 );
+	msg("dram_para->dram_tpr9       = %x\n", dram_para->dram_tpr9 );
+	msg("dram_para->dram_tpr10      = %x\n", dram_para->dram_tpr10);
+	msg("dram_para->dram_tpr11      = %x\n", dram_para->dram_tpr11);
+	msg("dram_para->dram_tpr12      = %x\n", dram_para->dram_tpr12);
+	msg("dram_para->dram_tpr13      = %x\n", dram_para->dram_tpr13);
+#endif
 	//bonding ID
 	//0: A31	1: A31S		2: A3X PHONE
 	id = ss_bonding_id();
-	dram_para->dram_tpr13 = 0; 
+	dram_para->dram_tpr13 = 0;
 
 	if(id == 0)
 	{
 		//size restrict to 2GB
 		dram_para->dram_tpr13 |= 0x1<<7;
 		if(type == 1)	//lock, function restrict
-		{	
+		{
 			dram_para->dram_tpr13 |= 0x3<<1;
 		}
-		
+
 		//dram_para.dram_ch_num = 2;
 		paraconfig(&(dram_para->dram_para2), 0xF<<8, 2<<8);
 		//dram_para.dram_bus_width = 32;
 		paraconfig(&(dram_para->dram_para2), 0xF<<0, 1<<0);
-		
-		
+
+
 	}else if(id == 1)
 	{
 		//size restrict to 1GB
@@ -1387,16 +1689,16 @@ signed int init_DRAM(int type, void *para)
 		//id configuration
 		dram_para->dram_tpr13 |= 0x1<<3;
 		if(type == 1)	//lock, function restrict
-		{	
+		{
 			dram_para->dram_tpr13 |= 0x3<<1;
 		}
-		
+
 		//dram_para.dram_ch_num = 1;
 		paraconfig(&(dram_para->dram_para2), 0xF<<8, 1<<8);
 		//dram_para.dram_bus_width = 32;
 		paraconfig(&(dram_para->dram_para2), 0xF<<0, 1<<0);
-		
-		
+
+
 	}else if(id == 2)
 	{
 		//id configuration
@@ -1433,13 +1735,13 @@ unsigned int ss_bonding_id(void)
 	reg_val >>=16;
 	reg_val &=0x3;
 	mctl_write_w(0x01C15000 + 0x00,reg_val);
-	
+
 	id = reg_val;
 
 	reg_val = mctl_read_w(0x01C15000 + 0x00); //SS_CTL
 	reg_val &= ~0x1;
 	mctl_write_w(0x01C15000 + 0x00,reg_val);
-	
+
 	//0: A31	1: A31S		2: A3X PHONE
 	return id;
 }
@@ -1447,10 +1749,10 @@ unsigned int ss_bonding_id(void)
 void paraconfig(unsigned int *para, unsigned int mask, unsigned int value)
 {
 	unsigned int reg_val = *para;
-	
+
 	reg_val &= ~(mask);
 	reg_val |= value;
-	
+
 	*para = reg_val;
 }
 
