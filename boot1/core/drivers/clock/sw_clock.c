@@ -375,7 +375,7 @@ __u32 _get_axi_clock(void)
 			clock = 32000;
 			break;
 		case 1:
-			clock = 24000;
+			clock = 24;
 			break;
 		case 2:
 			clock =  _get_pll1_clock();
@@ -716,7 +716,7 @@ int _set_divd(int pll)
 	//config axi
 	reg_val = CCMU_REG_AXI_MOD;
 	reg_val &= ~(0x03 << 0);
-	reg_val |=  (0x01 << 0);
+	reg_val |=  (0x02 << 0);
 	CCMU_REG_AXI_MOD = reg_val;
 	//config ahb
 	reg_val = CCMU_REG_AHB1_APB1;

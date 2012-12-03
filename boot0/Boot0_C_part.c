@@ -42,6 +42,7 @@ static void clear_ZI( void );
 static void timer_init(void);
 static void print_version(void);
 static __u32 check_odt(int ms);
+static void bias_calibration(void);
 /*******************************************************************************
 *函数名称: Boot0_C_part
 *函数原型：void Boot0_C_part( void )
@@ -58,6 +59,8 @@ void Boot0_C_part( void )
 
 	move_RW( );
 	clear_ZI( );
+
+	bias_calibration();
 
     timer_init();
     UART_open( BT0_head.prvt_head.uart_port, (void *)BT0_head.prvt_head.uart_ctrl, 24*1000*1000 );
@@ -298,4 +301,14 @@ static void clear_ZI( void )
 	{
 		*p8++ = 0;
 	}
+}
+
+static void bias_calibration(void)
+{
+	//open codec apb gate
+	*(volatile unsigned int *)(0x1c20000 + 0x68) |= 1;
+	//disable codec soft reset
+	*(volatile unsigned int *)(0x1c20000 + 0x2D0) |= 1;
+	//enable HBIASADCEN
+	*(volatile unsigned int *)(0x1c22C00 + 0x28) |= (1 << 29);
 }
