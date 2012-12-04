@@ -38,53 +38,85 @@ usb_struct awxx_usb[USB_SIE_COUNT];
 
 extern  __u32 usb_device_function(pusb_struct pusb);
 
-void usb_clock_init(void)
+#define  readl(reg)            (*(volatile unsigned int *)(reg))
+#define  writel(value, reg)    ((*(volatile unsigned int *)(reg)) = value)
+
+static void udelay(u32 time)
 {
-	__u32 temp;
-	__u32 i;
+    int i = 0;
 
-	//open phy0 sie clock
-	temp = *(volatile unsigned int *)(0x1c20000 + 0x60);
-	temp |= 0x01;
-	*(volatile unsigned int *)(0x1c20000 + 0x60) = temp;
+    for(i = 0; i < time; i++){}
 
-	//init phy
-	temp = 0x01<<8;
-	*(volatile unsigned int *)(0x1c20000 + 0xcc) = temp;
-	for(i=0; i<0x100; i++);
-	temp |= 0x01;
-	*(volatile unsigned int *)(0x1c20000 + 0xcc) = temp;
-
-	//init sram for usb0
-	temp = *(volatile unsigned int *)(0x1c00000 + 0x04);
-	temp |= 0x01;
-	*(volatile unsigned int *)(0x1c00000 + 0x04) = temp;
+    return;
 }
 
+void usb_clock_init(void)
+{
+    u32 ccmu_base = 0x1c20000;
+    u32 reg_value = 0;
+    u32 offset_ahb = 0x60;
+    u32 offset_ahb_rst = 0x2c0;
+    u32 offet_phy = 0xcc;
+
+    /* AHB gating */
+    reg_value = readl(ccmu_base + offset_ahb);
+    reg_value |= (1 << 24);
+    writel(reg_value, (ccmu_base + offset_ahb));
+
+    /* AHB reset */
+    reg_value = readl(ccmu_base + offset_ahb_rst);
+    reg_value |= (1 << 24);
+    writel(reg_value, (ccmu_base + offset_ahb_rst));
+    udelay(1000);
+
+    /* phy gating */
+    reg_value = readl(ccmu_base + offet_phy);
+    reg_value |= (1 << 8);
+    writel(reg_value, (ccmu_base + offet_phy));
+
+    /* phy reset */
+    reg_value = readl(ccmu_base + offet_phy);
+    reg_value |= (1 << 0);
+    writel(reg_value, (ccmu_base + offet_phy));
+    udelay(1000);
+
+    return;
+}
 
 void usb_clock_exit(void)
 {
-	__u32 temp;
-	__u32 i;
+    u32 ccmu_base = 0x1c20000;
+    u32 reg_value = 0;
+    u32 offset_ahb = 0x60;
+    u32 offset_ahb_rst = 0x2c0;
+    u32 offet_phy = 0xcc;
 
-	//init sram for usb0
-	temp = *(volatile unsigned int *)(0x1c00000 + 0x04);
-	temp &= ~0x01;
-	*(volatile unsigned int *)(0x1c00000 + 0x04) = temp;
+    /* AHB gating */
+    reg_value = readl(ccmu_base + offset_ahb);
+    reg_value &= ~(1 << 24);
+    writel(reg_value, (ccmu_base + offset_ahb));
 
-	//init phy
-	temp = *(volatile unsigned int *)(0x1c20000 + 0xcc);
-	temp &= ~(0x01 << 8);
-	*(volatile unsigned int *)(0x1c20000 + 0xcc) = temp;
-	for(i=0; i<0x100; i++);
-	temp &= ~0x01;
-	*(volatile unsigned int *)(0x1c20000 + 0xcc) = temp;
+    /* AHB reset */
+    reg_value = readl(ccmu_base + offset_ahb_rst);
+    reg_value &= ~(1 << 24);
+    writel(reg_value, (ccmu_base + offset_ahb_rst));
+    udelay(1000);
 
-	//open phy0 sie clock
-	temp = *(volatile unsigned int *)(0x1c20000 + 0x60);
-	temp &= ~0x01;
-	*(volatile unsigned int *)(0x1c20000 + 0x60) = temp;
+    /* phy gating */
+    reg_value = readl(ccmu_base + offet_phy);
+    reg_value &= ~(1 << 8);
+    writel(reg_value, (ccmu_base + offet_phy));
+
+    /* phy reset */
+    reg_value = readl(ccmu_base + offet_phy);
+    reg_value &= ~(1 << 0);
+    writel(reg_value, (ccmu_base + offet_phy));
+    udelay(1000);
+
+    return;
 }
+
+
 /*
 ************************************************************************************************************
 *
@@ -108,8 +140,8 @@ void usb_params_init(void)
 	usb_clock_init();
 
 	awxx_usb[0].index = 0;
-	awxx_usb[0].reg_base = 	0x01c13000;
-	awxx_usb[0].irq_no = 38;
+	awxx_usb[0].reg_base = 	0x01c19000;
+	awxx_usb[0].irq_no = 103;
 	awxx_usb[0].drq_no = 0x04;
 
 	awxx_usb[0].role = USB0_ROLE;  //USB_ROLE_HST; //USB_ROLE_UNK
@@ -479,6 +511,7 @@ __u32 usb_run(void)
 */
 extern int power_ops_int_status;
 
+#if 0
 static void timer_test_usbdc(void *p_arg)
 {
 	if(power_ops_int_status & 0x08)
@@ -496,6 +529,17 @@ static void timer_test_usbdc(void *p_arg)
 
 	return ;
 }
+#else
+static void timer_test_usbdc(void *p_arg)
+{
+	usb_clock_exit();
+	wBoot_DisableInt(awxx_usb[0].irq_no);
+	power_set_usbdc();
+	usb_working = 0;
+
+	return ;
+}
+#endif
 /*
 ************************************************************************************************************
 *
@@ -554,8 +598,8 @@ static void usb_detect_irq_handler(void *p_arg)
 __u32 usb_detect_enter(void)
 {
 	awxx_usb[0].index = 0;
-	awxx_usb[0].reg_base = 	0x01c13000;
-	awxx_usb[0].irq_no = 38;
+	awxx_usb[0].reg_base = 	0x01c19000;
+	awxx_usb[0].irq_no = 103;
 	awxx_usb[0].drq_no = 0x04;
 
 	__inf("usb start detect\n");

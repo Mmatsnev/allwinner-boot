@@ -115,7 +115,7 @@ void eGon2_start( void )
 
     eGon2_clock_set_pll6();
     eGon2_clock_set_mbus();
-
+	eGon2_printf("power finish\n");
     eGon2_key_init();
     //检查是否需要直接进入fel，通常用于异常出现的情况
     exception = eGon2_boot_detect();
@@ -138,6 +138,11 @@ void eGon2_start( void )
 
     	force_to_card0 = 1;
     }
+	//设置电压
+	axp_set_all_limit();
+	axp_set_hardware_poweron_vol();
+	axp_set_power_supply_output();
+
 	eGon2_printf("flash init start\n");
 	eGon2_block_device_init();
     eGon2_printf("flash init finish\n");
@@ -193,13 +198,8 @@ void eGon2_start( void )
 //    {
 //    	eGon2_printf("script install late\n");
 //    }
-	eGon2_printf("script finish\n");
-	//设置电压
-	axp_set_hardware_poweron_vol();
-	axp_set_power_supply_output();
 	//eGon2_config_charge_current(0);
 	//设置nand参数到脚本中
-	eGon2_printf("power finish\n");
 //	{
 //		while((*(int *)(0x40000000)) != 0x55);
 //	}

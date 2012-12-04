@@ -501,43 +501,11 @@ int axp221_set_dcdc2(int set_vol)
     {
         return -1;
     }
-    tmp = reg_value & 0x3f;
-    vol = tmp * 20 + 600;
-    //如果电压过高，则调低
-    while(vol > set_vol)
+    reg_value &= ~0x3f;
+    reg_value |= (set_vol - 600)/20;
+    if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, &reg_value))
     {
-        tmp --;
-        reg_value &= ~0x3f;
-        reg_value |= tmp;
-        if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, reg_value))
-	    {
-	        return -1;
-	    }
-	    for(i=0;i<2000;i++);
-        if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, &reg_value))
-	    {
-	        return -1;
-	    }
-        tmp     = reg_value & 0x3f;
-        vol     = tmp * 20 + 600;
-    }
-    //如果电压过低，则调高，根据先调低再调高的过程，保证电压会大于等于用户设定电压
-    while(vol < set_vol)
-    {
-        tmp ++;
-        reg_value &= ~0x3f;
-        reg_value |= tmp;
-        if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, reg_value))
-	    {
-	        return -1;
-	    }
-	    for(i=0;i<2000;i++);
-        if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, &reg_value))
-	    {
-	        return -1;
-	    }
-        tmp     = reg_value & 0x3f;
-        vol     = tmp * 20 + 600;
+        return -1;
     }
 
     return 0;
@@ -561,6 +529,7 @@ int axp221_set_dcdc2(int set_vol)
 int axp221_set_dcdc3(int set_vol)
 {
     u8   reg_value;
+    u8   reg_dump;
 
 	if((set_vol < 600) || (set_vol > 1860))
 	{
@@ -581,6 +550,8 @@ int axp221_set_dcdc3(int set_vol)
 
 		return -1;
 	}
+	axp_i2c_read(AXP22_ADDR, BOOT_POWER22_DC3OUT_VOL, &reg_dump);
+	eGon2_printf("sunxi pmu %x\n", reg_dump);
 
 	return 0;
 }
@@ -1340,7 +1311,7 @@ int axp221_set_vbus_cur_limit(int current)
 	{
 	    reg_value |= 0x03;
 	}
-	else if(current < 900)		//limit to 500
+	else if(current <= 500)		//limit to 500
 	{
 		reg_value |= 0x01;
 	}

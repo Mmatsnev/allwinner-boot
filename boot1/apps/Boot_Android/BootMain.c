@@ -211,7 +211,7 @@ int BootMain(int argc, char **argv)
     }
     else
     {
-//    	power_int_reg();	//∆Ù”√÷–∂œºÏ≤‚vbus
+    	power_int_reg();	//∆Ù”√÷–∂œºÏ≤‚vbus
     	if(BootOS_detect_os_type(&para_addr, &kernal_addr, (void *)global_info, &logo_status))
     	{
     		ret = -2;
@@ -220,8 +220,8 @@ int BootMain(int argc, char **argv)
     //BoardExit(logo_status, ret);
 	BoardExit(0, ret);
 
-	power_int_rel();
-	usb_detect_exit();
+	//power_int_rel();
+	//usb_detect_exit();
     if(!ret)
     {
         BootOS(para_addr, kernal_addr);

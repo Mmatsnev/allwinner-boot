@@ -80,25 +80,28 @@ int axp_probe(void)
 int power_init(int set_vol)
 {
 	int ret = -1;
+	int dcdc3_vol;
 
 	//set_vol = uboot_spare_head.boot_data.run_core_vol;
 	//set_clock = uboot_spare_head.boot_data.run_clock;
-	if(!set_vol)
+	ret = eGon2_script_parser_fetch("target", "dcdc3_vol", &dcdc3_vol, 1);
+	if(ret)
 	{
-		set_vol = 1400;
+		dcdc3_vol = 1200;
 	}
+	eGon2_printf("set dcdc3 to %d\n", dcdc3_vol);
 	if(!axp_probe())
 	{
 		if(!axp_probe_power_supply_condition())
 		{
-			if(!axp_set_dcdc2(set_vol))
+			if(!axp_set_dcdc3(dcdc3_vol))
 			{
-				eGon2_printf("axp_set_dcdc2 ok\n");
+				eGon2_printf("axp_set_dcdc3 ok\n");
 				ret = 0;
 			}
 			else
 			{
-				eGon2_printf("axp_set_dcdc2 fail\n");
+				eGon2_printf("axp_set_dcdc3 fail\n");
 			}
 		}
 		else
@@ -499,19 +502,25 @@ int axp_set_power_supply_output(void)
 {
 	int vol_value;
 
-	//set dcdc3
-	if(!eGon2_script_parser_fetch("target", "dcdc3_vol", &vol_value, 1))
+	//set dcdc2
+	if(!eGon2_script_parser_fetch("target", "dcdc2_vol", &vol_value, 1))
 	{
-		axp_set_dcdc3(vol_value);
+		if(!axp_set_dcdc2(vol_value))
+		{
+			eGon2_printf("boot power:set dcdc2 to %d ok\n", vol_value);
+		}
 	}
 	else
 	{
-		eGon2_printf("boot power:unable to find dcdc3 set\n");
+		eGon2_printf("boot power:unable to find dcdc2 set\n");
 	}
 	//set dcdc4
 	if(!eGon2_script_parser_fetch("target", "dcdc4_vol", &vol_value, 1))
 	{
-		axp_set_dcdc4(vol_value);
+		if(!axp_set_dcdc4(vol_value))
+		{
+			eGon2_printf("boot power:set dcdc4 to %d ok\n", vol_value);
+		}
 	}
 	else
 	{
@@ -520,7 +529,10 @@ int axp_set_power_supply_output(void)
     //set dcdc5
 	if(!eGon2_script_parser_fetch("target", "dcdc5_vol", &vol_value, 1))
 	{
-		axp221_set_dcdc5(vol_value);
+		if(!axp_set_dcdc5(vol_value))
+		{
+			eGon2_printf("boot power:set dcdc5 to %d ok\n", vol_value);
+		}
 	}
 	else
 	{
@@ -529,7 +541,10 @@ int axp_set_power_supply_output(void)
 	//set ldo2
 	if(!eGon2_script_parser_fetch("target", "ldo2_vol", &vol_value, 1))
 	{
-		axp_set_ldo2(vol_value);
+		if(!axp_set_ldo2(vol_value))
+		{
+			eGon2_printf("boot power:set ldo2 to %d ok\n", vol_value);
+		}
 	}
 	else
 	{
@@ -538,7 +553,10 @@ int axp_set_power_supply_output(void)
 	//set ldo3
 	if(!eGon2_script_parser_fetch("target", "ldo3_vol", &vol_value, 1))
 	{
-		axp_set_ldo3(vol_value);
+		if(!axp_set_ldo3(vol_value))
+		{
+			eGon2_printf("boot power:set ldo2 to %d ok\n", vol_value);
+		}
 	}
 	else
 	{
@@ -634,6 +652,26 @@ int  axp_set_dcdc3(int set_vol)
 int  axp_set_dcdc4(int set_vol)
 {
 	return axp221_set_dcdc4(set_vol);
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int  axp_set_dcdc5(int set_vol)
+{
+	return axp221_set_dcdc5(set_vol);
 }
 /*
 ************************************************************************************************************
@@ -795,5 +833,51 @@ int  axp_set_vbus_cur_limit(int current)
 int  axp_set_vbus_vol_limit(int vol)
 {
 	return axp221_set_vbus_vol_limit(vol);
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp_set_all_limit(void)
+{
+	int usbvol_limit = 0;
+	int usbcur_limit = 0;
+	int limit_vol = 0, limit_cur = 0;
+
+	eGon2_script_parser_fetch("pmu_para", "pmu_usbvol_limit", &usbvol_limit, 1);
+	eGon2_script_parser_fetch("pmu_para", "pmu_usbcur_limit", &usbcur_limit, 1);
+	eGon2_script_parser_fetch("pmu_para", "pmu_usbvol", &limit_vol, 1);
+	eGon2_script_parser_fetch("pmu_para", "pmu_usbcur", &limit_cur, 1);
+
+	eGon2_printf("usbvol_limit = %d, limit_vol = %d\n", usbvol_limit, limit_vol);
+	eGon2_printf("usbcur_limit = %d, limit_cur = %d\n", usbcur_limit, limit_cur);
+
+	if(!usbvol_limit)
+	{
+		limit_vol = 0;
+
+	}
+	if(!usbcur_limit)
+	{
+		limit_cur = 0;
+
+	}
+
+	axp_set_vbus_vol_limit(limit_vol);
+	axp_set_vbus_cur_limit(limit_cur);
+
+	return 0;
 }
 
