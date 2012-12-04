@@ -34,7 +34,8 @@ OBJS=$(SRCCS:.c=.o) $(SRCSS:.S=.o)
 nand:$(LOCALTARGET)
 	$(LOAD) $(LDFLAGS) -O binary -S -g -R .note -R .comment $(LOCALTARGET) $(TMPTARGET)
 	-$(WORKTOOLS)/gen_check_code $(TMPTARGET)
-	cp $(TMPTARGET) $(TARGET)
+	-cp $(TMPTARGET) $(TARGET0)
+	cp  $(TMPTARGET) $(TARGET1)
 	-rm $(OBJS) $(TMPTARGET)
 	@echo ----------------------------
 	@echo target make finish

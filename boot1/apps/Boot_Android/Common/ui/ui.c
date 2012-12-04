@@ -171,7 +171,7 @@ __s32 ShowLayer(__hdle layer_hdl, display_layer_info_t *layer_para, __s32 layer_
 __s32 WaitForDeInitFinish(void)
 {
 	__s32 ret;
-	__s32 timedly = 5000;
+	__s32 timedly = 2000;
 	__s32 check_time = timedly/50;
 
 	do
