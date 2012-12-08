@@ -44,3 +44,37 @@ int axp221_set_dc1sw(int on_off)
 }
 
 
+int axp221_set_dldo3(int on_off)
+{
+    u8   reg_value;
+
+	if(axp_i2c_write(NULL, BOOT_POWER22_OUTPUT_DLDO3_VO, 0x0b))
+	{
+		wlibc_uprintf("sunxi pmu error : unable to set dcdc1\n");
+		return -1;
+	}
+
+	if(axp_i2c_read(NULL, BOOT_POWER22_OUTPUT_DLDO3_SW, &reg_value))
+    {
+		wlibc_uprintf("%d\n", __LINE__);
+        return -1;
+    }
+    if(on_off)
+    {
+		reg_value |= (1 << 5);
+	}
+	else
+	{
+		reg_value &= ~(1 << 5);
+	}
+	
+	if(axp_i2c_write(NULL, BOOT_POWER22_OUTPUT_DLDO3_SW, reg_value))
+	{
+		wlibc_uprintf("sunxi pmu error : unable to set dcdc1\n");
+
+		return -1;
+	}
+
+	return 0;
+}
+

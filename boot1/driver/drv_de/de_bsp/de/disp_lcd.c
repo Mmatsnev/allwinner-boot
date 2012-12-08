@@ -1164,6 +1164,18 @@ __s32 LCD_POWER_EN(__u32 sel, __bool b_en)
 
         hdl = OSAL_GPIO_Request(gpio_info, 1);
         OSAL_GPIO_Release(hdl, 2);
+        
+        if((gpanel_info[sel].lcd_if == LCD_IF_EDP) && (gpanel_info[sel].lcd_edp_tx_ic == 0))
+    		{
+	         if(b_en)
+	         {
+	            axp221_set_dldo3(1);
+	         }
+	        else
+	        {
+	            axp221_set_dldo3(0);
+	        }
+				}
     }
 
 #ifdef __FPGA_DEBUG__
