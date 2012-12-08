@@ -39,23 +39,11 @@
 *
 ************************************************************************************************************
 */
-static int int_reggroup_value[36];
-
 int standby_int_init(void)
 {
-	int	  i;
-	int   *addr;
-
 	asm("mrs r0, cpsr");
 	asm("orr r0, r0, #(0x40|0x80)");
 	asm("msr cpsr_c, r0");
-
-	//±£´æÖĞ¶Ï¼Ä´æÆ÷Öµ
-//	addr = (int *)(0x01c20400);
-//	for(i=1;i<36;i++)
-//	{
-//		int_reggroup_value[i] = *(addr + i);
-//	}
 
     return 0;
 }
@@ -81,20 +69,6 @@ int standby_int_init(void)
 */
 int standby_int_exit(void)
 {
-//	int	  i;
-//	int   *addr;
-//
-//	//±£´æÖĞ¶Ï¼Ä´æÆ÷Öµ
-//	addr = (int *)(0x01c20400);
-//	if(!int_reggroup_value)
-//	{
-//		return -1;
-//	}
-//	for(i=1;i<36;i++)
-//	{
-//		*(addr + i) = int_reggroup_value[i];
-//	}
-
 	asm("mrs r0, cpsr");
 	asm("bic r0, r0, #(0x40|0x80)");
 	asm("msr cpsr_c, r0");
@@ -105,16 +79,6 @@ int standby_int_exit(void)
 
 int standby_int_query(void)
 {
-//	__u32 reg_val;
-//
-//	reg_val = INTC_REG_IRQ_PENDCLR0;
-//	if(reg_val & 1)
-//	{
-//		INTC_REG_IRQ_PENDCLR0 = reg_val;
-//
-//		return 1;
-//	}
-
 	return 0;
 }
 

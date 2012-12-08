@@ -81,7 +81,8 @@ typedef unsigned int __hdle;
 #define __FPGA_DEBUG__
 #endif
 
-#define   OSAL_PRINTF   wlibc_uprintf
+//#define   OSAL_PRINTF   wlibc_uprintf
+#define  OSAL_PRINTF(...)
 #include "string.h"
 #include "../osal/osal_de.h"
 #include "iep/iep.h"

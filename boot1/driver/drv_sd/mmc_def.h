@@ -17,6 +17,7 @@
 #define MAX_MMC_NUM			4
 #define MMC_TRANS_BY_DMA
 //#define MMC_DEBUG
+#undef  MMC_DEBUG
 
 #define MMC_REG_BASE		0x01c0f000
 #define MMC_REG_FIFO_OS		(0x200)
@@ -37,7 +38,7 @@
 #define mmcdbg(fmt...)	wlibc_uprintf("[mmc]: "fmt)
 #define mmcmsg(fmt...)	wlibc_uprintf(fmt)
 #else
-#define mmcinfo(fmt...) wlibc_uprintf("[mmc]: "fmt)
+#define mmcinfo(fmt...)
 #define mmcdbg(fmt...)
 #define mmcmsg(fmt...)
 #endif

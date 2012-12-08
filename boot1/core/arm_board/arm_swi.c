@@ -79,8 +79,7 @@ void eGon2_swi_handler_entry(__u32 swi_number, struct swi_regs * swi_reg)
 		break;
 		case EGON2_SWI_JUMP_TO_LINUX:
 		{
-		    eGon2_printf("%x %x %x %x\n", swi_reg->reg[0], swi_reg->reg[1], swi_reg->reg[2], swi_reg->reg[3]);
-			eGon2_jump_to_android_linux(swi_reg->reg[0], swi_reg->reg[1], swi_reg->reg[2], swi_reg->reg[3]);
+		    eGon2_jump_to_android_linux(swi_reg->reg[0], swi_reg->reg[1], swi_reg->reg[2], swi_reg->reg[3]);
 		}
         break;
  /* 中断服务 */
@@ -203,7 +202,7 @@ void eGon2_swi_handler_entry(__u32 swi_number, struct swi_regs * swi_reg)
 /* 内置POWER操作 */
         case EGON2_SWI_POWER_GET_SOURCE:
         {
-            swi_reg->reg[0] = axp_power_get_dcin_battery_exist((__u32 *)swi_reg->reg[0], (__u32 *)swi_reg->reg[1]);
+            swi_reg->reg[0] = axp_power_get_dcin_battery_exist((int *)swi_reg->reg[0], (int *)swi_reg->reg[1]);
         }
         break;
 

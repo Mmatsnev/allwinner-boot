@@ -29,34 +29,6 @@ extern  __u32  tmr_hd;
 extern  int    usb_working;
 extern  int    power_ops_int_status;
 
-__s32 BOOT_TWI_Read(__u32 arg1, __u8 *arg2, __u8 *arg3)
-{
-    _twi_arg_t  twi_data;
-
-    twi_data.slave_addr = arg1;
-    twi_data.slave_addr_flag = 0;
-    twi_data.byte_addr  = arg2;
-    twi_data.byte_addr_width = 1;
-    twi_data.byte_count = 1;
-    twi_data.data = arg3;
-    twi_data.if_restart = 1;
-
-    return wBoot_twi_read((void *)&twi_data);
-}
-
-__s32  BOOT_TWI_Write(__u32 arg1, __u8 *arg2, __u8 *arg3)
-{
-    _twi_arg_t  twi_data;
-
-    twi_data.slave_addr = arg1;
-    twi_data.slave_addr_flag = 0;
-    twi_data.byte_addr  = arg2;
-    twi_data.byte_addr_width = 1;
-    twi_data.byte_count = 1;
-    twi_data.data = arg3;
-
-    return wBoot_twi_write((void *)&twi_data);
-}
 /*
 ************************************************************************************************************
 *

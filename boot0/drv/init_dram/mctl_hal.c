@@ -21,6 +21,7 @@
 //				2012/11/28		CPL				0.94	modify for boot and burn interface compatible
 //				2012/11/29		CPL				0.95	modify lock parameters configuration
 //				2012/12/3		CPL				0.96	add dll&pll delay and simple test ; add voltage adjust
+//				2012/12/6			CPL				0.97	add write odt enable function
 //*****************************************************************************
 #include "mctl_reg.h"
 #include "mctl_hal.h"
@@ -189,7 +190,8 @@ int p2wi_write(unsigned int addr, unsigned int val)
 
 	return 0;
 }
-
+#define AW1636_DCDC3_VOL_CTRL	(0x23)
+#define AW1636_DCDC4_VOL_CTRL	(0x24)
 #define AW1636_IC_ID_REG	(0x3)
 #define AW1636_DCDC5_VOL_CTRL	(0x25)
 int set_ddr_voltage(void)
@@ -220,6 +222,14 @@ int set_ddr_voltage(void)
 #endif
 		return -1;
 	}
+	ret = p2wi_write(AW1636_DCDC4_VOL_CTRL, (1200-600)/20);
+	if (ret) {
+#ifdef PW2I_PRINK
+		msg("set system voltage 1200mV failed\n");
+#endif
+		return -1;
+	}
+
 
 	//adjust dc5
 	//DDR2 || DDR3 || DDR3L
@@ -323,8 +333,11 @@ unsigned int DRAMC_init(__dram_para_t *para)
 	reg_val |= 0x7;//modify 12/2
 	mctl_write_w(SDR_COM_CCR, reg_val);
 
-	if(set_ddr_voltage())
-		return 0;
+	if((mctl_read_w(R_VDD_SYS_PWROFF_GATE) & 0x3) == 0)
+	{
+		if(set_ddr_voltage())
+			return 0;
+	}
 
    //***********************************************
    // dram mctl & phy init
@@ -849,7 +862,7 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 					para->dram_mr0 |= (tcl-4)<<4;
 				}
 			}
-			para->dram_mr1		=	0;
+			para->dram_mr1		=	0x4;
 			if(tal != 0)
 			{
 				para->dram_mr1	|= (tcl - tal)<<3;
@@ -1020,20 +1033,27 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 		reg_val = 0xc;
 	mctl_write_w(ch_id + SDR_DCR, reg_val);
 
-#if 1
 	//set DDR system general configuration register
 	reg_val = 0xd200001b;	//modify 12/2
+	if((para->dram_mr1 & 0x244) != 0)
+		reg_val |= 0x1<<29;
 	mctl_write_w(ch_id + SDR_DSGCR, reg_val);
 
 	//set DATX8 common configuration register
 	reg_val = 0x800;
 	mctl_write_w(ch_id + SDR_DXCCR, reg_val);
 
+if(para->dram_odt_en == 0){
 	mctl_write_w(ch_id + SDR_DX0GCR, 0x881);
 	mctl_write_w(ch_id + SDR_DX1GCR, 0x881);
 	mctl_write_w(ch_id + SDR_DX2GCR, 0x881);
 	mctl_write_w(ch_id + SDR_DX3GCR, 0x881);
-#endif
+}else{
+	mctl_write_w(ch_id + SDR_DX0GCR, 0x887);
+	mctl_write_w(ch_id + SDR_DX1GCR, 0x887);
+	mctl_write_w(ch_id + SDR_DX2GCR, 0x887);
+	mctl_write_w(ch_id + SDR_DX3GCR, 0x887);
+}
 
    //***********************************************
    // check dram PHY status
@@ -1063,7 +1083,13 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 #endif
 
 	//wait init done
-	while( (mctl_read_w(ch_id + SDR_PGSR)&0x1F) != 0x1F) {};//modify 12/3
+	if(!hold_flag)
+	{
+		while( (mctl_read_w(ch_id + SDR_PGSR)&0x1F) != 0x1F) {};//modify 12/3
+	}else
+	{
+		while( (mctl_read_w(ch_id + SDR_PGSR)&0x1F) != 0xB) {};//modify 12/3
+	}
 
    //***********************************************
    // set dram MCTL register
@@ -1111,6 +1137,16 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	mctl_write_w(ch_id + SDR_TCKESR ,tckesr);
 	mctl_write_w(ch_id + SDR_TDPD 	,tdpd);
 
+if((para->dram_mr1 & 0x244) != 0){
+	reg_val = mctl_read_w(ch_id + SDR_DFIODTCFG);
+	reg_val |= (0x1<<3);
+	mctl_write_w(ch_id + SDR_DFIODTCFG, reg_val);
+
+	reg_val = mctl_read_w(ch_id + SDR_DFIODTCFG1);
+	reg_val &= ~((0x1f<<0));
+	reg_val |= (0x0<<0);
+	mctl_write_w(ch_id + SDR_DFIODTCFG1, reg_val);
+}
 	//select 16/32-bits mode for MCTL
 	reg_val = 0x0;
 	//if(para->dram_bus_width == 16)
@@ -1636,7 +1672,7 @@ signed int init_DRAM(int type, void *para)
 #endif
 #endif
 
-	msg("dram_para->dram_clk        = %x\n", dram_para->dram_clk  );
+	msg("dram clk = %x\n", dram_para->dram_clk  );
 #if 0
 	msg("dram_para->dram_type       = %x\n", dram_para->dram_type );
 	msg("dram_para->dram_zq         = %x\n", dram_para->dram_zq   );
@@ -1665,7 +1701,7 @@ signed int init_DRAM(int type, void *para)
 	//bonding ID
 	//0: A31	1: A31S		2: A3X PHONE
 	id = ss_bonding_id();
-	dram_para->dram_tpr13 = 0;
+	//dram_para->dram_tpr13 = 0;
 
 	if(id == 0)
 	{

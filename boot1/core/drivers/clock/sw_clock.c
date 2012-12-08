@@ -658,10 +658,10 @@ int eGon2_clock_set_pll6(void)
 	factor_n = ((reg_val >> 8) & 0x1f) + 1;
 	factor_k = ((reg_val >> 4) & 0x03) + 1;
 	pll6 = 24 * factor_n * factor_k/2;
-
+#ifdef DEBUG
 	eGon2_printf("PLL6 CTRL %x, pll = %d\n", reg_val, pll6);
-
-	return 0;
+#endif
+	return pll6;
 }
 
 int eGon2_clock_set_mbus(void)
@@ -875,8 +875,9 @@ __u32 eGon2_clock_set_ext(__u32 clock_frequency, __u32 core_vol)
     CCMU_REG_AXI_MOD = reg_val;
 //    tmp = (reg_val>>8)&0x03;
 //    eGon2_printf("axi:ahb:apb=%d:%d:%d\n", ((reg_val>>0)&0x03) + 1, 1<<((reg_val>>4)&0x03), tmp?2:(1<<tmp));
+#ifdef DEBUG
 	eGon2_printf("PLL1 %x, AXI %x, AHBAPB %x\n", CCMU_REG_PLL1_CTRL, CCMU_REG_AXI_MOD, CCMU_REG_AHB1_APB1);
-
+#endif
     return  _get_pll1_clock();
 }
 

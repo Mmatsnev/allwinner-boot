@@ -37,12 +37,17 @@ __s32 eGon2_block_device_init(void)
 	gpio_no    = BT1_head.boot_head.eGON_vsn[1];
 	*storage   = ((gpio_no << 16) | sdcard_num);
 
-	eGon2_printf("try to init sdcard %d\n", sdcard_num);
     //return  SDMMC_LogicalInit(*storage, sdcard_info->boot_offset, sdcard_info->speed_mode[gpio_no], sdcard_info->line_count[gpio_no]);
 	ret = SDMMC_LogicalInit(sdcard_num, 20 * 1024 * 1024/512, 4);
-	eGon2_printf("sdcard %d init result = %d\n", sdcard_num, ret);
 
-	return ret;
+	if(ret)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 __s32 eGon2_block_device_exit(void)

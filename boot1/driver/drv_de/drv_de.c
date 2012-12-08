@@ -26,7 +26,7 @@ void DRV_lcd_open_callback(void *parg)
     __s32 i = lcd_flow_cnt[sel]++;
 
     flow = BSP_disp_lcd_get_open_flow(sel);
-    __wrn("lcd open callback, step %d, timeout=%d\n", i, flow->func[i].delay);
+    __inf("lcd %d timeout=%d\n", i, flow->func[i].delay);
 
 	if(i < flow->func_num)
     {
@@ -177,8 +177,6 @@ __s32 disp_int_process(__u32 sel)
 __s32 DRV_DE_INIT(void)
 {
     __disp_bsp_init_para para;
-
-    __wrn("==DRV_DE_INIT==\n");
 
     para.base_image0   = 0x01e60000;
     para.base_image1   = 0x01e40000;

@@ -46,6 +46,8 @@ typedef struct
 }__int_func_t;
 
 __int_func_t  eGon2_IRQVectorTable[GIC_IRQ_NUM];
+
+__u32 int_enable_number[32];
 /*
 ************************************************************************************************************
 *
@@ -404,4 +406,41 @@ void gic_irq_handler(void)
 	return ;
 }
 
+
+void gic_store(void)
+{
+	int max_no, i;
+
+	max_no = GIC_IRQ_NUM/32;
+	if(GIC_IRQ_NUM%32)
+	{
+		max_no ++;
+	}
+
+	memset(int_enable_number, 0, sizeof(int) * max_no);
+	for(i=0;i<max_no;i++)
+	{
+		int_enable_number[i] = GICD_ISENABLER(i);
+		GICD_ISENABLER(i) = 0;
+		GICD_ICPENDR(i) = 0xffffffff;
+	}
+	eGon2_EnableInt(AW_IRQ_NMI);
+}
+
+void gic_restore(void)
+{
+	int max_no, i;
+
+	max_no = GIC_IRQ_NUM/32;
+	if(GIC_IRQ_NUM%32)
+	{
+		max_no ++;
+	}
+
+	for(i=0;i<max_no;i++)
+	{
+		GICD_ISENABLER(i) = int_enable_number[i];
+	}
+	memset(int_enable_number, 0, sizeof(int) * max_no);
+}
 

@@ -21,10 +21,6 @@
 #define   __AXP_H__
 
 
-#define  AXP_POWER_ON_BY_POWER_KEY       0
-#define  AXP_POWER_ON_BY_POWER_TRIGGER   1
-
-
 #define  AXP_POWER_NULL					 0
 #define  AXP_POWER_PMU209				 1
 

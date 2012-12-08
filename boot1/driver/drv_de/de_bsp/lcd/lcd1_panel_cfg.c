@@ -10,7 +10,7 @@ static void LCD_panel_exit(__u32 sel);
 //#define LCD_PARA_USE_CONFIG
 
 #ifdef LCD_PARA_USE_CONFIG
-static __u8 g_gamma_tbl[][2] = 
+static __u8 g_gamma_tbl[][2] =
 {
 //{input value, corrected value}
     {0, 0},
@@ -36,13 +36,13 @@ static __u8 g_gamma_tbl[][2] =
 static void LCD_cfg_panel_info(__panel_para_t * info)
 {
     __u32 i = 0, j=0;
-    
+
     memset(info,0,sizeof(__panel_para_t));
 
     info->lcd_x             = 800;
     info->lcd_y             = 480;
     info->lcd_dclk_freq     = 33;       //MHz
-    
+
     info->lcd_pwm_not_used  = 0;
     info->lcd_pwm_ch        = 1;
     info->lcd_pwm_freq      = 10000;     //Hz
@@ -57,7 +57,7 @@ static void LCD_cfg_panel_info(__panel_para_t * info)
     info->lcd_vt            = 2 * 525;  //vysnc total cycle *2
     info->lcd_hv_vspw       = 0;        //vysnc plus width
 
-    info->lcd_hv_if         = 0;        //0:hv parallel 1:hv serial 
+    info->lcd_hv_if         = 0;        //0:hv parallel 1:hv serial
     info->lcd_hv_smode      = 0;        //0:RGB888 1:CCIR656
     info->lcd_hv_s888_if    = 0;        //serial RGB format
     info->lcd_hv_syuv_if    = 0;        //serial YUV format
@@ -76,7 +76,7 @@ static void LCD_cfg_panel_info(__panel_para_t * info)
     if(info->lcd_gamma_correction_en)
     {
         __u32 items = sizeof(g_gamma_tbl)/2;
-        
+
         for(i=0; i<items-1; i++)
         {
             __u32 num = g_gamma_tbl[i+1][0] - g_gamma_tbl[i][0];
@@ -108,7 +108,7 @@ static __s32 LCD_open_flow(__u32 sel)
 }
 
 static __s32 LCD_close_flow(__u32 sel)
-{	
+{
 	LCD_CLOSE_FUNC(sel, LCD_bl_close, 0);       //close lcd backlight, and delay 0ms
 	LCD_CLOSE_FUNC(sel, TCON_close, 0);         //close lcd controller, and delay 0ms
 	LCD_CLOSE_FUNC(sel, LCD_panel_exit,	200);   //open lcd power, than delay 200ms
@@ -142,25 +142,21 @@ static void LCD_bl_close(__u32 sel)
 static void LCD_panel_init(__u32 sel)
 {
     __panel_para_t *info = OSAL_malloc(sizeof(__panel_para_t));
-    
+
     lcd_get_panel_para(sel, info);
     if((info->lcd_if == LCD_IF_EDP) && (info->lcd_edp_tx_ic == 0))
     {
-        __inf("edp select anx9804 ic\n");
+        //__inf("edp select anx9804 ic\n");
         anx9804_init(info);
     }
     else if((info->lcd_if == LCD_IF_EDP) && (info->lcd_edp_tx_ic == 1))
     {
-        __inf("edp select anx6345 ic\n");
+        //__inf("edp select anx6345 ic\n");
         anx6345_init(info);
-    }
-    else
-    {
-        __inf("== panel is not edp interface ===!\n");
     }
 
     OSAL_free(info);
-    
+
     return;
 }
 
@@ -177,7 +173,7 @@ static __s32 LCD_user_defined_func(__u32 sel, __u32 para1, __u32 para2, __u32 pa
 
 void LCD_get_panel_funs_1(__lcd_panel_fun_t * fun)
 {
-    __inf("LCD_get_panel_funs_1\n");
+    //__inf("LCD_get_panel_funs_1\n");
 #ifdef LCD_PARA_USE_CONFIG
     fun->cfg_panel_info = LCD_cfg_panel_info;//delete this line if you want to use the lcd para define in sys_config1.fex
 #endif

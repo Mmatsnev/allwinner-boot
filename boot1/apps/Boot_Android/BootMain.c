@@ -204,8 +204,8 @@ int BootMain(int argc, char **argv)
     BoardInit_Display(global_info->display_device, global_info->display_mode);
     //开始准备系统数据
     //检测电压状态
-    //if(check_power_status())
-    if(0)
+    if(check_power_status())
+    //if(0)
     {
     	ret = -1;
     }

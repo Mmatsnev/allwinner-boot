@@ -143,19 +143,7 @@ int axp221_probe_battery_ratio(void)
         return -1;
     }
 
-	if(reg_value & 0x80)
-	{
-    	return reg_value & 0x7f;
-	}
-	else
-	{
-		if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_COULOMB_CAL, &reg_value))
-	    {
-	        return -1;
-	    }
-
-	    return reg_value & 0x7f;
-	}
+	return reg_value & 0x7f;
 }
 /*
 ************************************************************************************************************
@@ -182,7 +170,14 @@ int axp221_probe_battery_exist(void)
         return -1;
     }
 
-    return (reg_value & 0x20);
+	if(reg_value & 0x10)
+	{
+		return (reg_value & 0x20);
+	}
+	else
+	{
+		return -1;
+	}
 }
 /*
 ************************************************************************************************************
@@ -503,7 +498,7 @@ int axp221_set_dcdc2(int set_vol)
     }
     reg_value &= ~0x3f;
     reg_value |= (set_vol - 600)/20;
-    if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, &reg_value))
+    if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, &reg_value))
     {
         return -1;
     }
@@ -551,7 +546,6 @@ int axp221_set_dcdc3(int set_vol)
 		return -1;
 	}
 	axp_i2c_read(AXP22_ADDR, BOOT_POWER22_DC3OUT_VOL, &reg_dump);
-	eGon2_printf("sunxi pmu %x\n", reg_dump);
 
 	return 0;
 }
@@ -1407,3 +1401,107 @@ int axp221_probe_rest_battery_capacity(void)
 	bat_rest = reg_value & 0x7F;
     return bat_rest;
 }
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp221_read_int_enable_status(__u8 *buffer)
+{
+	int   i;
+	__u8  int_reg = BOOT_POWER22_INTEN1;
+
+	for(i=0;i<3;i++)
+	{
+		if(axp_i2c_read(AXP22_ADDR, int_reg, buffer + i))
+	    {
+	        return -1;
+	    }
+	    int_reg ++;
+	}
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+__s32 axp221_write_int_enable_status(__u8 *buffer)
+{
+	int   i;
+	__u8  int_reg = BOOT_POWER22_INTEN1;
+
+	for(i=0;i<3;i++)
+	{
+		if(axp_i2c_write(AXP22_ADDR, int_reg, buffer + i))
+	    {
+	        return -1;
+	    }
+	    int_reg ++;
+	}
+
+	return 0;
+}
+
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+__s32 axp221_int_query(__u8 *int_status)
+{
+	int   i, delay;
+	__u8  int_reg = BOOT_POWER22_INTSTS1;
+
+	for(i=0;i<3;i++)
+	{
+		for(delay = 0; delay <= 10000; delay++);
+		if(axp_i2c_read(AXP22_ADDR, int_reg, int_status + i))
+	    {
+	        return -1;
+	    }
+	    for(delay = 0; delay <= 10000; delay++);
+	    if(axp_i2c_write(AXP22_ADDR, int_reg, int_status[i]))
+	    {
+	        return -1;
+	    }
+	    int_reg ++;
+	}
+
+	return 0;
+}
+

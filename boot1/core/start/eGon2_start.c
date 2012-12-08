@@ -144,8 +144,16 @@ void eGon2_start( void )
 	axp_set_power_supply_output();
 
 	eGon2_printf("flash init start\n");
-	eGon2_block_device_init();
-    eGon2_printf("flash init finish\n");
+	if(!eGon2_block_device_init())
+    {
+    	eGon2_printf("flash init finish\n");
+    }
+    else
+    {
+    	eGon2_printf("flash init failed\n");
+
+    	eGon2_jump_Fel( );
+    }
     fs_ops.Write = eGon2_block_device_write;
     fs_ops.Read  = eGon2_block_device_read;
     fs_ops.Init  = reserved_init;
@@ -300,7 +308,6 @@ static int eGon2_storage_type_set(void)
 
 	if(!eGon2_script_parser_patch("target", "storage_type", type))
 	{
-		eGon2_printf("set storage type = %d\n", type);
 		eGon2_printf("storage_type=%d\n", type);
 	}
 
@@ -329,7 +336,7 @@ static int script_relocation(void)
 
 	start = (char *)BOOT1_BASE + BT1_head.boot_head.boot1_length;
     size  = BT1_head.boot_head.length - BT1_head.boot_head.boot1_length;
-
+#ifdef DEBUG
     eGon2_printf("total length = %d\n", BT1_head.boot_head.length);
 	eGon2_printf("boot1 length = %d\n", BT1_head.boot_head.boot1_length);
 	eGon2_printf("start = %x, size = %d\n", (__u32)start, size);
@@ -337,6 +344,7 @@ static int script_relocation(void)
 	eGon2_printf("dest buffer = %x\n", SCRIPT_BASE);
 
 	eGon2_printf("size=%d\n", size);
+#endif
 	if(size)
 	{
 		memcpy((void *)SCRIPT_BASE, start, size);
