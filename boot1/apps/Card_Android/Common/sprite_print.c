@@ -86,9 +86,9 @@ void sprite_wrn(const char *str, ...)
 {
 	__inf(str);
 //	if(!cue)
-//	{
-//		boot_ui_printf(str);
-//	}
+	{
+		boot_ui_printf(str);
+	}
 ////	else if(1 == cue)
 //	{
 //		if(log_file)

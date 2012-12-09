@@ -21,7 +21,8 @@
 //				2012/11/28		CPL				0.94	modify for boot and burn interface compatible
 //				2012/11/29		CPL				0.95	modify lock parameters configuration
 //				2012/12/3		CPL				0.96	add dll&pll delay and simple test ; add voltage adjust
-//				2012/12/6			CPL				0.97	add write odt enable function
+//				2012/12/6		CPL				0.97	add write odt enable function
+//				2012/12/8		CPL				0.98	add read odt enable & adjust dll phase
 //*****************************************************************************
 #include "mctl_reg.h"
 #include "mctl_hal.h"
@@ -1049,11 +1050,32 @@ if(para->dram_odt_en == 0){
 	mctl_write_w(ch_id + SDR_DX2GCR, 0x881);
 	mctl_write_w(ch_id + SDR_DX3GCR, 0x881);
 }else{
-	mctl_write_w(ch_id + SDR_DX0GCR, 0x887);
-	mctl_write_w(ch_id + SDR_DX1GCR, 0x887);
-	mctl_write_w(ch_id + SDR_DX2GCR, 0x887);
-	mctl_write_w(ch_id + SDR_DX3GCR, 0x887);
+	mctl_write_w(ch_id + SDR_DX0GCR, 0x2e81);
+	mctl_write_w(ch_id + SDR_DX1GCR, 0x2e81);
+	mctl_write_w(ch_id + SDR_DX2GCR, 0x2e81);
+	mctl_write_w(ch_id + SDR_DX3GCR, 0x2e81);
 }
+
+	//adjust dll phase 12/8
+	reg_val = mctl_read_w(ch_id + SDR_DX0DLLCR);
+	reg_val &= ~(0xF<<14);
+	reg_val |= 0x1<<14;
+	mctl_write_w(ch_id + SDR_DX0DLLCR, reg_val);
+	
+	reg_val = mctl_read_w(ch_id + SDR_DX1DLLCR);
+	reg_val &= ~(0xF<<14);
+	reg_val |= 0x1<<14;
+	mctl_write_w(ch_id + SDR_DX1DLLCR, reg_val);
+	
+	reg_val = mctl_read_w(ch_id + SDR_DX2DLLCR);
+	reg_val &= ~(0xF<<14);
+	reg_val |= 0x1<<14;
+	mctl_write_w(ch_id + SDR_DX2DLLCR, reg_val);
+	
+	reg_val = mctl_read_w(ch_id + SDR_DX3DLLCR);
+	reg_val &= ~(0xF<<14);
+	reg_val |= 0x1<<14;
+	mctl_write_w(ch_id + SDR_DX3DLLCR, reg_val);
 
    //***********************************************
    // check dram PHY status
@@ -1672,7 +1694,7 @@ signed int init_DRAM(int type, void *para)
 #endif
 #endif
 
-	msg("dram clk = %x\n", dram_para->dram_clk  );
+	msg("[DRAM]ver 0.98--dram_clk = %d\n", dram_para->dram_clk  );
 #if 0
 	msg("dram_para->dram_type       = %x\n", dram_para->dram_type );
 	msg("dram_para->dram_zq         = %x\n", dram_para->dram_zq   );
