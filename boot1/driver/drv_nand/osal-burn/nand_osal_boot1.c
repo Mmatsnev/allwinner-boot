@@ -54,7 +54,7 @@ __u32 _Getpll6Clk(void)
 	__u32 factor_k, div_m;
 	__u32 clock;
 
-	reg_val  = 0x01c20000 + 0x28;
+	reg_val  = *(volatile __u32 *)(0x01c20000 + 0x28);
 	factor_n = ((reg_val >> 8) & 0x1f) + 1;
 	factor_k = ((reg_val >> 4) & 0x3) + 1;
 	div_m = ((reg_val >> 0) & 0x3) + 1;
@@ -269,7 +269,7 @@ int NAND_SetClk(__u32 nand_index, __u32 nand_clock)
 		cfg |= ((m&0xf));
 	
 		*(volatile __u32 *)(0x01c20000 + 0x80) = cfg;
-		NAND_Print("NAND_SetClk, nand_index: 0x%x\n", nand_index);
+		NAND_Print("NAND_SetClk, nand_index: 0x%x, clock: %d\n", nand_index, nand_clock);
 		NAND_Print("Reg 0x01c20080: 0x%x\n", *(volatile __u32 *)(0x01c20080));
 		
 	}
@@ -284,7 +284,7 @@ int NAND_SetClk(__u32 nand_index, __u32 nand_clock)
 		cfg |= ((m&0xf));
 	
 		*(volatile __u32 *)(0x01c20000 + 0x84) = cfg;
-		NAND_Print("NAND_SetClk, nand_index: 0x%x\n", nand_index);
+		NAND_Print("NAND_SetClk, nand_index: 0x%x, clock: %d\n", nand_index, nand_clock);
 		NAND_Print("Reg 0x01c20084: 0x%x\n", *(volatile __u32 *)(0x01c20084));
 		
 	}		
