@@ -23,6 +23,7 @@
 //				2012/12/3		CPL				0.96	add dll&pll delay and simple test ; add voltage adjust
 //				2012/12/6		CPL				0.97	add write odt enable function
 //				2012/12/8		CPL				0.98	add read odt enable & adjust dll phase
+//				2012/12/10		CPL				0.99	extend DLL & PLL delay
 //*****************************************************************************
 #include "mctl_reg.h"
 #include "mctl_hal.h"
@@ -212,6 +213,7 @@ int set_ddr_voltage(void)
 #endif
 		return -1;
 	}
+	pmu_id &= 0x0f;
 	if (pmu_id == 6 || pmu_id == 7)
 	{
 #ifdef PW2I_PRINK
@@ -619,7 +621,7 @@ unsigned int mctl_sys_init(void)
   	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
 
 #ifndef SYSTEM_SIMULATION
-  	aw_delay(0x20000);
+  	aw_delay(0x1000000);
 #else
   	aw_delay(0x20);
 #endif
@@ -686,7 +688,7 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 	}
 
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x10000);
+	aw_delay(0x100000);
 #else
 	aw_delay(0x10);
 #endif
@@ -703,7 +705,7 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 	}
 
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x10000);
+	aw_delay(0x100000);
 #else
 	aw_delay(0x10);
 #endif
@@ -719,7 +721,7 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 		mctl_write_w(ch_id + SDR_DX3DLLCR,0x40000000);
 	}
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x10000);
+	aw_delay(0x100000);
 #else
 	aw_delay(0x10);
 #endif
@@ -1055,27 +1057,6 @@ if(para->dram_odt_en == 0){
 	mctl_write_w(ch_id + SDR_DX2GCR, 0x2e81);
 	mctl_write_w(ch_id + SDR_DX3GCR, 0x2e81);
 }
-
-	//adjust dll phase 12/8
-	reg_val = mctl_read_w(ch_id + SDR_DX0DLLCR);
-	reg_val &= ~(0xF<<14);
-	reg_val |= 0x1<<14;
-	mctl_write_w(ch_id + SDR_DX0DLLCR, reg_val);
-	
-	reg_val = mctl_read_w(ch_id + SDR_DX1DLLCR);
-	reg_val &= ~(0xF<<14);
-	reg_val |= 0x1<<14;
-	mctl_write_w(ch_id + SDR_DX1DLLCR, reg_val);
-	
-	reg_val = mctl_read_w(ch_id + SDR_DX2DLLCR);
-	reg_val &= ~(0xF<<14);
-	reg_val |= 0x1<<14;
-	mctl_write_w(ch_id + SDR_DX2DLLCR, reg_val);
-	
-	reg_val = mctl_read_w(ch_id + SDR_DX3DLLCR);
-	reg_val &= ~(0xF<<14);
-	reg_val |= 0x1<<14;
-	mctl_write_w(ch_id + SDR_DX3DLLCR, reg_val);
 
    //***********************************************
    // check dram PHY status
@@ -1694,7 +1675,7 @@ signed int init_DRAM(int type, void *para)
 #endif
 #endif
 
-	msg("[DRAM]ver 0.98--dram_clk = %d\n", dram_para->dram_clk  );
+	msg("[DRAM]ver 0.99--dram_clk = %d\n", dram_para->dram_clk  );
 #if 0
 	msg("dram_para->dram_type       = %x\n", dram_para->dram_type );
 	msg("dram_para->dram_zq         = %x\n", dram_para->dram_zq   );
@@ -1813,6 +1794,3 @@ void paraconfig(unsigned int *para, unsigned int mask, unsigned int value)
 
 	*para = reg_val;
 }
-
-
-

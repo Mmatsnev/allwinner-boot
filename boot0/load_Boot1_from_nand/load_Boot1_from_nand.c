@@ -31,8 +31,6 @@
 #include "load_Boot1_from_nand_i.h"
 
 
-
-
 /*******************************************************************************
 *函数名称: load_Boot1_from_nand
 *函数原型：int32 load_Boot1_from_nand( void )
@@ -51,7 +49,12 @@ __s32 load_Boot1_from_nand( void )
 	boot_file_head_t  *bfh;
 
 
-	NF_open( );                         // 打开nand flash
+	if(NF_open( ) == NF_ERROR)                         // 打开nand flash
+	{
+		msg("fail in opening nand flash\n");
+
+		return ERROR;
+	}
 	msg("Succeed in opening nand flash.\n");
 	msg("block from %d to %d\n", BOOT1_START_BLK_NUM, BOOT1_LAST_BLK_NUM);
     for( i = BOOT1_START_BLK_NUM;  i <= BOOT1_LAST_BLK_NUM;  i++ )

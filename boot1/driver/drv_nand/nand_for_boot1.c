@@ -1109,5 +1109,3 @@ __s32 NAND_BadBlockScan(const boot_nand_para_t *nand_param)
 
  	return good_block_ratio;
 }
-
-

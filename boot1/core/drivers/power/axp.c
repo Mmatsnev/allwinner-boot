@@ -459,6 +459,14 @@ int axp_set_power_supply_output(void)
 {
 	int vol_value;
 
+	//set dcdc1
+	if(!eGon2_script_parser_fetch("target", "dcdc1_vol", &vol_value, 1))
+	{
+		if(!axp_set_dcdc1(vol_value))
+		{
+			eGon2_printf("boot power:set dcdc1 to %d ok\n", vol_value);
+		}
+	}
 	//set dcdc2
 	if(!eGon2_script_parser_fetch("target", "dcdc2_vol", &vol_value, 1))
 	{
@@ -559,6 +567,26 @@ int axp_set_power_supply_output(void)
 int  axp_set_dc1sw(int on_off)
 {
 	return axp221_set_dc1sw(on_off);
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int  axp_set_dcdc1(int set_vol)
+{
+	return axp221_set_dcdc1(set_vol);
 }
 /*
 ************************************************************************************************************

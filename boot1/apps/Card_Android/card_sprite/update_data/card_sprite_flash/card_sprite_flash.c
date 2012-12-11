@@ -185,14 +185,22 @@ __s32 sprite_flash_exit(int type)
 */
 __s32 sprite_flash_read(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 {
+	int ret;
+
 	__inf("read start %x, count %x\n", nSectNum, nSectorCnt);
 	if(!card_sprite_type)
 	{
-		return NAND_LogicRead(nSectNum, nSectorCnt, pBuf);
+		ret = NAND_LogicRead(nSectNum, nSectorCnt, pBuf);
+		__inf("read nand end\n");
+
+		return ret;
 	}
 	else if(card_sprite_type == 1)
 	{
-		return SDMMC_LogicalRead(nSectNum, nSectorCnt, pBuf, 2);
+		ret = SDMMC_LogicalRead(nSectNum, nSectorCnt, pBuf, 2);
+		__inf("read card end\n");
+
+		return ret;
 	}
 	else
 	{
@@ -217,14 +225,22 @@ __s32 sprite_flash_read(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 */
 __s32 sprite_flash_write(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 {
+	int ret;
+
 	__inf("write start %x, count %x\n", nSectNum, nSectorCnt);
 	if(!card_sprite_type)
 	{
-		return NAND_LogicWrite(nSectNum, nSectorCnt, pBuf);
+		ret = NAND_LogicWrite(nSectNum, nSectorCnt, pBuf);
+		__inf("write nand end\n");
+
+		return ret;
 	}
 	else if(card_sprite_type == 1)
 	{
-		return SDMMC_LogicalWrite(nSectNum, nSectorCnt, pBuf, 2);
+		ret = SDMMC_LogicalWrite(nSectNum, nSectorCnt, pBuf, 2);
+		__inf("write card end\n");
+
+		return ret;
 	}
 	else
 	{

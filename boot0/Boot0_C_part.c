@@ -321,3 +321,14 @@ static void bias_calibration(void)
 	//enable HBIASADCEN
 	*(volatile unsigned int *)(0x1c22C00 + 0x28) |= (1 << 29);
 }
+
+void disbale_cpus(void)
+{
+	//disable watchdog
+	*(volatile unsigned int *)(0x01f01000 + 0x00) = 0;
+	*(volatile unsigned int *)(0x01f01000 + 0x04) = 1;
+	*(volatile unsigned int *)(0x01f01000 + 0x18) &= ~1;
+	//assert cups
+	*(volatile unsigned int *)(0x01f01C00 + 0x00) = 0;
+}
+
