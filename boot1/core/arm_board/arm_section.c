@@ -67,12 +67,13 @@ extern int _standby_start_lma;
 
 void clear_ZI( void )
 {
-	int *dst;
+	//int *dst, *end;
 
-	for (dst = &_bss_start; dst< &_bss_end; dst++)
-	{
-		*dst = 0;
-	}
+	memset(&_bss_start, 0, &_bss_end - &_bss_start);
+	//for (dst = &_bss_start; dst< &_bss_end; dst++)
+	//{
+	//	*dst = 0;
+	//}
 }
 /*
 **********************************************************************************************************************

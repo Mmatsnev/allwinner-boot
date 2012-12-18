@@ -55,7 +55,7 @@ int BootMain(int argc, char **argv)
 	__u32				  para_addr;
 	__s32                 ret;
     __s32                 logo_status = 0;
-    boot_global_info_t   *global_info;
+//    boot_global_info_t   *global_info;
 //    char				  product[64];
 
 	DMSG_INFO("BootMain start\n");
@@ -112,19 +112,19 @@ int BootMain(int argc, char **argv)
 		goto jump_to_parameters_fail;
 	}
     //填充自定义数据
-    strcpy(board_res.fel_file_name, OS_FOR_USB_UPDATE_FILE_NAME);
+    //strcpy(board_res.fel_file_name, OS_FOR_USB_UPDATE_FILE_NAME);
     //检查，用户是否有进入fel的需求
     //首先检查文件形式升级
-    if(!check_file_to_fel(board_res.fel_file_name))
-    {
-        __inf("jump to fel because of update file found\n");
-        goto jump_to_fel;
-    }
-    //如果是量产完成，直接关机
-    if(!check_natch_time("c:\\natch.ini", boot1_priv_para.work_mode))
-    {
-        goto jump_to_power_off;
-    }
+//    if(!check_file_to_fel(board_res.fel_file_name))
+//    {
+//        __inf("jump to fel because of update file found\n");
+//        goto jump_to_fel;
+//    }
+//    //如果是量产完成，直接关机
+//    if(!check_natch_time("c:\\natch.ini", boot1_priv_para.work_mode))
+//    {
+//        goto jump_to_power_off;
+//    }
     //power_set_init();
 //    memset(product, 0, 64);
 //    ret = wBoot_script_parser_fetch("target", "product", (int *)product, 64/4);
@@ -181,28 +181,30 @@ int BootMain(int argc, char **argv)
 #endif
 //	check_private_part(boot1_priv_para.uart_port);
 //	check_private_part(11);
-	__inf("init to usb pc\n");
+//	__inf("init to usb pc\n");
 	//power_set_usbpc();
     //申请内存，填充第一个启动脚本
-    global_info = (boot_global_info_t *)wBoot_malloc(sizeof(boot_global_info_t));
-    if(!global_info)
-    {
-        __inf("unable to malloc memory for bootini\n");
-
-        return -1;
-    }
-    //填充启动脚本
-    memset(global_info, 0, sizeof(boot_global_info_t));
-    ret = script_patch("c:\\boot.ini", global_info, 0);
-    if(ret < 0)
-    {
-        __inf("unable to parser boot.ini\n");
-
-        goto jump_to_fel;
-    }
+//    global_info = (boot_global_info_t *)wBoot_malloc(sizeof(boot_global_info_t));
+//    if(!global_info)
+//    {
+//        __inf("unable to malloc memory for bootini\n");
+//
+//        return -1;
+//    }
+//    //填充启动脚本
+//    memset(global_info, 0, sizeof(boot_global_info_t));
+//    ret = script_patch("c:\\boot.ini", global_info, 0);
+//    if(ret < 0)
+//    {
+//        __inf("unable to parser boot.ini\n");
+//
+//        goto jump_to_fel;
+//    }
     //初始化显示设备
-    BoardInit_Display(global_info->display_device, global_info->display_mode);
+    //BoardInit_Display(global_info->display_device, global_info->display_mode);
+    BoardInit_Display(0, 0);
     //开始准备系统数据
+    __inf("de init ok\n");
     //检测电压状态
     if(check_power_status())
     //if(0)
@@ -211,8 +213,9 @@ int BootMain(int argc, char **argv)
     }
     else
     {
-    	power_int_reg();	//启用中断检测vbus
-    	if(BootOS_detect_os_type(&para_addr, &kernal_addr, (void *)global_info, &logo_status))
+    	boot_show_logo("c:\\os_show\\bootlogo.bmp", 1, BOOT_LOGO_MEM_BASE);
+    	//power_int_reg();	//启用中断检测vbus
+    	if(BootOS_detect_os_type(&para_addr, &kernal_addr, 0, &logo_status))
     	{
     		ret = -2;
     	}

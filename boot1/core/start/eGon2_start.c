@@ -61,12 +61,11 @@ void eGon2_start( void )
 	eGon2_create_heap( boot_heap_base, SZ_16M );
 
 	/* use mmu */
-	mmu_system_init(EGON2_DRAM_BASE, 4 * 1024, EGON2_MMU_BASE);                 // init mmu
+	mmu_system_init(EGON2_DRAM_BASE, 1 * 1024, EGON2_MMU_BASE);                 // init mmu
 	mmu_enable( );                      // enable mmu
 
 	eGon2_timer_init( );				// timer 初始化
 	eGon2_Int_Init( );                  // 对中断系统进行初始化
-	serial_init(BT1_head.prvt_head.uart_port, (normal_gpio_cfg *)BT1_head.prvt_head.uart_ctrl, 115200, 24000000);
 
 	reposition_arm_start( );            // reposition vect table
 	set_vect_low_addr( );               // set interrupt vector low address
@@ -94,7 +93,7 @@ void eGon2_start( void )
         	eGon2_printf("try to set clock to %d Mhz\n", BT1_head.prvt_head.core_para.user_set_clock);
         	default_clock = eGon2_clock_set_ext(BT1_head.prvt_head.core_para.user_set_clock, BT1_head.prvt_head.core_para.user_set_core_vol);
     		//default_clock = eGon2_clock_set_ext(k, BT1_head.prvt_head.core_para.user_set_core_vol);
-    		eGon2_printf("set dcdc2=%d, clock=%d successed\n", BT1_head.prvt_head.core_para.user_set_core_vol, default_clock);
+    		eGon2_printf("set clock=%d successed\n", default_clock);
         }
         else
         {
@@ -139,6 +138,7 @@ void eGon2_start( void )
     	force_to_card0 = 1;
     }
 	//设置电压
+	axp_set_charge_vol_limit();
 	axp_set_all_limit();
 	axp_set_hardware_poweron_vol();
 	axp_set_power_supply_output();

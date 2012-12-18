@@ -22,6 +22,7 @@
 #include "axp221.h"
 
 int power_step_level = BATTERY_RATIO_DEFAULT;
+int pmu_suspend_chgcur, pmu_runtime_chgcur;
 /*
 ************************************************************************************************************
 *
@@ -82,13 +83,13 @@ int power_init(int set_vol)
 	int ret = -1;
 	int dcdc3_vol;
 
-	ret = eGon2_script_parser_fetch("target", "dcdc3_vol", &dcdc3_vol, 1);
+	ret = eGon2_script_parser_fetch("power_sply", "dcdc3_vol", &dcdc3_vol, 1);
 	if(ret)
 	{
 		dcdc3_vol = 1200;
 	}
 #ifdef DEBUG
-	eGon2_printf("set dcdc3 to %d\n", dcdc3_vol);
+	eGon2_printf("try set dcdc3 to %d\n", dcdc3_vol);
 #endif
 	if(!axp_probe())
 	{
@@ -96,7 +97,7 @@ int power_init(int set_vol)
 		{
 			if(!axp_set_dcdc3(dcdc3_vol))
 			{
-				eGon2_printf("axp_set_dcdc3 ok\n");
+				eGon2_printf("set dcdc3 to %d ok\n", dcdc3_vol);
 				ret = 0;
 			}
 			else
@@ -165,7 +166,7 @@ int axp_probe_power_supply_condition(void)
 	{
 		return -1;
 	}
-	else if(ratio <= 1)
+	else if(ratio < 1)
 	{
 		if(dcin_exist)
 		{
@@ -460,7 +461,7 @@ int axp_set_power_supply_output(void)
 	int vol_value;
 
 	//set dcdc1
-	if(!eGon2_script_parser_fetch("target", "dcdc1_vol", &vol_value, 1))
+	if(!eGon2_script_parser_fetch("power_sply", "dcdc1_vol", &vol_value, 1))
 	{
 		if(!axp_set_dcdc1(vol_value))
 		{
@@ -468,7 +469,7 @@ int axp_set_power_supply_output(void)
 		}
 	}
 	//set dcdc2
-	if(!eGon2_script_parser_fetch("target", "dcdc2_vol", &vol_value, 1))
+	if(!eGon2_script_parser_fetch("power_sply", "dcdc2_vol", &vol_value, 1))
 	{
 		if(!axp_set_dcdc2(vol_value))
 		{
@@ -482,7 +483,7 @@ int axp_set_power_supply_output(void)
 	}
 #endif
 	//set dcdc4
-	if(!eGon2_script_parser_fetch("target", "dcdc4_vol", &vol_value, 1))
+	if(!eGon2_script_parser_fetch("power_sply", "dcdc4_vol", &vol_value, 1))
 	{
 		if(!axp_set_dcdc4(vol_value))
 		{
@@ -496,7 +497,7 @@ int axp_set_power_supply_output(void)
 	}
 #endif
     //set dcdc5
-	if(!eGon2_script_parser_fetch("target", "dcdc5_vol", &vol_value, 1))
+	if(!eGon2_script_parser_fetch("power_sply", "dcdc5_vol", &vol_value, 1))
 	{
 		if(!axp_set_dcdc5(vol_value))
 		{
@@ -510,7 +511,7 @@ int axp_set_power_supply_output(void)
 	}
 #endif
 	//set ldo2
-	if(!eGon2_script_parser_fetch("target", "ldo2_vol", &vol_value, 1))
+	if(!eGon2_script_parser_fetch("power_sply", "ldo2_vol", &vol_value, 1))
 	{
 		if(!axp_set_ldo2(vol_value))
 		{
@@ -524,7 +525,7 @@ int axp_set_power_supply_output(void)
 	}
 #endif
 	//set ldo3
-	if(!eGon2_script_parser_fetch("target", "ldo3_vol", &vol_value, 1))
+	if(!eGon2_script_parser_fetch("power_sply", "ldo3_vol", &vol_value, 1))
 	{
 		if(!axp_set_ldo3(vol_value))
 		{
@@ -538,7 +539,7 @@ int axp_set_power_supply_output(void)
 	}
 #endif
 	//set ldo4
-//	if(!eGon2_script_parser_fetch("target", "ldo4_vol", &vol_value, 1))
+//	if(!eGon2_script_parser_fetch("power_sply", "ldo4_vol", &vol_value, 1))
 //	{
 //		axp_set_ldo4(vol_value);
 //	}
@@ -874,6 +875,86 @@ int axp_set_all_limit(void)
 	axp_set_vbus_cur_limit(limit_cur);
 
 	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp_set_charge_vol_limit(void)
+{
+	int ret1;
+	int ret2;
+
+	ret1 = eGon2_script_parser_fetch("pmu_para", "pmu_runtime_chgcur", &pmu_runtime_chgcur, 1);
+	ret2 = eGon2_script_parser_fetch("pmu_para", "pmu_suspend_chgcur", &pmu_suspend_chgcur, 1);
+
+	if(ret1)
+	{
+		pmu_runtime_chgcur = 600;
+	}
+	if(ret2)
+	{
+		pmu_suspend_chgcur = 1500;
+	}
+#if DEBUG
+	eGon2_printf("pmu_runtime_chgcur=%d\n", pmu_runtime_chgcur);
+	eGon2_printf("pmu_suspend_chgcur=%d\n", pmu_suspend_chgcur);
+#endif
+	axp_set_suspend_chgcur();
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp_set_suspend_chgcur(void)
+{
+	return axp221_set_chgcur(pmu_suspend_chgcur);
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp_set_runtime_chgcur(void)
+{
+	return axp221_set_chgcur(pmu_runtime_chgcur);
 }
 static  __u8  power_int_value[4];
 /*

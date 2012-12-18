@@ -41,6 +41,7 @@ void eGon2_jump_to(__u32 addr)
 {
     eGon2_printf("eGon2_jump_to\n");
 	axp_set_next_poweron_status(0x0e);
+	axp_set_runtime_chgcur();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     eGon2_twi_exit();           //关闭TWI设备
@@ -78,6 +79,7 @@ void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 ke
     void (*kernel_entry)(int zero, int arch, uint params);
 
 	axp_set_next_poweron_status(0x0e);
+	axp_set_runtime_chgcur();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     eGon2_twi_exit();           //关闭TWI设备
@@ -115,6 +117,7 @@ void eGon2_jump_Fel( void )
 {
     eGon2_printf("eGon2_jump_Fel\n");
 	axp_set_next_poweron_status(0);
+	axp_set_runtime_chgcur();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     eGon2_twi_exit();           //关闭TWI设备

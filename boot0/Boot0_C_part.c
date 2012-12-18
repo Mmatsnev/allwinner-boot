@@ -330,5 +330,9 @@ void disbale_cpus(void)
 	*(volatile unsigned int *)(0x01f01000 + 0x18) &= ~1;
 	//assert cups
 	*(volatile unsigned int *)(0x01f01C00 + 0x00) = 0;
+	//disable cpus module gating
+	*(volatile unsigned int *)(0x01f01400 + 0x28) = 0;
+	//disable cpus module assert
+	*(volatile unsigned int *)(0x01f01400 + 0xb0) = 0;
 }
 

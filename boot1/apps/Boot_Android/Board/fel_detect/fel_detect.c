@@ -195,13 +195,14 @@ __s32 check_power_status(void)
 		__u32 bat_show_hd = NULL;
 		int   i, j, key_status;
 		int   bat_full_status = 0;
+		int   bat_init = 0;
 
 		//当前可以确定是火牛开机，但是是否开机还不确定，需要确认电池是否存在
 		//当电池不存在即开机，电池存在则关机
 		//power_int_reg();
 		//usb_detect_enter();
-		bat_show_hd = ShowBatteryCharge_init(0);
-		wBoot_timer_delay(1500);
+		//bat_show_hd = ShowBatteryCharge_init(0);
+		//wBoot_timer_delay(1500);
 		counter = 4;
 		do
 		{
@@ -210,6 +211,11 @@ __s32 check_power_status(void)
 			wBoot_power_get_dcin_battery_exist(&dcin, &bat_exist);
 			if(bat_exist == -1)
 			{
+				if(!bat_init)
+				{
+					bat_show_hd = ShowBatteryCharge_init(0);
+					bat_init = 1;
+				}
 				wBoot_timer_delay(500);
 			}
 			else
@@ -218,10 +224,13 @@ __s32 check_power_status(void)
 			}
 		}
 		while(counter --);
-		if(!bat_exist)
+		if(bat_exist <= 0)
 		{
 			__inf("no battery exist\n");
-			ShowBatteryCharge_exit(bat_show_hd);
+			if(bat_init)
+			{
+				ShowBatteryCharge_exit(bat_show_hd);
+			}
 			//power_int_rel();
 			//usb_detect_exit();
 
@@ -237,9 +246,25 @@ __s32 check_power_status(void)
 		}
 		if(this_bat_cal == 100)
 		{
-			ShowBatteryCharge_exit(bat_show_hd);
+			if(bat_init)
+			{
+				ShowBatteryCharge_exit(bat_show_hd);
+			}
 			bat_show_hd = NULL;
 			show_battery_full(&bat_full_status);
+			for(i =0;i<12;i++)
+			{
+				key_status = wBoot_power_get_key();
+				if(key_status & 0x02)	//短按
+				{
+					i = 0;
+				}
+				else if(key_status & 0x01) //长按
+				{
+					return 0;
+				}
+				wBoot_timer_delay(250);
+			}
 //			for(i =0;i<12;i++)
 //			{
 //				if(power_ops_int_status & 0x02)	//短按
@@ -262,25 +287,15 @@ __s32 check_power_status(void)
 //				}
 //				wBoot_timer_delay(250);
 //			}
-			key_status = wBoot_power_get_key();
-			if(key_status > 0)
-			{
-				if(key_status & 0x02)	//短按
-				{
-					i = 0;
-				}
-				else if(key_status & 0x01) //长按
-				{
-					ShowBatteryCharge_exit(bat_show_hd);
-
-					return 0;
-				}
-			}
 		}
 		else
 		{
 			int one_delay;
 
+			if(!bat_init)
+			{
+				bat_show_hd = ShowBatteryCharge_init(0);
+			}
 			one_delay = 1000/(10 - (this_bat_cal/10));
 			for(j=0;j<3;j++)
 			{

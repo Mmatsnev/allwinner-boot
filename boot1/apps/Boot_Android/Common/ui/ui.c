@@ -147,7 +147,44 @@ __s32 ShowLayer(__hdle layer_hdl, display_layer_info_t *layer_para, __s32 layer_
 
 	return 0;
 }
+/*
+*******************************************************************************
+*                     ShowLayer
+*
+* Description:
+*    显示图层
+*
+* Parameters:
+*    layer_hdl   :  input. 图层句柄
+*    layer_para  :  input. 图层参数
+*
+* Return value:
+*    0  :  成功
+*   !0  :  失败
+*
+* note:
+*    void
+*
+*******************************************************************************
+*/
+__s32 ShowLayer1(__hdle layer_hdl, display_layer_info_t *layer_para, __s32 layer_source)
+{
+	__s32 ret = 0;
 
+    //if(!layer_source)
+    //{
+	//    WaitForDeInitFinish();
+    //}
+	ret = De_SetLayerPara(layer_hdl, layer_para);
+	if(ret != 0){
+		DMSG_PANIC("ERR: De_SetLayerPara failed\n");
+		return -1;
+	}
+	/* 显示 */
+	De_OpenLayer(layer_hdl);
+
+	return 0;
+}
 /*
 *******************************************************************************
 *                     WaitForDeInitFinish
@@ -241,7 +278,57 @@ __u32 ShowPictureEx(char *Path, __u32 address)
 	/* 显示图片 */
 	layer_para = ui_AllocLayerPara(&PictureInfo);
 	ShowLayer(board_res.layer_hd, layer_para, board_res.display_source);
-	wBoot_timer_delay(50);
+	//wBoot_timer_delay(50);
+
+    return (__u32)layer_para;
+
+error:
+
+	return 0;
+}
+
+/*
+*******************************************************************************
+*                     ShowPictureEx
+*
+* Description:
+*   把图片数据解析到指定的地址中，并且显示出来.
+* 如果指定的地址为NULL, 则可以存放在任何地址。
+*
+* Parameters:
+*   Para  	:  input.  Boot阶段的参数。
+*   Path 	:  input.  图片存放在介质中的位置，如“c:\logo.bmp”
+*   Addr	:  input.  存放解析后的图片,
+*
+* Return value:
+*    0  :  成功
+*   !0  :  失败
+*
+* note:
+*   void
+*
+*******************************************************************************
+*/
+__u32 ShowPictureEx1(char *Path, __u32 address)
+{
+	Picture_t PictureInfo;
+	__s32 ret = 0;
+	display_layer_info_t *layer_para = NULL;
+
+	/* 参数初始化 */
+	if(!board_res.layer_hd)
+    {
+        return 0;
+    }
+	memset(&PictureInfo, 0, sizeof(Picture_t));
+	ret = Parse_Pic_BMP_ByPath(Path, &PictureInfo, address);
+	if(ret != 0)
+	{
+		DMSG_PANIC("ERR: Parse_Pic_BMP failed\n");
+		goto error;
+	}
+	layer_para = ui_AllocLayerPara(&PictureInfo);
+	ShowLayer1(board_res.layer_hd, layer_para, board_res.display_source);
 
     return (__u32)layer_para;
 

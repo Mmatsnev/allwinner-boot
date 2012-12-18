@@ -498,7 +498,7 @@ int axp221_set_dcdc2(int set_vol)
     }
     reg_value &= ~0x3f;
     reg_value |= (set_vol - 600)/20;
-    if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, &reg_value))
+    if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_DC2OUT_VOL, reg_value))
     {
         return -1;
     }
@@ -1363,6 +1363,48 @@ int axp221_set_vbus_vol_limit(int vol)
 		reg_value |= ((vol-4000)/100) << 3;
 	}
 	if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_IPS_SET, reg_value))
+    {
+        return -1;
+    }
+
+    return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp221_set_chgcur(int cur)
+{
+	__u8 reg_value;
+
+	if(cur < 300)
+	{
+		cur = 300;
+	}
+	else if(cur > 2550)
+	{
+		cur = 2550;
+	}
+	//set charge current
+	if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_CHARGE1, &reg_value))
+    {
+        return -1;
+    }
+    reg_value &= 0xf0;
+    reg_value |= (((cur - 300)/150) & 0x0f);
+    if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_CHARGE1, reg_value))
     {
         return -1;
     }

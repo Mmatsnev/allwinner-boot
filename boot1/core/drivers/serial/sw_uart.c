@@ -31,7 +31,7 @@ int sw_uart_init (sw_uart_t com_port, int uart_port, void  *uart_ctrl, int baud_
 
 	(*(volatile unsigned int *)0x01c202D8) |= (1 << (16 + uart_port));
 
-	eGon2_GPIO_Set_cfg((normal_gpio_cfg *)uart_ctrl, 2, 1);
+	//eGon2_GPIO_Set_cfg((normal_gpio_cfg *)uart_ctrl, 2, 1);
 
 	com_port->ier = 0x00;
 	com_port->lcr = LCR_BKSE | LCRVAL;
