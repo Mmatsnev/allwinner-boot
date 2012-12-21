@@ -24,6 +24,10 @@
 #define    ANDROID_FASTBOOT_MODE		1
 #define    ANDROID_RECOVERY_MODE		2
 
+#define    ANDROID_BOOT_BASE            0x40007800
+
+#define    SUNXI_FLASH_READ_FIRST_SIZE  (512 * 1024)
+
 extern  boot1_private_head_t  boot1_priv_para;
 
 extern  int boot_recovery_status;
@@ -54,47 +58,38 @@ static __s32 check_key_to_recovery(void)
 		return ANDROID_RECOVERY_MODE;
 	}
 	keyvalue = boot1_priv_para.uart_port;
-	__inf("key value = %d\n", keyvalue);
+	__inf("key %d\n", keyvalue);
 
     ret1 = wBoot_script_parser_fetch("recovery_key", "key_max", &key_high, 1);
 	ret2 = wBoot_script_parser_fetch("recovery_key", "key_min", &key_low, 1);
-	if(ret1)
+	if((ret1) || (ret2))
 	{
-		__inf("unable to find recovery_key key_max value\n");
-		return -1;
+		__inf("cant find rcvy value\n");
 	}
-	if(ret2)
+	else
 	{
-		__inf("unable to find recovery_key key_min value\n");
-		return -1;
+		__inf("recovery key high %d, low %d\n", key_high, key_low);
+		if((keyvalue >= key_low) && (keyvalue <= key_high))
+		{
+			__inf("key found, android recovery\n");
+			return ANDROID_RECOVERY_MODE;
+		}
 	}
-	__inf("recovery key high %d, low %d\n", key_high, key_low);
-	if((keyvalue >= key_low) && (keyvalue <= key_high))
-	{
-		__inf("key found, android recovery\n");
-		return ANDROID_RECOVERY_MODE;
-	}
-
     ret1 = wBoot_script_parser_fetch("fastboot_key", "key_max", &key_high, 1);
 	ret2 = wBoot_script_parser_fetch("fastboot_key", "key_min", &key_low, 1);
-	if(ret1)
+	if((ret1) || (ret2))
 	{
-		__inf("unable to find fastboot_key key_max value\n");
-		return -1;
+		__inf("cant find fstbt value\n");
 	}
-	if(ret2)
+	else
 	{
-		__inf("unable to find fastboot_key key_min value\n");
-		return -1;
+		__inf("fastboot key high %d, low %d\n", key_high, key_low);
+		if((keyvalue >= key_low) && (keyvalue <= key_high))
+		{
+			__inf("key found, android fastboot\n");
+			return ANDROID_FASTBOOT_MODE;
+		}
 	}
-	__inf("fastboot key high %d, low %d\n", key_high, key_low);
-	if((keyvalue >= key_low) && (keyvalue <= key_high))
-	{
-		__inf("key found, android fastboot\n");
-		return ANDROID_FASTBOOT_MODE;
-	}
-
-	__inf("key invalid\n");
 
 	return -1;
 }
@@ -123,7 +118,6 @@ __s32 boot_show_logo(char *logo_name, __u32 logo_show, __u32 logo_address)
         return -1;
     }
     ShowPictureEx1(logo_name, logo_address);
-    __inf("show pic finish\n");
 
     return 0;
 }
@@ -210,21 +204,19 @@ static __s32 boot_dsipatch_kernal(boot_sys_img_set_t  *os_img, __u32 *kernal_add
     *para_addr 	 = os_img->img_set[1].img_base;
 #else
 	*kernal_addr = 0x4a000000;
-	*para_addr   = 0x43000000;
 	hd_file = wBoot_fopen("c:\\linux\\u-boot.bin", "rb");
-    if(!hd_file)
-    {
-        __inf("open img file c:\\linux\\u-boot.bin failed\n");
+	if(!hd_file)
+	{
+    	__inf("open img file c:\\linux\\u-boot.bin failed\n");
 
-        goto dispath_error;
-    }
-    file_length = wBoot_flen(hd_file);
-    wBoot_fread((void *)(*kernal_addr), 1, file_length, hd_file);
-    wBoot_fclose(hd_file);
+    	goto dispath_error;
+	}
+	file_length = wBoot_flen(hd_file);
+	wBoot_fread((void *)(*kernal_addr), 1, file_length, hd_file);
+	wBoot_fclose(hd_file);
 
 #endif
     __inf("load kernel successed\n");
-    __inf("kernal_addr = %x\n", *kernal_addr);
 
     return 0;
 
@@ -409,7 +401,7 @@ _boot_pre_err:
 void BootOS(__u32 para_addr, __u32 kernal_addr)
 {
     __inf("jump to\n");
-    wBoot_jump_to_linux(0, 3495, para_addr, kernal_addr);
+    wBoot_jump_to_linux(0, 3892, para_addr, kernal_addr);
 
     {
         __u32 delay = 0x55;

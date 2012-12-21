@@ -43,68 +43,76 @@
 */
 __s32 BoardInit_Display(__s32 source, __s32 mode)
 {
-    __s32 ret = 0;
-    __s32 source_type, tv_mode, dislpay_device;
-
-//    board_res.display_source = source;
-//    if((source < 0) || (mode < 0))
+//    __s32 ret = 0;
+//    __s32 source_type, tv_mode, dislpay_device;
+//
+////    board_res.display_source = source;
+////    if((source < 0) || (mode < 0))
+////    {
+////        board_res.display_source = -1;
+////        return 0;
+////    }
+//	__inf("BoardInit_Display start\n");
+//
+//    ret = wBoot_driver_install("c:\\drv_de.drv");
+//    if(ret != 0)
 //    {
-//        board_res.display_source = -1;
-//        return 0;
+//        DMSG_PANIC("ERR: wBoot_driver_install display driver failed\n");
+//        return -1;
 //    }
-    ret = wBoot_driver_install("c:\\drv_de.drv");
-    if(ret != 0)
-    {
-        DMSG_PANIC("ERR: wBoot_driver_install display driver failed\n");
-        return -1;
-    }
-	//提前打开显示设备
-	board_res.disp_hd = wBoot_driver_open(EGON2_EMOD_TYPE_DRV_DISP, NULL);
-    if(board_res.disp_hd == NULL)
-    {
-        DMSG_PANIC("ERR: open display driver failed\n");
-        return -1;
-    }
-    source_type = 0;
-    tv_mode     = 0;
-    switch(source)
-    {
-        case 1:                                 //CVBS
-            source_type = DISP_OUTPUT_TYPE_TV;
-            tv_mode = DISP_TV_CVBS;
-            break;
-        case 2:                                 //YPBPR
-            source_type = DISP_OUTPUT_TYPE_TV;
-            tv_mode = DISP_TV_YPBPR;
-            break;
-//        case 3:                                 //SVIDEO
+//    __inf("%s %d\n", __FILE__, __LINE__);
+//	//提前打开显示设备
+	board_res.disp_hd = 0x40000000;
+	board_res.layer_hd = 0x64;
+//	board_res.disp_hd = wBoot_driver_open(EGON2_EMOD_TYPE_DRV_DISP, NULL);
+//    if(board_res.disp_hd == NULL)
+//    {
+//        DMSG_PANIC("ERR: open display driver failed\n");
+//        return -1;
+//    }
+//    source_type = 0;
+//    tv_mode     = 0;
+//    switch(source)
+//    {
+//        case 1:                                 //CVBS
 //            source_type = DISP_OUTPUT_TYPE_TV;
-//            tv_mode = DISP_TV_SVIDEO;
+//            tv_mode = DISP_TV_CVBS;
 //            break;
-        case 3:                                 //HDMI
-            source_type = DISP_OUTPUT_TYPE_HDMI;
-            break;
-        case 4:                                 //VGA
-            source_type = DISP_OUTPUT_TYPE_VGA;
-            break;
-        default:
-            source_type = DISP_OUTPUT_TYPE_LCD;
-            break;
-    }
-    dislpay_device = (source_type << 16) | (tv_mode << 8) | ((mode << 0));
-    //打开显示屏幕
-    ret = De_OpenDevice(dislpay_device);
-    if(ret != 0)
-    {
-        DMSG_PANIC("ERR: De Open LCD or TV failed\n");
-        return -1;
-    }
-	board_res.layer_hd = De_RequestLayer(DISP_LAYER_WORK_MODE_NORMAL);
-	if(board_res.layer_hd == NULL)
-	{
-        DMSG_PANIC("ERR: De_RequestLayer failed\n");
-        return -1;
-	}
+//        case 2:                                 //YPBPR
+//            source_type = DISP_OUTPUT_TYPE_TV;
+//            tv_mode = DISP_TV_YPBPR;
+//            break;
+////        case 3:                                 //SVIDEO
+////            source_type = DISP_OUTPUT_TYPE_TV;
+////            tv_mode = DISP_TV_SVIDEO;
+////            break;
+//        case 3:                                 //HDMI
+//            source_type = DISP_OUTPUT_TYPE_HDMI;
+//            break;
+//        case 4:                                 //VGA
+//            source_type = DISP_OUTPUT_TYPE_VGA;
+//            break;
+//        default:
+//            source_type = DISP_OUTPUT_TYPE_LCD;
+//            break;
+//    }
+//    dislpay_device = (source_type << 16) | (tv_mode << 8) | ((mode << 0));
+//    //打开显示屏幕
+//    __inf("%s %d\n", __FILE__, __LINE__);
+//    ret = De_OpenDevice(dislpay_device);
+//    if(ret != 0)
+//    {
+//        DMSG_PANIC("ERR: De Open LCD or TV failed\n");
+//        return -1;
+//    }
+//    __inf("%s %d\n", __FILE__, __LINE__);
+//	board_res.layer_hd = De_RequestLayer(DISP_LAYER_WORK_MODE_NORMAL);
+//	if(board_res.layer_hd == NULL)
+//	{
+//        DMSG_PANIC("ERR: De_RequestLayer failed\n");
+//        return -1;
+//	}
+//	__inf("%s %d\n", __FILE__, __LINE__);
 
     return 0;
 }

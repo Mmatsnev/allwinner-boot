@@ -26,6 +26,8 @@
 
 boot1_private_head_t  boot1_priv_para;
 boot_hardware_res     board_res;
+__u32				  layer_hd;
+__u32                 disp_hd;
 int boot_recovery_status = 0;
 
 extern  __u32 usb_pc_type;
@@ -58,7 +60,7 @@ int BootMain(int argc, char **argv)
 //    boot_global_info_t   *global_info;
 //    char				  product[64];
 
-	DMSG_INFO("BootMain start\n");
+//	DMSG_INFO("BootMain start\n");
 	while( 1 )
 	{
 		char ch;
@@ -204,7 +206,7 @@ int BootMain(int argc, char **argv)
     //BoardInit_Display(global_info->display_device, global_info->display_mode);
     BoardInit_Display(0, 0);
     //开始准备系统数据
-    __inf("de init ok\n");
+    //__inf("de init ok\n");
     //检测电压状态
     if(check_power_status())
     //if(0)

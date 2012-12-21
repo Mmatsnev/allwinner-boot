@@ -126,6 +126,12 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
     	goto _update_error_;
     }
     ret = -1;
+    if(sprite_detect_flash_ch())
+    {
+    	sprite_wrn("sprite update error: dram ch is not equal to nand ch\n");
+
+    	goto _update_error_;
+    }
     //准备nand数据信息
 	sprite_show(CARD_SPRITE_FLASH_INFO);
 	//src_buf = (char *)sprite_malloc(1024 * 1024);
@@ -230,8 +236,8 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
     __inf("mbr_count = %d\n", mbr_count);
     for(i=0;i<mbr_count;i++)
     {
-    	item_mbr = (MBR *)(mbr_buffer + sizeof(MBR));
-    	crc = calc1_crc32((void *)item_mbr->version, sizeof(MBR) - 4);
+    	item_mbr = (MBR *)(mbr_buffer + sizeof(MBR) * i);
+    	crc = calc1_crc32((void *)&item_mbr->version, sizeof(MBR) - 4);
 		__inf("count crc=%x, source crc=%x\n", crc, item_mbr->crc32);
 		if(crc != item_mbr->crc32)
 		{

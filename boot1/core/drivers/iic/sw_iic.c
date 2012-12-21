@@ -19,6 +19,8 @@
 #include "include.h"
 #include "sw_iic.h"
 
+#if 0
+
 #define   i2c_ctl    twi_ports[twi_index]
 
 
@@ -737,7 +739,7 @@ __s32  BOOT_TWI_WriteEx(__u32 arg1, __u8 *arg2, __u8 *arg3, __u8 count)
     return eGon2_twi_write((void *)&twi_data);
 }
 
-
+#endif
 
 
 

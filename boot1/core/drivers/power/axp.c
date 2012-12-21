@@ -89,7 +89,7 @@ int power_init(int set_vol)
 		dcdc3_vol = 1200;
 	}
 #ifdef DEBUG
-	eGon2_printf("try set dcdc3 to %d\n", dcdc3_vol);
+	eGon2_printf("set dcdc3 to %d\n", dcdc3_vol);
 #endif
 	if(!axp_probe())
 	{
@@ -97,7 +97,7 @@ int power_init(int set_vol)
 		{
 			if(!axp_set_dcdc3(dcdc3_vol))
 			{
-				eGon2_printf("set dcdc3 to %d ok\n", dcdc3_vol);
+				eGon2_printf("dcdc3 %d\n", dcdc3_vol);
 				ret = 0;
 			}
 			else
@@ -459,13 +459,14 @@ int  axp_probe_key(void)
 int axp_set_power_supply_output(void)
 {
 	int vol_value;
+	int cpus_sel;
 
 	//set dcdc1
 	if(!eGon2_script_parser_fetch("power_sply", "dcdc1_vol", &vol_value, 1))
 	{
 		if(!axp_set_dcdc1(vol_value))
 		{
-			eGon2_printf("boot power:set dcdc1 to %d ok\n", vol_value);
+			eGon2_printf("dcdc1 %d\n", vol_value);
 		}
 	}
 	//set dcdc2
@@ -473,7 +474,7 @@ int axp_set_power_supply_output(void)
 	{
 		if(!axp_set_dcdc2(vol_value))
 		{
-			eGon2_printf("boot power:set dcdc2 to %d ok\n", vol_value);
+			eGon2_printf("dcdc2 %d\n", vol_value);
 		}
 	}
 #ifdef DEBUG
@@ -487,7 +488,7 @@ int axp_set_power_supply_output(void)
 	{
 		if(!axp_set_dcdc4(vol_value))
 		{
-			eGon2_printf("boot power:set dcdc4 to %d ok\n", vol_value);
+			eGon2_printf("dcdc4 %d\n", vol_value);
 		}
 	}
 #ifdef DEBUG
@@ -501,7 +502,7 @@ int axp_set_power_supply_output(void)
 	{
 		if(!axp_set_dcdc5(vol_value))
 		{
-			eGon2_printf("boot power:set dcdc5 to %d ok\n", vol_value);
+			eGon2_printf("dcdc5 %d\n", vol_value);
 		}
 	}
 #ifdef DEBUG
@@ -510,6 +511,7 @@ int axp_set_power_supply_output(void)
 		eGon2_printf("boot power:unable to find dcdc5 set\n");
 	}
 #endif
+#if 0
 	//set ldo2
 	if(!eGon2_script_parser_fetch("power_sply", "ldo2_vol", &vol_value, 1))
 	{
@@ -529,7 +531,7 @@ int axp_set_power_supply_output(void)
 	{
 		if(!axp_set_ldo3(vol_value))
 		{
-			eGon2_printf("boot power:set ldo2 to %d ok\n", vol_value);
+			eGon2_printf("boot power:set ldo3 to %d ok\n", vol_value);
 		}
 	}
 #ifdef DEBUG
@@ -537,6 +539,7 @@ int axp_set_power_supply_output(void)
 	{
 		eGon2_printf("boot power:unable to find ldo3 set\n");
 	}
+#endif
 #endif
 	//set ldo4
 //	if(!eGon2_script_parser_fetch("power_sply", "ldo4_vol", &vol_value, 1))
@@ -547,6 +550,20 @@ int axp_set_power_supply_output(void)
 //	{
 //		eGon2_printf("boot power:unable to find ldo4 set\n");
 //	}
+	if(!eGon2_script_parser_fetch("power_sply", "cpus_source", &cpus_sel, 1))
+	{
+		if(cpus_sel)
+		{
+			if(!eGon2_script_parser_fetch("power_sply", "gpio1ldo_vol", &vol_value, 1))
+			{
+				if(!axp221_set_gpio1ldo(cpus_sel, vol_value))
+				{
+					eGon2_printf("boot power:set gpio1ldo to %d ok\n", vol_value);
+				}
+			}
+		}
+	}
+
 	return 0;
 }
 /*

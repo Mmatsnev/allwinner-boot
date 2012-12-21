@@ -36,6 +36,8 @@ typedef struct
 boot_hardware_res;
 
 extern  boot_hardware_res     board_res;
+extern  __u32				  layer_hd;
+extern  __u32                 disp_hd;
 
 #endif   //__BOOT_HARDWARE_RES_H__
 

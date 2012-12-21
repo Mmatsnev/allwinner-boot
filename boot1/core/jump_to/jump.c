@@ -44,7 +44,8 @@ void eGon2_jump_to(__u32 addr)
 	axp_set_runtime_chgcur();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
-    eGon2_twi_exit();           //关闭TWI设备
+    //eGon2_twi_exit();           //关闭TWI设备
+    p2wi_exit();
     eGon2_block_device_exit(); //关闭用到的存储设备
     close_sys_int( );      // close system interrupt
 	eGon2_Int_Exit( );     // 关闭所有中断
@@ -82,7 +83,8 @@ void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 ke
 	axp_set_runtime_chgcur();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
-    eGon2_twi_exit();           //关闭TWI设备
+    //eGon2_twi_exit();           //关闭TWI设备
+    p2wi_exit();
     eGon2_block_device_exit(); //关闭用到的存储设备
     close_sys_int( );      // close system interrupt
     eGon2_Int_Exit( );     // 关闭所有中断
@@ -91,7 +93,7 @@ void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 ke
 	eGon2_printf("%x\n", kernal_addr);
     flush_dcache();		   // 关闭dcache
     disable_dcache();
-    kernal_addr_base = 0x4a000000;
+    kernal_addr_base = kernal_addr;
 	kernel_entry = (void (*)(int, int, __u32))(kernal_addr_base);
 	kernel_entry(zero, mod_id, paddr);
 
@@ -120,7 +122,8 @@ void eGon2_jump_Fel( void )
 	axp_set_runtime_chgcur();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
-    eGon2_twi_exit();           //关闭TWI设备
+    //eGon2_twi_exit();           //关闭TWI设备
+	p2wi_exit();
 	eGon2_block_device_exit(); //关闭用到的存储设备
 	close_sys_int( );                   // close system interrupt
 	set_vect_high_addr( );              // set interrupt vector low address
@@ -159,7 +162,8 @@ void eGon2_simple_jump_Fel( void )
     eGon2_printf("eGon2_simple_jump_Fel\n");
 	eGon2_timer_exit();	   //关闭timer
     eGon2_key_exit();      //关闭按键
-    eGon2_twi_exit();      //关闭TWI设备
+    //eGon2_twi_exit();      //关闭TWI设备
+	p2wi_exit();
 	close_sys_int( );      // close system interrupt
 	set_vect_high_addr( ); // set interrupt vector low address
 	eGon2_Int_Exit( );     // 关闭所有中断

@@ -464,3 +464,72 @@ int create_stdmbr(void *mbr_i)
 	return 0;
 }
 
+
+typedef struct __DRAM_PARA
+{
+	//normal configuration
+	unsigned int        dram_clk;
+	unsigned int        dram_type;		//dram_type			DDR2: 2				DDR3: 3				LPDDR2: 6	DDR3L: 31
+    unsigned int        dram_zq;
+    unsigned int		dram_odt_en;
+
+	//control configuration
+	unsigned int		dram_para1;
+    unsigned int		dram_para2;
+
+	//timing configuration
+	unsigned int		dram_mr0;
+    unsigned int		dram_mr1;
+    unsigned int		dram_mr2;
+    unsigned int		dram_mr3;
+    unsigned int		dram_tpr0;
+    unsigned int		dram_tpr1;
+    unsigned int		dram_tpr2;
+    unsigned int		dram_tpr3;
+    unsigned int		dram_tpr4;
+    unsigned int		dram_tpr5;
+   	unsigned int		dram_tpr6;
+
+    //reserved for future use
+    unsigned int		dram_tpr7;
+    unsigned int		dram_tpr8;
+    unsigned int		dram_tpr9;
+    unsigned int		dram_tpr10;
+    unsigned int		dram_tpr11;
+    unsigned int		dram_tpr12;
+    unsigned int		dram_tpr13;
+
+}__dram_para_t;
+
+
+
+int sprite_detect_flash_ch(void)
+{
+	__u32 dramBondingId;
+	__u32 channelCnt;
+    __dram_para_t      *dram_p;
+	boot1_file_head_t  *boot1_head;
+
+
+	boot1_head = (boot1_file_head_t *)BOOT1_BASE;
+	dram_p     = (__dram_para_t *)boot1_head->prvt_head.script_buf;
+
+	dramBondingId = (dram_p->dram_tpr13>>3) & 0x3;
+	channelCnt = NAND_GetChannelCnt();
+
+	__inf("dram ch=%d\n", dramBondingId);
+	__inf("nand ch=%d\n", channelCnt);
+
+	if (dramBondingId == 0)
+    {
+        if (channelCnt != 2)
+        {
+            __inf("dram ch %d is not match nand ch %d\n", dramBondingId, channelCnt);
+
+            return -1;
+        }
+    }
+
+    return 0;
+}
+

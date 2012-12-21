@@ -281,7 +281,7 @@ int set_ddr_voltage(void)
 	}
 
 #ifdef PW2I_PRINK
-	msg("Set DDR Voltage to %dmV\n", voltage_mV);
+	msg("ddr vol %dmV\n", voltage_mV);
 #endif
 
 	p2wi_exit();
@@ -1675,7 +1675,7 @@ signed int init_DRAM(int type, void *para)
 #endif
 #endif
 
-	msg("[DRAM]ver 0.99--dram_clk = %d\n", dram_para->dram_clk  );
+	msg("[DRAM 0.99] clk = %d\n", dram_para->dram_clk  );
 #if 0
 	msg("dram_para->dram_type       = %x\n", dram_para->dram_type );
 	msg("dram_para->dram_zq         = %x\n", dram_para->dram_zq   );

@@ -424,7 +424,56 @@ int axp221_set_dc1sw(int on_off)
 
 	return 0;
 }
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp221_set_dldo3(int on_off)
+{
+    u8   reg_value;
 
+	if(axp_i2c_write(NULL, BOOT_POWER22_OUTPUT_DLDO3_VO, 0x0b))
+	{
+		eGon2_printf("sunxi pmu error : unable to set dldo3\n");
+
+		return -1;
+	}
+
+	if(axp_i2c_read(NULL, BOOT_POWER22_OUTPUT_CTL2, &reg_value))
+    {
+		eGon2_printf("sunxi pmu error : unable to read output ctl 2\n");
+        return -1;
+    }
+    if(on_off)
+    {
+		reg_value |= (1 << 5);
+	}
+	else
+	{
+		reg_value &= ~(1 << 5);
+	}
+
+	if(axp_i2c_write(NULL, BOOT_POWER22_OUTPUT_CTL2, reg_value))
+	{
+		wlibc_uprintf("sunxi pmu error : unable to set output ctl 2\n");
+
+		return -1;
+	}
+
+	return 0;
+}
 /*
 ************************************************************************************************************
 *
@@ -1098,7 +1147,61 @@ int axp221_set_ldo10(int set_vol)
 	}
 	return 0;
 }
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp221_set_gpio1ldo(int onoff, int set_vol)
+{
+	u8 reg_value;
 
+	if(onoff)
+	{
+		if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_GPIO1_VOL, &reg_value))
+	    {
+	        return -1;
+	    }
+	    reg_value &= 0xf0;
+	    if(set_vol < 700)
+	    {
+	    	set_vol = 700;
+	    }
+	    else if(set_vol > 3300)
+	    {
+	    	set_vol = 3300;
+	    }
+	    reg_value |= ((set_vol - 700)/100) & 0x0f;
+	    if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_GPIO1_VOL, reg_value))
+	    {
+	        return -1;
+	    }
+
+		if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_GPIO1_CTL, &reg_value))
+	    {
+	        return -1;
+	    }
+	    reg_value &= ~7;
+	    reg_value |=  3;
+	    if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_GPIO1_CTL, reg_value))
+	    {
+	        return -1;
+	    }
+	}
+
+	return 0;
+}
 /*
 ************************************************************************************************************
 *

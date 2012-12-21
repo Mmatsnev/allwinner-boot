@@ -47,22 +47,22 @@ __u8  *get_page_buf( void )
 }
 
 
-void   get_boot0_dram_para( boot_dram_para_t *boot0_dram_para_p )
-{
-	memcpy( boot0_dram_para_p, &(BT0_head.prvt_head.dram_para), sizeof(boot_dram_para_t) );
-}
-
-void   set_boot0_dram_para( boot_dram_para_t *boot0_dram_para_p )
-{
-	boot0_file_head_t  *boot0_buf = (boot0_file_head_t *)BOOT0_BASE;
-
-	memcpy( &(boot0_buf->prvt_head.dram_para), boot0_dram_para_p, sizeof(boot_dram_para_t) );
-}
+//void   get_boot0_dram_para( boot_dram_para_t *boot0_dram_para_p )
+//{
+//	memcpy( boot0_dram_para_p, &(BT0_head.prvt_head.dram_para), sizeof(boot_dram_para_t) );
+//}
+//
+//void   set_boot0_dram_para( boot_dram_para_t *boot0_dram_para_p )
+//{
+//	boot0_file_head_t  *boot0_buf = (boot0_file_head_t *)BOOT0_BASE;
+//
+//	memcpy( &(boot0_buf->prvt_head.dram_para), boot0_dram_para_p, sizeof(boot_dram_para_t) );
+//}
 
 void set_dram_para(void *dram_addr )
 {
 	boot1_file_head_t  *boot1_buf = (boot1_file_head_t *)BOOT1_BASE;
-	memcpy((void *)&boot1_buf->prvt_head.dram_para, dram_addr, sizeof(boot_dram_para_t));
+	memcpy((void *)boot1_buf->prvt_head.script_buf, dram_addr, 32 * sizeof(int));
 
 	return;
 }
