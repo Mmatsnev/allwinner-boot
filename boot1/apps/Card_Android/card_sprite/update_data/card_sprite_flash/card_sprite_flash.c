@@ -187,11 +187,11 @@ __s32 sprite_flash_read(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 {
 	int ret;
 
-	__inf("read start %x, count %x\n", nSectNum, nSectorCnt);
+	//__inf("read start %x, count %x\n", nSectNum, nSectorCnt);
 	if(!card_sprite_type)
 	{
 		ret = NAND_LogicRead(nSectNum, nSectorCnt, pBuf);
-		__inf("read nand end\n");
+		//__inf("read nand end\n");
 
 		return ret;
 	}
@@ -227,11 +227,11 @@ __s32 sprite_flash_write(__u32 nSectNum, __u32 nSectorCnt, void * pBuf)
 {
 	int ret;
 
-	__inf("write start %x, count %x\n", nSectNum, nSectorCnt);
+	//__inf("write start %x, count %x\n", nSectNum, nSectorCnt);
 	if(!card_sprite_type)
 	{
 		ret = NAND_LogicWrite(nSectNum, nSectorCnt, pBuf);
-		__inf("write nand end\n");
+		//__inf("write nand end\n");
 
 		return ret;
 	}

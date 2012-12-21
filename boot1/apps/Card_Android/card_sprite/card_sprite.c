@@ -49,6 +49,11 @@ __hdle    progressbar_hd;
 
 extern    int		android_format;
 
+__u32 sprite_read_time;
+__u32 sprite_write_time;
+__u32 card_read_time;
+__u32 check_time;
+
 static  void  sprite_show(int ratio)
 {
 	boot_ui_progressbar_upgrate(progressbar_hd, ratio);
@@ -93,6 +98,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
     int         aver_rage, sprite_ratio, pre_ratio, this_ratio;          //进度标志
     unsigned    i, sprite_type;
     char		flash_info[512];
+    __u32       t2, t1;
 
     /*创建一个1M的空间，用于保存临时数据*/
     /*tmp_buf和tmp_dest将共享1M数据空间，各占512K，目前的任何一个数据块都不会超过512K*/
@@ -350,7 +356,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	    	item_origin_sectors ++;
 	    }
 	    item_rest_sectors = item_origin_sectors;
-	    __inf("item sectors %d\n", item_origin_sectors);
+	    //__inf("item sectors %d\n", item_origin_sectors);
 	    //检查文件大小是否小于等于分区大小
 		file_sector = item_original_size / 512;
 		part_sector = dl_info->one_part_info[i].lenlo;
@@ -368,6 +374,10 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	    tmp_partdata_start = partdata_start;
 	    __inf("part start = %d\n", partdata_start);
 	    calc_sum = 0;
+	    sprite_read_time  = 0;
+	    sprite_write_time = 0;
+	    card_read_time  = 0;
+	    check_time      = 0;
 	    while(item_rest_sectors > TEST_BLK_SECTORS)      //当超过32k的时候
 	    {
 //	    	if(!Img_ReadItemData(imghd, imgitemhd, (void *)src_buf, TEST_BLK_BYTES))   //读出32k数据
@@ -376,13 +386,16 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 //
 //	            goto _update_error_;
 //	        }
-			__inf("image part start = %x\n", tmp_partdata_start);
+			//__inf("image part start = %x\n", tmp_partdata_start);
+			t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 			if(wBoot_block_read(tmp_partdata_start, TEST_BLK_SECTORS, (void *)src_buf))
 			{
 				sprite_wrn("sprite update error: fail to read data from %s\n", dl_info->one_part_info[i].dl_filename);
 
 	            goto _update_error_;
 			}
+			t2 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+			card_read_time += t2 - t1;
 			tmp_partdata_start += TEST_BLK_SECTORS;
 	        item_rest_sectors -= TEST_BLK_SECTORS;
 	        decode((__u32)src_buf, (__u32)dest_buf, TEST_BLK_BYTES, &actual_buf_addr);
@@ -390,13 +403,15 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 //			once_sum = verify_sum((void *)actual_buf_addr, TEST_BLK_BYTES);
 //	        __inf("verify sum = %x\n", once_sum);
 //	        calc_sum += once_sum;
-
+			t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 	        if(update_flash_write((void *)actual_buf_addr, TEST_BLK_BYTES))
 	        {
 	        	sprite_wrn("sprite update error: fail to write data in %s\n", dl_info->one_part_info[i].dl_filename);
 
 	            goto _update_error_;
 	        }
+	        t2 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+	        sprite_write_time += t2 - t1;
 	        //this_ratio = (((item_original_size>>9) - item_rest_sectors)*aver_rage)/((__u32)(item_original_size>>9));
 	        this_ratio = ((item_origin_sectors - item_rest_sectors)*aver_rage)/item_origin_sectors;
 	        if(this_ratio)
@@ -408,7 +423,7 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	    			__inf("this ratio = %d\n", this_ratio);
 	    		}
 	    	}
-	    	__inf("\n");
+	    	//__inf("\n");
 	    }
 	    if(item_rest_sectors)
 	    {
@@ -421,13 +436,16 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 //	        }
 			//__inf("image part start = %x\n", tmp_partdata_start);
 			//__inf("item rest sectors = %x\n", item_rest_sectors);
+			t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 	        if(wBoot_block_read(tmp_partdata_start, item_rest_sectors, (void *)src_buf))
 			{
 				sprite_wrn("sprite update error: fail to read data from %s\n", dl_info->one_part_info[i].dl_filename);
 
 	            goto _update_error_;
 			}
+			t2 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 			//__inf("%x %x %x %x\n", *((__u32 *)src_buf + 0), *((__u32 *)src_buf + 1), *((__u32 *)src_buf + 2), *((__u32 *)src_buf + 3));
+	        card_read_time += t2 - t1;
 	        if(!item_rest_bytes)
 			{
 				last_bytes = item_rest_sectors<<9;
@@ -449,12 +467,15 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	        //__inf("verify sum = %x\n", once_sum);
 	        //calc_sum += once_sum;
 			//__inf("total sum = %x\n", calc_sum);
+			t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 			if(update_flash_write((void *)actual_buf_addr, last_bytes))
 	        {
 	        	sprite_wrn("sprite update error: fail to write last data in %s\n", dl_info->one_part_info[i].dl_filename);
 
 	            goto _update_error_;
 	        }
+	        t2 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+	        sprite_write_time += t2 - t1;
 	    }
 	    exit_code();
 	    __inf("data deal finish\n");
@@ -506,13 +527,19 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 				        	//__inf("verify part start = %x\n", dl_info->one_part_info[i].addrlo);
 				        	while(item_rest_sectors > TEST_BLK_SECTORS)
 				        	{
+				        		t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 				        		if(update_flash_read_ext(dest_buf, TEST_BLK_BYTES))
 				        		{
 				        			__inf("sprite update warning: fail to read data in %s\n", dl_info->one_part_info[i].vf_filename);
 
 				        			goto __download_part_data__;
 				        		}
+				        		t2 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+	        					sprite_read_time += t2 - t1;
+				        		t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 				        		once_sum = verify_sum(dest_buf, TEST_BLK_BYTES);
+				        		t2 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+	        					check_time += t2 - t1;
 				        		//__inf("verify sum = %x\n", once_sum);
 								sum += once_sum;
 								//__inf("sum = %x\n", sum);
@@ -520,12 +547,16 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 				        	}
 				        	if(item_rest_sectors)
 				        	{
+				        		t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 				        		if(update_flash_read_ext(dest_buf, item_rest_sectors<<9))
 				        		{
 				        			__inf("sprite update warning: fail to read data in %s\n", dl_info->one_part_info[i].vf_filename);
 
 				        			goto __download_part_data__;
 				        		}
+				        		t2 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+	        					sprite_read_time += t2 - t1;
+								t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
 								if(!item_rest_bytes)
 								{
 									once_sum = verify_sum(dest_buf, item_rest_sectors<<9);
@@ -534,6 +565,8 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 								{
 									once_sum = verify_sum(dest_buf, ((item_rest_sectors - 1)<<9) + item_rest_bytes);
 								}
+								t2 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+	        					check_time += t2 - t1;
 								//once_sum = verify_sum(dest_buf, item_rest_sectors<<9);
 				        		//__inf("verify sum = %x\n", once_sum);
 								sum += once_sum;
@@ -561,7 +594,10 @@ __s32 card_sprite(void *mbr_i, int flash_erase, int disp_type)
 	    	__inf("part %s not need verify\n", dl_info->one_part_info[i].dl_filename);
 	    }
 __download_part_data__:
-		;
+		__inf("part write time %d\n", sprite_write_time);
+		__inf("part read time %d\n",  sprite_read_time);
+		__inf("card read time %d\n",  card_read_time);
+		__inf("check     time %d\n",  check_time);
 	}
 	sprite_show(CARD_SPRITE_DOWN_PART);
 /*****************************************************************************
