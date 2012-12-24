@@ -76,9 +76,3 @@ int standby_int_exit(void)
     return 0;
 }
 
-
-int standby_int_query(void)
-{
-	return 0;
-}
-

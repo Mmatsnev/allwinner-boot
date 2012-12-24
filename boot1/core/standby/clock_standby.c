@@ -21,114 +21,155 @@
 #include "include.h"
 
 
-static  __u32  pll1_value = 0;
-static  __u32  pll2_value = 0;
-static  __u32  pll3_value = 0;
-static  __u32  pll4_value = 0;
-static  __u32  pll5_value = 0;
-static  __u32  pll6_value = 0;
-static  __u32  pll7_value = 0;
-static  __u32  pll8_value = 0;
-static  __u32  pll9_value = 0;
-static  __u32  pll10_value = 0;
-
-__s32 standby_clock_store(void)
+//static  __u32  pll1_value = 0;
+//static  __u32  pll2_value = 0;
+//static  __u32  pll3_value = 0;
+//static  __u32  pll4_value = 0;
+//static  __u32  pll5_value = 0;
+//static  __u32  pll6_value = 0;
+//static  __u32  pll7_value = 0;
+//static  __u32  pll8_value = 0;
+//static  __u32  pll9_value = 0;
+//static  __u32  pll10_value = 0;
+//
+//
+//__s32 standby_clock_store(void)
+//{
+//	pll1_value  = CCMU_REG_PLL1_CTRL;
+//	pll2_value  = CCMU_REG_PLL2_CTRL;
+//	pll3_value  = CCMU_REG_PLL3_CTRL;
+//	pll4_value  = CCMU_REG_PLL4_CTRL;
+//	pll5_value  = CCMU_REG_PLL5_CTRL;
+//	pll6_value  = CCMU_REG_PLL6_CTRL;
+//	pll7_value  = CCMU_REG_PLL7_CTRL;
+//	pll8_value  = CCMU_REG_PLL8_CTRL;
+//	pll9_value  = CCMU_REG_PLL9_CTRL;
+//	pll10_value = CCMU_REG_PLL10_CTRL;
+//
+//	return 0;
+//}
+//
+//
+//__s32 standby_clock_restore(void)
+//{
+//	CCMU_REG_PLL1_CTRL  = pll1_value;
+//	CCMU_REG_PLL2_CTRL  = pll2_value;
+//	CCMU_REG_PLL3_CTRL  = pll3_value;
+//	CCMU_REG_PLL4_CTRL  = pll4_value;
+//	CCMU_REG_PLL5_CTRL  = pll5_value;
+//	CCMU_REG_PLL6_CTRL  = pll6_value;
+//	CCMU_REG_PLL7_CTRL  = pll7_value;
+//	CCMU_REG_PLL8_CTRL  = pll8_value;
+//	CCMU_REG_PLL9_CTRL  = pll9_value;
+//	CCMU_REG_PLL10_CTRL = pll10_value;
+//
+//	return 0;
+//}
+__s32 standby_clock_to_24M(void)
 {
-	pll1_value  = CCMU_REG_PLL1_CTRL;
-	pll2_value  = CCMU_REG_PLL2_CTRL;
-	pll3_value  = CCMU_REG_PLL3_CTRL;
-	pll4_value  = CCMU_REG_PLL4_CTRL;
-	pll5_value  = CCMU_REG_PLL5_CTRL;
-	pll6_value  = CCMU_REG_PLL6_CTRL;
-	pll7_value  = CCMU_REG_PLL7_CTRL;
-	pll8_value  = CCMU_REG_PLL8_CTRL;
-	pll9_value  = CCMU_REG_PLL9_CTRL;
-	pll10_value = CCMU_REG_PLL10_CTRL;
+	__u32 reg_val;
+	int   i;
+
+	_set_divd(24);
+
+	reg_val = CCMU_REG_AXI_MOD;
+    reg_val &= ~(0x03 << 16);
+    reg_val |=  (0x01 << 16);
+    CCMU_REG_AXI_MOD = reg_val;
+
+	for(i=0; i<0x4000; i++);
 
 	return 0;
 }
 
-
-__s32 standby_clock_restore(void)
-{
-	CCMU_REG_PLL1_CTRL  = pll1_value;
-	CCMU_REG_PLL2_CTRL  = pll2_value;
-	CCMU_REG_PLL3_CTRL  = pll3_value;
-	CCMU_REG_PLL4_CTRL  = pll4_value;
-	CCMU_REG_PLL5_CTRL  = pll5_value;
-	CCMU_REG_PLL6_CTRL  = pll6_value;
-	CCMU_REG_PLL7_CTRL  = pll7_value;
-	CCMU_REG_PLL8_CTRL  = pll8_value;
-	CCMU_REG_PLL9_CTRL  = pll9_value;
-	CCMU_REG_PLL10_CTRL = pll10_value;
-
-	return 0;
-}
-
-__s32 standby_clock_to_source(int clock_source)
+__s32 standby_clock_to_pll1(void)
 {
 	__u32 reg_val;
 
+	_set_divd(_get_pll1_clock());
+
 	reg_val = CCMU_REG_AXI_MOD;
-	reg_val &= ~(0x03 << 16);
-	if(clock_source == 32000)
-	{
-		;
-	}
-	else if(clock_source == 24000000)
-	{
-		reg_val |= 1 << 16;
-	}
-	else
-	{
-		reg_val |= 2 << 16;
-	}
-	CCMU_REG_AXI_MOD = reg_val;
+    reg_val &= ~(0x03 << 16);
+    reg_val |=  (0x02 << 16);
+    CCMU_REG_AXI_MOD = reg_val;
 
 	return 0;
 }
+
 
 void standby_clock_plldisable(void)
 {
 	CCMU_REG_PLL1_CTRL &= ~(1U << 31);
-	CCMU_REG_PLL2_CTRL &= ~(1U << 31);
 	CCMU_REG_PLL3_CTRL &= ~(1U << 31);
-	CCMU_REG_PLL4_CTRL &= ~(1U << 31);
-	CCMU_REG_PLL5_CTRL &= ~(1U << 31);
+	//CCMU_REG_PLL5_CTRL &= ~(1U << 31);
 	CCMU_REG_PLL6_CTRL &= ~(1U << 31);
 	CCMU_REG_PLL7_CTRL &= ~(1U << 31);
-	CCMU_REG_PLL8_CTRL &= ~(1U << 31);
-	CCMU_REG_PLL9_CTRL &= ~(1U << 31);
-	CCMU_REG_PLL10_CTRL &= ~(1U << 31);
 }
 
-void standby_clock_divsetto0(void)
+void standby_clock_pllenable(void)
 {
-	return ;
+	__u32 reg_val;
+
+	CCMU_REG_PLL1_CTRL |= (1U << 31);
+	do
+	{
+		reg_val = CCMU_REG_PLL1_CTRL;
+	}
+	while(reg_val & (0x1 << 28));
+
+
+	CCMU_REG_PLL3_CTRL |= (1U << 31);
+	do
+	{
+		reg_val = CCMU_REG_PLL3_CTRL;
+	}
+	while(reg_val & (0x1 << 28));
+
+	//CCMU_REG_PLL5_CTRL = ~(1U << 31);
+
+
+	CCMU_REG_PLL6_CTRL |= (1U << 31);
+	do
+	{
+		reg_val = CCMU_REG_PLL6_CTRL;
+	}
+	while(reg_val & (0x1 << 28));
+
+	CCMU_REG_PLL7_CTRL |= (1U << 31);
+	do
+	{
+		reg_val = CCMU_REG_PLL7_CTRL;
+	}
+	while(reg_val & (0x1 << 28));
 }
 
-void standby_clock_divsetback(void)
-{
-	return ;
-}
-
-void standby_clock_drampll_ouput(int op)
-{
-//	__u32 reg_val;
+//void standby_clock_divsetto0(void)
+//{
+//	return ;
+//}
 //
-//	reg_val = CCMU_REG_PLL5_CTRL;
-//	if(op)
-//	{
-//		reg_val |= 1 << 29;
-//	}
-//	else
-//	{
-//		reg_val &= ~(1 << 29);
-//	}
-//	CCMU_REG_PLL5_CTRL = reg_val;
+//void standby_clock_divsetback(void)
+//{
+//	return ;
+//}
 //
-//	return;
-}
+//void standby_clock_drampll_ouput(int op)
+//{
+////	__u32 reg_val;
+////
+////	reg_val = CCMU_REG_PLL5_CTRL;
+////	if(op)
+////	{
+////		reg_val |= 1 << 29;
+////	}
+////	else
+////	{
+////		reg_val &= ~(1 << 29);
+////	}
+////	CCMU_REG_PLL5_CTRL = reg_val;
+////
+////	return;
+//}
 
 /*
 *********************************************************************************************************

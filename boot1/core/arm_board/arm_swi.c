@@ -375,8 +375,7 @@ void eGon2_swi_handler_entry(__u32 swi_number, struct swi_regs * swi_reg)
 
 		case EGON2_SWI_DRV_IOCTL :
 		{
-			(swi_reg->reg[0])  = eGon2_driver_ioctl_through(swi_reg->reg[0], swi_reg->reg[1], swi_reg->reg[2], (void *)swi_reg->reg[3]);
-			//(swi_reg->reg[0])  = eGon2_driver_ioctl(swi_reg->reg[0], swi_reg->reg[1], swi_reg->reg[2], (void *)swi_reg->reg[3]);
+			(swi_reg->reg[0])  = eGon2_driver_ioctl(swi_reg->reg[0], swi_reg->reg[1], swi_reg->reg[2], (void *)swi_reg->reg[3]);
 		}
 		break;
 /* 文件操作 */
@@ -611,7 +610,8 @@ void eGon2_swi_handler_entry(__u32 swi_number, struct swi_regs * swi_reg)
 //key操作
         case EGON2_SWI_KEY_GET_STATUS:
         {
-            swi_reg->reg[0] = eGon2_key_get_status();
+            //swi_reg->reg[0] = eGon2_key_get_status();
+        	swi_reg->reg[0] = -1;
         }
         break;
 

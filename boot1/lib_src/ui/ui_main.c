@@ -49,7 +49,7 @@ static  int boot_ui_showLayer(void);
 */
 __s32 boot_ui_init(__s32 display_source, __s32 display_mode)
 {
-#if 0
+#if 1
     __s32 ret = 0;
     __s32 source, tv_mode;
 

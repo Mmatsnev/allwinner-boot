@@ -28,9 +28,7 @@ static int eGon2_standby_detect(void);
 static int eGon2_mod_enter_standby(void);
 static int eGon2_mod_exit_standby(void);
 
-static int standby_flag = 0;
-static int status;
-
+//static int standby_flag = 0;
 /*
 ************************************************************************************************************
 *
@@ -51,6 +49,7 @@ int eGon2_standby_mode(void)
 {
 	__s32 dcin_exist, battery_exist;
 	__s32 key_status;
+	__s32 status;
 
 	//检查是否有按键按下
 	key_status = axp_probe_key();
@@ -97,9 +96,9 @@ int eGon2_standby_mode(void)
 	}
 	status = -1;
 	//保存原来的SP
-	//eGon2_store_sp();
+	eGon2_store_sp();
 	//设置新的SP，存放在SRAM中
-	//eGon2_set_sp();
+	eGon2_set_sp();
 
 //	if(!standby_flag)
 	{
@@ -129,7 +128,7 @@ int eGon2_standby_mode(void)
 //	{
 //		standby_flag = 1;
 //	}
-//	eGon2_restore_sp();
+	eGon2_restore_sp();
 
 	return status;
 }
@@ -163,9 +162,12 @@ static int eGon2_enter_standby(void)
 ////	//清除power的中断pending
 ////	eGon2_power_int_query(power_int_status);
 //	//处理中断
-//	standby_int_init();
-	gic_store();
-	axp_int_store();
+	standby_int_init();
+//	gic_store();
+//	axp_int_store();
+	standby_clock_to_24M();
+	standby_clock_plldisable();
+//	dram_power_save_process();
 //	//处理clock
 //	standby_clock_store();
 //	//处理dram，之后不允许再访问dram
@@ -175,10 +177,11 @@ static int eGon2_enter_standby(void)
 //	//切换到24M
 //	standby_clock_to_source(24000000);
 //	//关闭所有pll输出
-//	standby_clock_plldisable();
+	standby_clock_plldisable();
+//	axp221_set_dcdc_onoff(0);
 //	//降低电源电压输出
 //	eGon2_power_set_dcdc2(DCDC2_STANDBY_VOL);
-////	eGon2_power_set_dcdc3(DCDC3_STANDBY_VOL);
+//	eGon2_power_set_dcdc3(DCDC3_STANDBY_VOL);
 //	//使能电源中断，等待唤醒
 //	eGon2_power_int_enable();
 //	//切换分频比全为0
@@ -213,7 +216,10 @@ static int eGon2_exit_standby(void)
 {
 //	int i;
 
-	gic_restore();
+//	dram_power_up_process();
+	standby_clock_pllenable();
+	standby_clock_to_pll1();
+//	gic_restore();
 	//关闭电源中断
 //	eGon2_power_int_disable();
 //	//设置电压
@@ -231,7 +237,7 @@ static int eGon2_exit_standby(void)
 //	dram_power_up_process();
 //	standby_tmr_disable_watchdog();
 //	//还原中断状态
-//	standby_int_exit();
+	standby_int_exit();
 //	//还原充电电流
 //	eGon2_config_charge_current(0);
 	//还原所有的驱动模块
@@ -258,27 +264,12 @@ static int eGon2_exit_standby(void)
 static int eGon2_standby_detect(void)
 {
 	int   i;
-	__u32 dcin_exist, battery_exist;
+	int   dcin_exist;
 	__u8  power_int_status[4];
 
-	//开启24M晶振
-//	standby_clock_24m_op(1);
-	//切换apb1到24M
-//	standby_clock_apb1_to_source(24000000);
-	//设置频率到24M
-//	standby_clock_to_source(24000000);
-//	standby_clock_divsetback();
-//	for(i=0;i<2000;i++);
 	//检查中断触发
 	*(int *)power_int_status = 0;
-	axp_int_query(power_int_status);
-	//清除中断控制器的pending
-//	standby_int_query();
-//	if(eGon2_key_get_status() == 1)			//普通ADC按键按下
-//	{
-//		return 1;
-//	}
-//	eGon2_power_vbus_unlimit();
+	standby_axp_int_query(power_int_status);
 	if(power_int_status[2] & 0x02)			//电源按键短按
 	{
 		return 2;
@@ -287,10 +278,8 @@ static int eGon2_standby_detect(void)
 	{
 		return 3;
 	}
-	dcin_exist = 100;
-	battery_exist = 100;
-	axp_power_get_dcin_battery_exist(&dcin_exist, &battery_exist);
-	if(!dcin_exist)							//外部电源移除
+	dcin_exist = standby_axp_probe_dcin_exist();
+	if(!dcin_exist)						//外部电源移除
 	{
 		return 4;
 	}
@@ -306,12 +295,6 @@ static int eGon2_standby_detect(void)
 //	{
 //		return 9;
 //	}
-
-	//还原到32K
-//	standby_clock_divsetto0();
-//	standby_clock_apb1_to_source(32000);
-//	standby_clock_to_source(32000);
-//	standby_clock_24m_op(0);
 
 	return 0;
 }

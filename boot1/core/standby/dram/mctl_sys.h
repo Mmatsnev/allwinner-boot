@@ -1,7 +1,7 @@
 //*****************************************************************************
 //	Allwinner Technology, All Right Reserved. 2006-2010 Copyright (c)
 //
-//	File: 				mctl_hal.h
+//	File: 				mctl_sys.h
 //
 //	Description:  This file implements basic functions for AW1633 DRAM controller
 //
@@ -22,49 +22,15 @@
 //				2012/11/29		CPL				0.95	modify lock parameters configuration
 //				2012/12/3		CPL				0.96	add dll&pll delay and simple test
 //*****************************************************************************
+#ifndef MCTL_SYS_H_
+#define MCTL_SYS_H_
 
-#ifndef   _MCTL_HAL_H
-#define   _MCTL_HAL_H
+extern void mctl_self_refresh_entry(unsigned int ch_index);
+extern void mctl_self_refresh_exit(unsigned int ch_index);
+extern unsigned int mctl_selfrefesh_test(void);
+extern unsigned int mctl_deep_sleep_test(void);
+extern void mctl_deep_sleep_entry(void);
+extern void mctl_deep_sleep_exit(__dram_para_t *para);
 
-
-//#define LINUX_CONFIG
-#define PW2I_PRINK
-
-#ifdef PW2I_PRINK
-//	#define msg printk
 #endif
-
-//#define FPGA_PLATFORM
-//#define LPDDR2_FPGA_S2C_2CS_2CH
-#define DDR3_32B
-#define TEST_MEM 0x40000000
-
-extern __dram_para_t *dram_para;
-
-extern unsigned int DRAMC_init(__dram_para_t *para);
-extern unsigned int DRAMC_init_auto(__dram_para_t *para);
-static unsigned int mctl_sys_init(void);
-static unsigned int mctl_reset_release(void);
-static unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para);
-static unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para);
-static unsigned int mctl_com_init(__dram_para_t *para);
-static unsigned int mctl_port_cfg(void);
-extern signed int init_DRAM(int type, void *para);
-static unsigned int ss_bonding_id(void);
-static void paraconfig(unsigned int *para, unsigned int mask, unsigned int value);
-//extern uint32 mctl_basic_test(void);
-//extern uint32 mctl_stable_test(void);
-extern int p2wi_read(unsigned int addr, unsigned int *val);
-extern  int p2wi_write(unsigned int addr, unsigned int val);
-
-#endif  //_MCTL_HAL_H
-
-
-
-
-
-
-
-
-
 

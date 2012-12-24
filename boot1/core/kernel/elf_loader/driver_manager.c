@@ -492,10 +492,10 @@ __s32 eGon2_driver_ioctl(__u32 hd, __u32 cmd, __s32 aux, void *pBuffer)
 *
 ************************************************************************************************************
 */
-int eGon2_driver_ioctl_through(__u32 hd, __u32 cmd, __s32 aux, void *pBuffer)
-{
-	return DRV_DE_IOCTRL(0, cmd, aux, pBuffer);
-}
+//int eGon2_driver_ioctl_through(__u32 hd, __u32 cmd, __s32 aux, void *pBuffer)
+//{
+//	return DRV_DE_IOCTRL(0, cmd, aux, pBuffer);
+//}
 /*
 ************************************************************************************************************
 *

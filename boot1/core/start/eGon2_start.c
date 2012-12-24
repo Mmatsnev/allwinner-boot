@@ -28,7 +28,6 @@ static __s32 reserved_exit(void);
 static int script_relocation(void);
 
 __u32 timer_hd;
-__u32 Layer_hd;
 static int  eGon2_storage_type_set(void);
 /*******************************************************************************
 *函数名称: eGon2_start
@@ -51,8 +50,12 @@ void eGon2_start( void )
 
 	/* init enviroment for running app */
 //	move_RW( );
-//	reposition_boot_standby();
+
+//	while((*(volatile unsigned int *)0x40000000) != 0x1234);
+
+	reposition_boot_standby();
 	clear_ZI( );
+	memcpy((void *)BOOT_STANDBY_DRAM_PARA_ADDR, BT1_head.prvt_head.script_buf, sizeof(__dram_para_t));
     // 做两次调频，第一次先到384M ???
     //default_clock = eGon2_clock_set(0, 240);
     default_clock = 408;
@@ -115,9 +118,6 @@ void eGon2_start( void )
     eGon2_clock_set_pll6();
     eGon2_clock_set_mbus();
 	eGon2_printf("power finish\n");
-
-	board_display();
-
     eGon2_key_init();
     //检查是否需要直接进入fel，通常用于异常出现的情况
     exception = eGon2_boot_detect();
@@ -357,31 +357,6 @@ static int script_relocation(void)
 	{
 		return -1;
 	}
-
-    return 0;
-}
-
-__s32 board_display(void)
-{
-	__u32  arg[3];
-
-	DRV_DE_INIT();
-	//提前打开显示设备
-	arg[0] = 0;
-    arg[1] = 0;
-    arg[2] = 0;
-    DRV_DE_IOCTRL(0, DISP_CMD_LCD_ON, 0, (void*)arg);
-	//打开LCD
-    arg[0] = DISP_LAYER_WORK_MODE_NORMAL;
-    arg[1] = 0;
-    arg[2] = 0;
-    Layer_hd = DRV_DE_IOCTRL(0, DISP_CMD_LAYER_REQUEST, 0, (void*)arg);
-    if(Layer_hd == NULL)
-    {
-        eGon2_printf("ERR: wBoot_driver_ioctl DISP_CMD_LAYER_REQUEST failed\n");
-
-        return -1;
-    }
 
     return 0;
 }
