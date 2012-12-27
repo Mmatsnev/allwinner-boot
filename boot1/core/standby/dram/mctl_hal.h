@@ -27,9 +27,8 @@
 #define   _MCTL_HAL_H
 
 #include "include.h"
-
 //#define LINUX_CONFIG
-#define PW2I_PRINK
+//#define PW2I_PRINK
 
 #ifdef PW2I_PRINK
 //	#define msg printk
@@ -48,11 +47,13 @@ static unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para);
 static unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para);
 static unsigned int mctl_com_init(__dram_para_t *para);
 static unsigned int mctl_port_cfg(void);
-extern signed int init_DRAM(int type, __dram_para_t *para);
+extern signed int init_DRAM(int type, void *para);
 static unsigned int ss_bonding_id(void);
 static void paraconfig(unsigned int *para, unsigned int mask, unsigned int value);
 //extern uint32 mctl_basic_test(void);
 //extern uint32 mctl_stable_test(void);
+extern int p2wi_read(unsigned int addr, unsigned int *val);
+extern  int p2wi_write(unsigned int addr, unsigned int val);
 
 #endif  //_MCTL_HAL_H
 

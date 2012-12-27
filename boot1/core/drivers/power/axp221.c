@@ -1562,89 +1562,17 @@ int axp221_probe_rest_battery_capacity(void)
 *
 ************************************************************************************************************
 */
-int axp221_read_int_enable_status(__u8 *buffer)
+int axp221_clear_int_status(void)
 {
 	int   i;
-	__u8  int_reg = BOOT_POWER22_INTEN1;
-
-	for(i=0;i<3;i++)
-	{
-		if(axp_i2c_read(AXP22_ADDR, int_reg, buffer + i))
-	    {
-	        return -1;
-	    }
-	    int_reg ++;
-	}
-
-	return 0;
-}
-/*
-************************************************************************************************************
-*
-*                                             function
-*
-*    函数名称：
-*
-*    参数列表：
-*
-*    返回值  ：
-*
-*    说明    ：
-*
-*
-************************************************************************************************************
-*/
-__s32 axp221_write_int_enable_status(__u8 *buffer)
-{
-	int   i;
-	__u8  int_reg = BOOT_POWER22_INTEN1;
-
-	for(i=0;i<3;i++)
-	{
-		if(axp_i2c_write(AXP22_ADDR, int_reg, buffer + i))
-	    {
-	        return -1;
-	    }
-	    int_reg ++;
-	}
-
-	return 0;
-}
-
-/*
-************************************************************************************************************
-*
-*                                             function
-*
-*    函数名称：
-*
-*    参数列表：
-*
-*    返回值  ：
-*
-*    说明    ：
-*
-*
-************************************************************************************************************
-*/
-__s32 axp221_int_query(__u8 *int_status)
-{
-	int   i, delay;
 	__u8  int_reg = BOOT_POWER22_INTSTS1;
 
-	for(i=0;i<3;i++)
+	for(i=0;i<5;i++)
 	{
-		for(delay = 0; delay <= 10000; delay++);
-		if(axp_i2c_read(AXP22_ADDR, int_reg, int_status + i))
+	    if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_INTSTS1 + i, 0xff))
 	    {
 	        return -1;
 	    }
-	    for(delay = 0; delay <= 10000; delay++);
-	    if(axp_i2c_write(AXP22_ADDR, int_reg, int_status[i]))
-	    {
-	        return -1;
-	    }
-	    int_reg ++;
 	}
 
 	return 0;

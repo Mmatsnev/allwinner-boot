@@ -29,11 +29,12 @@
 #include "mctl_reg.h"
 #include "mctl_hal.h"
 
-//#include "boot0_i.h"
 #ifdef LINUX_CONFIG
 	 #include <mach/sys_config.h>
 #endif
 
+//=============structure & macro definition===================
+//static __dram_para_t *dram_para;
 //========timing parameters===========
 //static	unsigned int trefi;
 //static	unsigned int tmrd;
@@ -81,10 +82,7 @@
 //static	unsigned int tdinit2;
 //static	unsigned int tdinit3;
 
-static void aw_delay(unsigned int n)
-{
-	while(n--);
-}
+//===========================================================================
 
 //--------------------------------------------external function definition-------------------------------------------
 //*****************************************************************************
@@ -105,6 +103,10 @@ unsigned int DRAMC_init(__dram_para_t *para)
    		//dram parameter is invalid
     	return 0;
 	}
+
+	standby_serial_putc('s');
+	standby_serial_putc('\n');
+
 
    //***********************************************
    // dram system init
@@ -168,11 +170,17 @@ unsigned int DRAMC_init(__dram_para_t *para)
 */
 	//data training error
    	if(mctl_read_w(SDR_PGSR) & (0x3<<5))
+ 	{
+ 		standby_serial_putc('3');
 		return 0;
+	}
    	if(mctl_read_w(SDR_COM_CR)&(0x1<<19))
    	{
    		if(mctl_read_w(SDR_PGSR + 0x1000) & (0x3<<5))
+   		{
+   			standby_serial_putc('4');
    			return 0;
+   		}
    	}
 /*
 	//mbus configuration
@@ -189,14 +197,209 @@ unsigned int DRAMC_init(__dram_para_t *para)
 	reg_val |= 0x1u<<31;
 	mctl_write_w(0x01c20000 + 0x160, reg_val);
 */
+
+    //NAND_Print("****************************************************************\n");
+	//NAND_Print("NAND_ClkRequest, Open MBUS CLK0 for DRAM!!!!!!!!!!!!!!!!!!!!! \n");
+	//NAND_Print("NAND_ClkRequest, Open MBUS CLK1 for DRAM!!!!!!!!!!!!!!!!!!!!! \n");
+	*(volatile unsigned int *)(0x01c20000 + 0x15c) = 0x82000001U;
+	*(volatile unsigned int *)(0x01c20000 + 0x160) = 0x81000000U;
+	//NAND_Print("Reg 0x01c2015c: 0x%x\n", *(volatile __u32 *)(0x01c2015c));
+	//NAND_Print("Reg 0x01c20160: 0x%x\n", *(volatile __u32 *)(0x01c20160));
+	//NAND_Print("****************************************************************\n");
+
 	dram_size = (para->dram_para1>>16)&0xF;
 	dram_size *= (1<<(((para->dram_para1>>20)&0xFF)-10));
 	dram_size *= (4<<(((para->dram_para1)>>28)&0xF));
 	dram_size *= ((para->dram_para2>>8)&0xf);
 	dram_size *= ((para->dram_para2>>12)&0xf);
 	paraconfig(&(para->dram_para1), 0xFFFF<<0, dram_size<<0);
+	standby_serial_putc('3');
+	standby_serial_putc('\n');
 	return (dram_size);
 }
+//*****************************************************************************
+//	unsigned int DRAMC_init_auto(__dram_para_t *para)
+//  Description:	DRAM auto detect Initialize Procession
+//
+//	Arguments:		None
+//
+//	Return Value:	0: Fail    others: dram size
+//*****************************************************************************
+unsigned int DRAMC_init_auto(__dram_para_t *para)
+{
+#if 0
+	unsigned int i, j;
+	unsigned int ch_lock = 0;
+	unsigned int bus_lock = 0;
+	unsigned int size_max = 2048;
+	unsigned int dram_size = 0;
+	int ret = 0;
+
+	//config the init parameters according different IC
+	//common detect init
+
+	//para->dram_bus_width = 16;
+	paraconfig(&(para->dram_para2), 0xF<<0, 0<<0);
+	//para->dram_page_size = 2;
+	paraconfig(&(para->dram_para1), 0xF<<16, 2<<16);
+	//para->dram_rank_num = 1;
+	paraconfig(&(para->dram_para2), 0xF<<12, 1<<12);
+	//para->dram_size = 0;
+	paraconfig(&(para->dram_para1), 0xFFFF<<0, 0<<0);
+	//para->dram_row_num = 14;
+	paraconfig(&(para->dram_para1), 0xFF<<20, 14<<20);
+	//para->dram_bank_size = 8;
+	paraconfig(&(para->dram_para1), 0xFu<<28, 1u<<28);
+
+	//=======AUTO DETECT start==============
+	//confirm the restrict parameters
+	if((para->dram_tpr13 & (0x3<<3)) == 0x0)//A31
+	{
+		if((para->dram_tpr13 & (0x1<<2)) == 1)//bus width lock
+		{
+			bus_lock = 1;
+			//para->dram_bus_width = 32;
+			paraconfig(&(para->dram_para2), 0xF<<0, 1<<0);
+			//para->dram_page_size = 4;
+			paraconfig(&(para->dram_para1), 0xF<<16, 4<<16);
+		}
+
+		if((para->dram_tpr13 & (0x1<<1)) == 1)//channel lock
+		{
+			ch_lock = 1;
+			//para->dram_ch_num = 2;
+			paraconfig(&(para->dram_para2), 0xF<<8, 2<<8);
+		}
+	}else if((para->dram_tpr13 & (0x3<<3)) == 0x1)//A31S
+	{
+		//dram size restrict to 1GB
+		if(para->dram_tpr13 & 0x8)
+		{
+			size_max = 1024;
+		}
+		if((para->dram_tpr13 & (0x1<<2)) == 1)//bus width lock
+		{
+			bus_lock = 1;
+			//para->dram_bus_width = 32;
+			paraconfig(&(para->dram_para2), 0xF<<0, 1<<0);
+			//para->dram_page_size = 4;
+			paraconfig(&(para->dram_para1), 0xF<<16, 4<<16);
+		}
+
+		if((para->dram_tpr13 & (0x1<<1)) == 1)//channel lock
+		{
+			ch_lock = 1;
+			//para->dram_ch_num = 1;
+			paraconfig(&(para->dram_para2), 0xF<<8, 1<<8);
+		}
+	}else if((para->dram_tpr13 & (0x3<<3)) == 0x2)//A3X PHONE
+	{
+	}
+	else
+	{
+	}
+
+	//channel number detect
+	if(ch_lock == 0)// channel num auto detect
+	{
+		//para->dram_ch_num = 2;
+		paraconfig(&(para->dram_para2), 0xF<<8, 2<<8);
+
+		//dram init
+		DRAMC_init(para);
+
+		for(i=0;i<4;i++)
+		{
+			if(mctl_read_w(0x40000000 + i*4) != mctl_read_w(0x40000040 + i*4))
+				break;
+		}
+		if(i<4)
+		{
+			//para->dram_ch_num = 1;
+			paraconfig(&(para->dram_para2), 0xF<<8, 1<<8);
+		}
+	}
+
+	//bus width detect
+	if(bus_lock == 0)//bus width auto detect
+	{
+		//para->dram_bus_width = 32;
+		paraconfig(&(para->dram_para2), 0xF<<0, 1<<0);
+		//para->dram_page_size = 4;
+		paraconfig(&(para->dram_para1), 0xF<<16, 4<<16);
+		//dram init
+		if(!DRAMC_init(para))
+		{
+			//para->dram_bus_width = 16;
+			paraconfig(&(para->dram_para2), 0xF<<0, 0<<0);
+			//para->dram_page_size = 2;
+			paraconfig(&(para->dram_para1), 0xF<<16, 2<<16);
+		}
+	}
+
+
+	//rank number detect
+	paraconfig(&(para->dram_para2), 0xF<<12, 2<<12);
+	{
+		//dram init
+		if(!DRAMC_init(para))
+		{
+			paraconfig(&(para->dram_para2), 0xF<<12, 1<<12);
+		}
+	}
+
+
+	//row width detect
+	//para->dram_row_num = row;
+	paraconfig(&(para->dram_para1), 0xFF<<20, 16<<20);
+
+	//dram init
+	DRAMC_init(para);
+
+	//write preset value at special address
+	for(i=0x10000000;i<(size_max<<10);i+=0x10000000)
+	{
+		for(j=0;j<32;j++)
+		{
+			mctl_write_w(0x40000000+i+j*4, 0x40000000+i+j*4);
+		}
+	}
+
+	//read and check value at special address
+	dram_size = size_max;
+	for(i=0x10000000;i<(size_max<<10);i+=0x10000000)
+	{
+		for(j=0;j<32;j++)
+		{
+			if(mctl_read_w(0x40000000+i+j*4) != (0x40000000+i+j*4))
+			{
+				ret = 1;
+				dram_size = (i>>20);
+				break;
+			}
+		}
+		if(ret == 1)
+			break;
+	}
+
+	//para->dram_size = size_max;
+	paraconfig(&(para->dram_para1), 0xFFFF<<0, dram_size<<0);
+	dram_size >>= ((para->dram_para2>>8)&0xf);
+	dram_size >>= ((para->dram_para2>>12)&0xf);
+	dram_size /= (4<<(((para->dram_para1)>>28)&0xF));
+	dram_size /= (para->dram_para1>>16)&0xF;
+	dram_size += 10;
+	//para->dram_row_num = row + 1;
+	paraconfig(&(para->dram_para1), 0xFF<<20, dram_size<<20);
+	//dram init
+	if(!DRAMC_init(para))
+		return 0;
+	return ((para->dram_para1)&0xFFFF);
+#else
+	return 0;
+#endif
+}
+
 
 unsigned int mctl_sys_init(__dram_para_t *dram_para)
 {
@@ -225,31 +428,54 @@ unsigned int mctl_sys_init(__dram_para_t *dram_para)
   	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
 
 #ifndef SYSTEM_SIMULATION
-  	aw_delay(0x1000000);
+  	standby_timer_delay(1000);
 #else
   	aw_delay(0x20);
 #endif
 
-  	//MDFS clock enable
-	reg_val = mctl_read_w(CCM_MDFS_CLK_CTRL);
-	reg_val |= 0x1U<<31;
-  	mctl_write_w(CCM_MDFS_CLK_CTRL, reg_val);
+		//mdfs clk = PLL6 600M / 3 = 200M
+  		reg_val = mctl_read_w(CCM_MDFS_CLK_CTRL);
+  		reg_val &= ~((0x3<<24) | (0x3<<16) | (0xf<<0));
+  		reg_val |= (0x1u<<31) | (0x1<<24) | (0x0<<16) | (0x2<<0);
+  		mctl_write_w(CCM_MDFS_CLK_CTRL, reg_val);
 
   	//select DRAM clock
-  	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
-	reg_val |= 0x1U<<16;
-  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+//  	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+//	reg_val |= 0x1U<<16;
+////	reg_val &= ~((0x1<<12) | (0x1<<4));
+////	reg_val |= (0x1<<0) | (0x1<<8);
+//  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
 
-  	//release DRAMC register reset
-  	reg_val = mctl_read_w(CCM_AHB1_RST_REG0);
-  	reg_val |= 0x1<<14;
-  	mctl_write_w(CCM_AHB1_RST_REG0, reg_val);
+	standby_serial_putc('1');
 
   	//DRAMC AHB clock on
   	reg_val = mctl_read_w(CCM_AHB1_GATE0_CTRL);
   	reg_val |= 0x1<<14;
   	mctl_write_w(CCM_AHB1_GATE0_CTRL, reg_val);
 
+	standby_serial_putc('2');
+
+  	reg_val = mctl_read_w(CCM_AHB1_RST_REG0);
+  	reg_val &= ~(0x1<<14);
+  	mctl_write_w(CCM_AHB1_RST_REG0, reg_val);
+
+	standby_serial_putc('3');
+
+	mctl_write_w(CCM_DRAM_GATING, 0);
+
+	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+  	reg_val &= ~(0x1U<<31);
+  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+
+	standby_serial_putc('4');
+
+  	//release DRAMC register reset
+	standby_timer_delay(1);
+  	reg_val = mctl_read_w(CCM_AHB1_RST_REG0);
+  	reg_val |= 0x1<<14;
+  	mctl_write_w(CCM_AHB1_RST_REG0, reg_val);
+
+	standby_serial_putc('4');
   	return (1);
 }
 
@@ -257,13 +483,23 @@ unsigned int mctl_reset_release(void)
 {
 	unsigned int reg_val;
 
+	standby_serial_putc('5');
+
   	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
   	reg_val |= 0x1U<<31;
   	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
 
 #ifndef SYSTEM_SIMULATION
-  	aw_delay(0x20);
+  	standby_timer_delay(10);
 #endif
+
+  	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+  	reg_val |= 0x1U<<16;
+  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+
+  	while(mctl_read_w(CCM_DRAMCLK_CFG_CTRL) & (0x1<<16)){};
+
+	standby_serial_putc('6');
 
   	return (1);
 }
@@ -271,6 +507,7 @@ unsigned int mctl_reset_release(void)
 unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 {
 	unsigned int ch_id;
+	unsigned int reg_val;
 
 	if(ch_index == 1)
 		ch_id = 0x1000;
@@ -292,7 +529,7 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 	}
 
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x100000);
+	standby_timer_delay(10);
 #else
 	aw_delay(0x10);
 #endif
@@ -309,7 +546,7 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 	}
 
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x100000);
+	standby_timer_delay(10);
 #else
 	aw_delay(0x10);
 #endif
@@ -325,10 +562,31 @@ unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para)
 		mctl_write_w(ch_id + SDR_DX3DLLCR,0x40000000);
 	}
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x100000);
+	standby_timer_delay(10);
 #else
 	aw_delay(0x10);
 #endif
+
+	reg_val = mctl_read_w(ch_id + SDR_DX0DLLCR);
+	reg_val &= ~(0xF<<14);
+	reg_val |= ((para->dram_tpr13>>16)&0xF)<<14;
+	mctl_write_w(ch_id + SDR_DX0DLLCR, reg_val);
+
+	reg_val = mctl_read_w(ch_id + SDR_DX1DLLCR);
+	reg_val &= ~(0xF<<14);
+	reg_val |= ((para->dram_tpr13>>16)&0xF)<<14;
+	mctl_write_w(ch_id + SDR_DX1DLLCR, reg_val);
+
+	reg_val = mctl_read_w(ch_id + SDR_DX2DLLCR);
+	reg_val &= ~(0xF<<14);
+	reg_val |= ((para->dram_tpr13>>16)&0xF)<<14;
+	mctl_write_w(ch_id + SDR_DX2DLLCR, reg_val);
+
+	reg_val = mctl_read_w(ch_id + SDR_DX3DLLCR);
+	reg_val &= ~(0xF<<14);
+	reg_val |= ((para->dram_tpr13>>16)&0xF)<<14;
+	mctl_write_w(ch_id + SDR_DX3DLLCR, reg_val);
+
 
 	return (1);
 }
@@ -555,11 +813,17 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	{
 		ch_id = 0x1000;
 		hold_flag = (reg_val)&0x1;
+		standby_serial_putc('c');
+		standby_serial_putc('1');
+		standby_serial_putc('\n');
 	}
 	else
 	{
 		ch_id = 0x0;
 		hold_flag = (reg_val>>1)&0x1;
+		standby_serial_putc('c');
+		standby_serial_putc('0');
+		standby_serial_putc('\n');
 	}
 
 	//set COM sclk enable register
@@ -569,8 +833,11 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 //	mctl_write_w(SDR_COM_CCR, reg_val);
 
 	//send NOP command to active CKE
-	reg_val = 0x80000000;
+	reg_val = 0x83000000;
 	mctl_write_w(ch_id + SDR_MCMD, reg_val);
+
+	while(mctl_read_w(ch_id + SDR_MCMD) & 0x80000000)
+		continue;
 
    //set PHY genereral configuration register
    reg_val = 0x01042202;
@@ -669,6 +936,10 @@ if(para->dram_odt_en == 0){
 
 	//set odt impendance divide ratio
 	mctl_write_w(ch_id + SDR_ZQ0CR1, para->dram_zq);
+	//clear status bits
+	reg_val = mctl_read_w(ch_id + SDR_PIR);
+	reg_val |= 0x1<<28;
+	mctl_write_w(ch_id + SDR_PIR, reg_val);
 
 	//init external dram
 #if 0
@@ -686,7 +957,7 @@ if(para->dram_odt_en == 0){
 	mctl_write_w(ch_id + SDR_PIR, reg_val);
 
 #ifndef SYSTEM_SIMULATION
-	aw_delay(0x10);
+	standby_timer_delay(10);
 #endif
 
 	//wait init done
@@ -695,7 +966,9 @@ if(para->dram_odt_en == 0){
 		while( (mctl_read_w(ch_id + SDR_PGSR)&0x1F) != 0x1F) {};//modify 12/3
 	}else
 	{
+		standby_serial_putc('a');
 		while( (mctl_read_w(ch_id + SDR_PGSR)&0x1F) != 0xB) {};//modify 12/3
+		standby_serial_putc('b');
 	}
 
    //***********************************************
@@ -806,11 +1079,14 @@ if((para->dram_mr1 & 0x244) != 0){
 
 	if(hold_flag)
 	{
+		standby_serial_putc('d');
+
 		//move to sleep state
 		reg_val = 0x3;
 		mctl_write_w(ch_id + SDR_SCTL, reg_val);
 		while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x5 ) {};
 
+		standby_serial_putc('e');
 		//close pad hold function
 		reg_val = mctl_read_w(R_VDD_SYS_PWROFF_GATE);
 		if(ch_index == 1)
@@ -824,10 +1100,13 @@ if((para->dram_mr1 & 0x244) != 0){
 		mctl_write_w(ch_id + SDR_SCTL, reg_val);
 		while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x3 ) {};
 
+		standby_serial_putc('f');
 		//calibration and dqs training
 		reg_val = 0x89;
 		mctl_write_w(ch_id + SDR_PIR, reg_val);
 		while( (mctl_read_w(ch_id + SDR_PGSR)&0x1) == 0x0) {};
+
+		standby_serial_putc('g');
 	}
 
 	//set power down period
@@ -1021,10 +1300,13 @@ unsigned int mctl_port_cfg(void)
 //	Return Value:	0: fail
 //					others: pass
 //*****************************************************************************
-signed int init_DRAM(int type, __dram_para_t *dram_para)
+signed int init_DRAM(int type, void *para)
 {
 	signed int ret_val;
 	unsigned int id = 0;
+	__dram_para_t *dram_para;
+
+	dram_para = (__dram_para_t *)para;
 
 #ifdef LINUX_CONFIG
 	script_item_u val;
@@ -1223,7 +1505,86 @@ signed int init_DRAM(int type, __dram_para_t *dram_para)
 	dram_para->dram_tpr13 = val.val;
 #endif
 
-	//msg("[DRAM]ver 0.99--dram_clk = %d\n", dram_para->dram_clk  );
+#if 0
+#if 0
+	dram_para->dram_clk        = 480;
+	dram_para->dram_type       = 3;
+	dram_para->dram_zq         = 0x17b;
+	dram_para->dram_odt_en     = 0;
+	dram_para->dram_para1      = 0x10F40800;
+	dram_para->dram_para2      = 0x1111;
+	dram_para->dram_mr0        = 0x1A50;
+	dram_para->dram_mr1        = 0x4;
+	dram_para->dram_mr2        = 0x8;
+	dram_para->dram_mr3        = 0;
+	dram_para->dram_tpr0       = 0;
+	dram_para->dram_tpr1       = 0x80000800;
+	dram_para->dram_tpr2       = 0x39a70140;
+	dram_para->dram_tpr3       = 0xa092e74c;
+	dram_para->dram_tpr4       = 0x2948c209;
+	dram_para->dram_tpr5       = 0x6944422c;
+	dram_para->dram_tpr6       = 0x300284a0;
+	dram_para->dram_tpr7       = 0x2a3297;
+	dram_para->dram_tpr8       = 0x5034fa8;
+	dram_para->dram_tpr9       = 0x36353d8;
+	dram_para->dram_tpr10      = 0;
+	dram_para->dram_tpr11      = 0;
+	dram_para->dram_tpr12      = 0;
+	dram_para->dram_tpr13      = 0x7;
+#else
+	dram_para->dram_clk        = 360;
+	dram_para->dram_type       = 3;
+	dram_para->dram_zq         = 0x0bb;
+	dram_para->dram_odt_en     = 0;
+	dram_para->dram_para1      = 0x10F40800;
+	dram_para->dram_para2      = 0x1211;
+	dram_para->dram_mr0        = 0x1A50;
+	dram_para->dram_mr1        = 0;
+	dram_para->dram_mr2        = 0x18;
+	dram_para->dram_mr3        = 0;
+	dram_para->dram_tpr0       = 0;
+	dram_para->dram_tpr1       = 0x80000800;
+	dram_para->dram_tpr2       = 0x46270140;
+	dram_para->dram_tpr3       = 0xA0C4284C;
+	dram_para->dram_tpr4       = 0x39c8c209;
+	dram_para->dram_tpr5       = 0x694552AD;
+	dram_para->dram_tpr6       = 0x3002c4a0;
+	dram_para->dram_tpr7       = 0x2aaf9b;
+	dram_para->dram_tpr8       = 0x604111d;
+	dram_para->dram_tpr9       = 0x42da072;
+	dram_para->dram_tpr10      = 0;
+	dram_para->dram_tpr11      = 0;
+	dram_para->dram_tpr12      = 0;
+	dram_para->dram_tpr13      = 0;
+#endif
+#endif
+
+	//msg("[DRAM 0.99] clk = %d\n", dram_para->dram_clk  );
+#if 0
+	msg("dram_para->dram_type       = %x\n", dram_para->dram_type );
+	msg("dram_para->dram_zq         = %x\n", dram_para->dram_zq   );
+	msg("dram_para->dram_odt_en     = %x\n", dram_para->dram_odt_en);
+	msg("dram_para->dram_para1      = %x\n", dram_para->dram_para1);
+	msg("dram_para->dram_para2      = %x\n", dram_para->dram_para2);
+	msg("dram_para->dram_mr0        = %x\n", dram_para->dram_mr0  );
+	msg("dram_para->dram_mr1        = %x\n", dram_para->dram_mr1  );
+	msg("dram_para->dram_mr2        = %x\n", dram_para->dram_mr2  );
+	msg("dram_para->dram_mr3        = %x\n", dram_para->dram_mr3  );
+	msg("dram_para->dram_tpr0       = %x\n", dram_para->dram_tpr0 );
+	msg("dram_para->dram_tpr1       = %x\n", dram_para->dram_tpr1 );
+	msg("dram_para->dram_tpr2       = %x\n", dram_para->dram_tpr2 );
+	msg("dram_para->dram_tpr3       = %x\n", dram_para->dram_tpr3 );
+	msg("dram_para->dram_tpr4       = %x\n", dram_para->dram_tpr4 );
+	msg("dram_para->dram_tpr5       = %x\n", dram_para->dram_tpr5 );
+	msg("dram_para->dram_tpr6       = %x\n", dram_para->dram_tpr6 );
+	msg("dram_para->dram_tpr7       = %x\n", dram_para->dram_tpr7 );
+	msg("dram_para->dram_tpr8       = %x\n", dram_para->dram_tpr8 );
+	msg("dram_para->dram_tpr9       = %x\n", dram_para->dram_tpr9 );
+	msg("dram_para->dram_tpr10      = %x\n", dram_para->dram_tpr10);
+	msg("dram_para->dram_tpr11      = %x\n", dram_para->dram_tpr11);
+	msg("dram_para->dram_tpr12      = %x\n", dram_para->dram_tpr12);
+	msg("dram_para->dram_tpr13      = %x\n", dram_para->dram_tpr13);
+#endif
 	//bonding ID
 	//0: A31	1: A31S		2: A3X PHONE
 	id = ss_bonding_id();
@@ -1269,6 +1630,9 @@ signed int init_DRAM(int type, __dram_para_t *dram_para)
 
 	ret_val = DRAMC_init(dram_para);
 	//ret_val = DRAMC_init_auto(dram_para);
+
+	standby_serial_putc('a');
+	standby_serial_putc('\n');
 
 	return ret_val;
 }

@@ -65,12 +65,62 @@
 //
 //	return 0;
 //}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+static int standby_set_divd(int pll)
+{
+	__u32 reg_val;
+
+	//config axi
+	reg_val = CCMU_REG_AXI_MOD;
+	reg_val &= ~(0x03 << 0);
+	reg_val |=  (0x02 << 0);
+	CCMU_REG_AXI_MOD = reg_val;
+	//config ahb
+	reg_val = CCMU_REG_AHB1_APB1;
+	reg_val &= ~((0x03 << 12) | (0x03 << 8) | (0x03 << 4));
+	reg_val |=   (0x02 << 12);
+	if(pll <= 400)
+	{
+		;
+	}
+	else if(pll <= 800)
+	{
+		reg_val |= (1 << 4);
+	}
+	else if(pll <= 1600)
+	{
+		reg_val |= (2 << 4);
+	}
+	else
+	{
+		reg_val |= (3 << 4);
+	}
+	CCMU_REG_AHB1_APB1 = reg_val;
+
+	return 0;
+}
+
 __s32 standby_clock_to_24M(void)
 {
 	__u32 reg_val;
 	int   i;
 
-	_set_divd(24);
+	standby_set_divd(24);
 
 	reg_val = CCMU_REG_AXI_MOD;
     reg_val &= ~(0x03 << 16);
@@ -84,9 +134,19 @@ __s32 standby_clock_to_24M(void)
 
 __s32 standby_clock_to_pll1(void)
 {
+	__u32 pll1;
 	__u32 reg_val;
+	__u32 factor_n;
+	__u32 factor_k, div_m;
 
-	_set_divd(_get_pll1_clock());
+	reg_val  = CCMU_REG_PLL1_CTRL;
+	factor_n = ((reg_val >> 8) & 0x1f) + 1;
+	factor_k = ((reg_val >> 4) & 0x3) + 1;
+	div_m = ((reg_val >> 0) & 0x3) + 1;
+
+	pll1 = 24 * factor_n * factor_k/div_m;
+
+	standby_set_divd(pll1);
 
 	reg_val = CCMU_REG_AXI_MOD;
     reg_val &= ~(0x03 << 16);
@@ -101,7 +161,6 @@ void standby_clock_plldisable(void)
 {
 	CCMU_REG_PLL1_CTRL &= ~(1U << 31);
 	CCMU_REG_PLL3_CTRL &= ~(1U << 31);
-	//CCMU_REG_PLL5_CTRL &= ~(1U << 31);
 	CCMU_REG_PLL6_CTRL &= ~(1U << 31);
 	CCMU_REG_PLL7_CTRL &= ~(1U << 31);
 }
@@ -115,7 +174,7 @@ void standby_clock_pllenable(void)
 	{
 		reg_val = CCMU_REG_PLL1_CTRL;
 	}
-	while(reg_val & (0x1 << 28));
+	while(!(reg_val & (0x1 << 28)));
 
 
 	CCMU_REG_PLL3_CTRL |= (1U << 31);
@@ -123,24 +182,21 @@ void standby_clock_pllenable(void)
 	{
 		reg_val = CCMU_REG_PLL3_CTRL;
 	}
-	while(reg_val & (0x1 << 28));
-
-	//CCMU_REG_PLL5_CTRL = ~(1U << 31);
-
+	while(!(reg_val & (0x1 << 28)));
 
 	CCMU_REG_PLL6_CTRL |= (1U << 31);
 	do
 	{
 		reg_val = CCMU_REG_PLL6_CTRL;
 	}
-	while(reg_val & (0x1 << 28));
+	while(!(reg_val & (0x1 << 28)));
 
 	CCMU_REG_PLL7_CTRL |= (1U << 31);
 	do
 	{
 		reg_val = CCMU_REG_PLL7_CTRL;
 	}
-	while(reg_val & (0x1 << 28));
+	while(!(reg_val & (0x1 << 28)));
 }
 
 //void standby_clock_divsetto0(void)

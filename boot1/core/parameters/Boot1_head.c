@@ -40,7 +40,7 @@ const boot1_file_head_t  BT1_head = {
 							   		      STAMP_VALUE,
 							   		      0,
 							   		      0,
-							   		      NF_ALIGN_SIZE,
+							   		      0x4000,
 							   		      BOOT1_FILE_HEAD_VERSION,
 							   		      BOOT1_VERSION,
 							   		      EGON_VERSION,

@@ -29,13 +29,19 @@
 #include "mctl_reg.h"
 #include "mctl_hal.h"
 
+static __u32 ccm_dram_gating_reserved;
+
 void mctl_self_refresh_entry(unsigned int ch_index)
 {
 	unsigned int reg_val;
 	unsigned int ch_id;
-	
-	//Disable the DRAM master access
-	mctl_write_w(SDR_COM_MAER, 0);
+
+  	//gating off the host access interface
+  	ccm_dram_gating_reserved = mctl_read_w(CCM_DRAM_GATING);
+  	mctl_write_w(CCM_DRAM_GATING, 0);
+
+  	//master access disable
+  	mctl_write_w(SDR_COM_MAER, 0);
 
 	if(ch_index == 1)
 		ch_id = 0x1000;
@@ -44,7 +50,6 @@ void mctl_self_refresh_entry(unsigned int ch_index)
 	//set SLEEP command
 	reg_val = 0x3;
 	mctl_write_w(ch_id + SDR_SCTL, reg_val);
-
 	//check whether in Low Power State
 	while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x5 ) {};
 
@@ -60,6 +65,7 @@ void mctl_self_refresh_entry(unsigned int ch_index)
 	reg_val = mctl_read_w(ch_id + SDR_DSGCR);
 	reg_val &= ~(0x1<<28);
 	mctl_write_w(ch_id + SDR_DSGCR, reg_val);
+
 }
 
 void mctl_self_refresh_exit(unsigned int ch_index)
@@ -89,11 +95,14 @@ void mctl_self_refresh_exit(unsigned int ch_index)
 	reg_val = 0x4;
 	mctl_write_w(ch_id + SDR_SCTL, reg_val);
 
-	//check whether in Low Power State
+	//check whether in Active State
 	while(  (mctl_read_w(ch_id + SDR_SSTAT)&0x7) != 0x3 ) {};
-	
-	//Disable the DRAM master access
+
+	//Enable the DRAM master access
 	mctl_write_w(SDR_COM_MAER, 0xFFFFFFFF);
+
+	//ccmu dram gating bit return
+  	mctl_write_w(CCM_DRAM_GATING, ccm_dram_gating_reserved);
 }
 
 void mctl_deep_sleep_entry(void)
@@ -102,52 +111,184 @@ void mctl_deep_sleep_entry(void)
 
 	//put external DRAM into sleep state
 	mctl_self_refresh_entry(0);
-	//if(MCTL_CHANNEL_NUM == 2)
 	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
 	{
 		mctl_self_refresh_entry(1);
 	}
 
+
 	//hold PAD
 	reg_val = mctl_read_w(R_VDD_SYS_PWROFF_GATE);
 	reg_val |= (0x1<<1);
-	//if(MCTL_CHANNEL_NUM == 2)
 	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
-		reg_val |=0x3;
+		reg_val |=0x1;
 	mctl_write_w(R_VDD_SYS_PWROFF_GATE, reg_val);
 
-  	//put DRAMC AHB register circuit on reset state
-  	reg_val = mctl_read_w(CCM_AHB1_RST_REG0);
-  	reg_val &= ~(0x1<<14);
-  	mctl_write_w(CCM_AHB1_RST_REG0, reg_val);
+	standby_serial_putc('q');
+	standby_serial_putc('\n');
+//
+//	mctl_write_w(SDR_COM_MAER, 0);
+//	mctl_write_w(CCM_AHB1_RST_REG0, (0x1<<14));
+//	mctl_write_w(CCM_AHB1_RST_REG0+0x4, 0);
+//	mctl_write_w(CCM_AHB1_RST_REG0+0x8, 0);
 
-  	//put DRAMC other circuit on reset state
-  	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
-  	reg_val &= ~(0x1U<<31);
-  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
 
-  	//gate off DRAMC AHB clk
-  	reg_val = mctl_read_w(CCM_AHB1_GATE0_CTRL);
-  	reg_val &=~(0x1<<14);
-  	mctl_write_w(CCM_AHB1_GATE0_CTRL, reg_val);
+//  	reg_val = mctl_read_w(SDR_PIR);
+// 	reg_val |= (0x1U<<4);
+// 	mctl_write_w(SDR_PIR, reg_val);
+//
+//  	reg_val = mctl_read_w(SDR_PIR+0x1000);
+// 	reg_val |= (0x1U<<4);
+// 	mctl_write_w(SDR_PIR+0x1000, reg_val);
 
-  	//gate off DRAMC MDFS clk
-  	reg_val = mctl_read_w(CCM_MDFS_CLK_CTRL);
-  	reg_val &=~(0x1U<<31);
-  	mctl_write_w(CCM_MDFS_CLK_CTRL, reg_val);
+	//turn off SCLK
+ 	reg_val = mctl_read_w(SDR_COM_CCR);
+ 	reg_val &= ~(0x7<<0);
+ 	mctl_write_w(SDR_COM_CCR, reg_val);
 
-  	//DRAMC PLL off
-  	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
-  	reg_val &=~(0x1U<<31);
-  	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
-  	
-  	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
-  	reg_val |= 0x1<<20;
-  	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+// 	reg_val = mctl_read_w(SDR_COM_CCR);
+// 	reg_val |= (0x18<<0);
+// 	mctl_write_w(SDR_COM_CCR, reg_val);
+
+ 	//gate off DRAMC AHB clk
+ 	reg_val = mctl_read_w(CCM_AHB1_GATE0_CTRL);
+ 	reg_val &=~(0x1<<14);
+ 	mctl_write_w(CCM_AHB1_GATE0_CTRL, reg_val);
+
+ 	//gate off DRAMC MDFS clk
+ 	reg_val = mctl_read_w(CCM_MDFS_CLK_CTRL);
+ 	reg_val &= ~(0x1U<<31);
+ 	mctl_write_w(CCM_MDFS_CLK_CTRL, reg_val);
+
+//	standby_serial_putc('2');
+//
+// 	//put DRAMC AHB register circuit on reset state
+// 	reg_val = mctl_read_w(CCM_AHB1_RST_REG0);
+// 	standby_serial_putc('5');
+// 	reg_val &= ~(0x1<<14);
+// 	mctl_write_w(CCM_AHB1_RST_REG0, reg_val);
+//
+//	standby_serial_putc('3');
+//
+// 	//put DRAMC other circuit on reset state
+// 	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+// 	reg_val &= ~(0x1U<<31);
+// 	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+//
+//	standby_serial_putc('4');
+//
+//
+//	standby_serial_putc('5');
+//
+//
+	standby_serial_putc('6');
+
+//
+// 	//DRAMC PLL off
+// 	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+// 	reg_val &=~(0x1U<<31);
+// 	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+//
+// 	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+// 	reg_val |= 0x1<<20;
+// 	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+//
+// 	while(mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1<<20)){}
 }
 
 void mctl_deep_sleep_exit(__dram_para_t *para)
 {
-	init_DRAM(1, para);
+	unsigned int reg_val;
+//
+//	standby_serial_putc('b');
+//	standby_serial_putc('\n');
+//
+//	//config PLL5 DRAM CLOCK: PLL5 = (24*N*K)/M
+//	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+//	reg_val &= ~((0x3<<0) | (0x3<<4) | (0x1F<<8));
+//	reg_val |= ((0x1<<0) | (0x1<<4));	//K = M = 2;
+//	reg_val |= ((para->dram_clk/24-1)<<0x8);//N
+//	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+//
+//  	//PLL5 enable
+//	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+//  	reg_val |= 0x1U<<31;
+//  	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+//
+//  	//PLL5 configuration update(validate PLL5)
+//  	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+//  	reg_val |= 0x1U<<20;
+//  	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+//
+//  	while(mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1<<20)){
+//  	standby_serial_putc('d');
+//  	}
+//
+//  	while(!(mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1<<28))){
+//  	standby_serial_putc('e');
+//  	}
+//  	standby_serial_putc('\n');
+//	aw_delay(0x1000000);
+//
+  	standby_serial_putc('c');
+	standby_serial_putc('\n');
+//
+
+//	reg_val = mctl_read_w(SDR_COM_CCR);
+// 	reg_val &= ~(0x18<<0);
+// 	mctl_write_w(SDR_COM_CCR, reg_val);
+//
+//	standby_timer_delay(1);
+//
+// 	reg_val = mctl_read_w(SDR_PIR);
+// 	reg_val &= ~(0x1U<<4);
+// 	reg_val |= (0x1U<<0);
+// 	mctl_write_w(SDR_PIR, reg_val);
+//
+//  	reg_val = mctl_read_w(SDR_PIR+0x1000);
+// 	reg_val &= ~(0x1U<<4);
+// 	reg_val |= (0x1U<<0);
+// 	mctl_write_w(SDR_PIR+0x1000, reg_val);
+
+ 	//turn on DRAMC MDFS clk
+ 	reg_val = mctl_read_w(CCM_MDFS_CLK_CTRL);
+ 	reg_val |= (0x1U<<31);
+ 	mctl_write_w(CCM_MDFS_CLK_CTRL, reg_val);
+
+	//turn on DRAMC AHB clk
+ 	reg_val = mctl_read_w(CCM_AHB1_GATE0_CTRL);
+ 	reg_val |= (0x1<<14);
+ 	mctl_write_w(CCM_AHB1_GATE0_CTRL, reg_val);
+
+	//turn on SCLK
+ 	reg_val = mctl_read_w(SDR_COM_CCR);
+ 	reg_val |= (0x7<<0);
+ 	mctl_write_w(SDR_COM_CCR, reg_val);
+
+	//close pad hold function
+	reg_val = mctl_read_w(R_VDD_SYS_PWROFF_GATE);
+	reg_val &= ~(0x1<<1);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+		reg_val &= ~(0x1);
+	mctl_write_w(R_VDD_SYS_PWROFF_GATE, reg_val);
+
+	standby_serial_putc('1');
+
+	mctl_self_refresh_exit(0);
+
+	standby_serial_putc('2');
+
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+	{
+		mctl_self_refresh_exit(1);
+	}
+
+  	standby_serial_putc('z');
+  	standby_serial_putc('f');
+	standby_serial_putc('\n');
+
+//	init_DRAM(1, (void *)para);
+//	standby_serial_putc('k');
+//	standby_serial_putc('\n');
 }
 

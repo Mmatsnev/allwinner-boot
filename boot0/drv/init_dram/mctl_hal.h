@@ -26,6 +26,7 @@
 #ifndef   _MCTL_HAL_H
 #define   _MCTL_HAL_H
 
+#include  "boot0_i.h"
 
 //#define LINUX_CONFIG
 #define PW2I_PRINK

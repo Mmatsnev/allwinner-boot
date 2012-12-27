@@ -19,6 +19,35 @@
 #include "include.h"
 #include "p2wi.h"
 
+
+__s32 standby_p2wi_wait_state(void)
+{
+	__s32  ret = -1;
+	__u32  stat;
+
+	while (1)
+	{
+		stat = egon2_readl(P2WI_REG_STAT);
+		if (stat & P2WI_TERR_INT)
+		{
+			//transfer error
+			ret = -1;
+			break;
+		}
+		if (stat & P2WI_TOVER_INT)
+		{
+			//transfer complete
+			ret = 0;
+			break;
+		}
+	}
+	//clear state flag
+	egon2_writel(stat, P2WI_REG_STAT);
+
+	return ret;
+}
+
+
 //p2wi can be config used or not
 __s32 standby_p2wi_read(u8 *addr, u8 *data, u32 len)
 {
@@ -53,7 +82,7 @@ __s32 standby_p2wi_read(u8 *addr, u8 *data, u32 len)
 	//start transmit
 	egon2_writel(egon2_readl(P2WI_REG_CTRL) | P2WI_START_TRANS, P2WI_REG_CTRL);
 	//wait transfer complete
-	if (p2wi_wait_state() != 0)
+	if (standby_p2wi_wait_state() != 0)
 	{
 		return -1;
 	}
@@ -74,33 +103,6 @@ __s32 standby_p2wi_read(u8 *addr, u8 *data, u32 len)
 	}
 
 	return 0;
-}
-
-__s32 standby_p2wi_wait_state(void)
-{
-	__s32  ret = -1;
-	__u32  stat;
-
-	while (1)
-	{
-		stat = egon2_readl(P2WI_REG_STAT);
-		if (stat & P2WI_TERR_INT)
-		{
-			//transfer error
-			ret = -1;
-			break;
-		}
-		if (stat & P2WI_TOVER_INT)
-		{
-			//transfer complete
-			ret = 0;
-			break;
-		}
-	}
-	//clear state flag
-	egon2_writel(stat, P2WI_REG_STAT);
-
-	return ret;
 }
 
 

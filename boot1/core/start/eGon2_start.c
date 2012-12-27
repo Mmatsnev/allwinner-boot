@@ -222,6 +222,10 @@ void eGon2_start( void )
 //	{
 //		eGon2_force_to_debug();
 //	}
+
+	*(volatile __u32 *)(0x1c20000 + 0x60)  &= ~(1 << 6);
+	*(volatile __u32 *)(0x1c20000 + 0x2C0) &= ~(1 << 6);
+
     {
      	char  *str_pointer_array[1];
      	char  str_array0[32] = "c:\\boot.axf";

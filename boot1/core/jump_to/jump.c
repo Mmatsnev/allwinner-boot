@@ -199,7 +199,10 @@ void eGon2_simple_jump_Fel( void )
 */
 void eGon2_power_off(void)
 {
+	axp_set_vbus_vol_limit();
+	axp_set_vbus_cur_limit();
 	axp_set_next_poweron_status(0);
+	axp_set_suspend_chgcur();
 	eGon2_block_device_exit();
 	axp_set_hardware_poweroff_vol();
 	axp_set_power_off();

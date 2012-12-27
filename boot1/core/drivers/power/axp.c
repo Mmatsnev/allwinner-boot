@@ -23,6 +23,7 @@
 
 int power_step_level = BATTERY_RATIO_DEFAULT;
 int pmu_suspend_chgcur, pmu_runtime_chgcur;
+int limit_vol = 0, limit_cur = 0;
 /*
 ************************************************************************************************************
 *
@@ -93,6 +94,7 @@ int power_init(int set_vol)
 #endif
 	if(!axp_probe())
 	{
+		axp221_clear_int_status();
 		if(!axp_probe_power_supply_condition())
 		{
 			if(!axp_set_dcdc3(dcdc3_vol))
@@ -823,9 +825,9 @@ int  axp_set_charge_control(void)
 *
 ************************************************************************************************************
 */
-int  axp_set_vbus_cur_limit(int current)
+int axp_set_vbus_cur_limit(void)
 {
-	return axp221_set_vbus_cur_limit(current);
+	return axp221_set_vbus_cur_limit(limit_cur);
 }
 /*
 ************************************************************************************************************
@@ -843,9 +845,9 @@ int  axp_set_vbus_cur_limit(int current)
 *
 ************************************************************************************************************
 */
-int  axp_set_vbus_vol_limit(int vol)
+int axp_set_vbus_vol_limit(void)
 {
-	return axp221_set_vbus_vol_limit(vol);
+	return axp221_set_vbus_vol_limit(limit_vol);
 }
 /*
 ************************************************************************************************************
@@ -867,7 +869,6 @@ int axp_set_all_limit(void)
 {
 	int usbvol_limit = 0;
 	int usbcur_limit = 0;
-	int limit_vol = 0, limit_cur = 0;
 
 	eGon2_script_parser_fetch("pmu_para", "pmu_usbvol_limit", &usbvol_limit, 1);
 	eGon2_script_parser_fetch("pmu_para", "pmu_usbcur_limit", &usbcur_limit, 1);
@@ -888,8 +889,8 @@ int axp_set_all_limit(void)
 
 	}
 
-	axp_set_vbus_vol_limit(limit_vol);
-	axp_set_vbus_cur_limit(limit_cur);
+	axp_set_vbus_vol_limit();
+	axp_set_vbus_cur_limit();
 
 	return 0;
 }
@@ -973,86 +974,4 @@ int axp_set_runtime_chgcur(void)
 {
 	return axp221_set_chgcur(pmu_runtime_chgcur);
 }
-static  __u8  power_int_value[4];
-/*
-************************************************************************************************************
-*
-*                                             function
-*
-*    函数名称：
-*
-*    参数列表：
-*
-*    返回值  ：
-*
-*    说明    ：
-*
-*
-************************************************************************************************************
-*/
-int axp_int_store(void)
-{
-    __u8  reg_addr;
-    __u8  int_enable[4];
-    int	  i;
-
-    axp221_read_int_enable_status(power_int_value);
-
-	//int_enable[0] = 0x2C;	//开启：VBUS移除，ACIN移除
-	//int_enable[1] = 0;		//开启：充电完成
-	//int_enable[2] = 0x3;	//开启：电源按键短按，长按
-	int_enable[0] = 0;	//开启：VBUS移除，ACIN移除
-	int_enable[1] = 0;	//开启：充电完成
-	int_enable[2] = 0;	//开启：电源按键短按，长按
-
-	axp221_write_int_enable_status(int_enable);
-
-	return 0;
-}
-/*
-************************************************************************************************************
-*
-*                                             function
-*
-*    函数名称：
-*
-*    参数列表：
-*
-*    返回值  ：
-*
-*    说明    ：
-*
-*
-************************************************************************************************************
-*/
-__s32 axp_int_restore(void)
-{
-	axp221_write_int_enable_status(power_int_value);
-
-	return 0;
-}
-
-/*
-************************************************************************************************************
-*
-*                                             function
-*
-*    函数名称：
-*
-*    参数列表：
-*
-*    返回值  ：
-*
-*    说明    ：
-*
-*
-************************************************************************************************************
-*/
-__s32 axp_int_query(__u8 *int_status)
-{
-    axp221_int_query(int_status);
-
-	return 0;
-}
-
 

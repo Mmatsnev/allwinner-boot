@@ -97,6 +97,10 @@ __s32 NF_open( void )
 			NF_BLK_SZ_WIDTH = 21;
 			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_2M_BLK_NF;
 			break;
+		case SZ_4M :
+			NF_BLK_SZ_WIDTH = 22;
+			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_4M_BLK_NF;
+			break;
 		default :
 		{
 			msg("GET NF_BLOCK_SIZE FAIL\n");
@@ -119,6 +123,9 @@ __s32 NF_open( void )
 			break;
 		case SZ_8K :
 			NF_PG_SZ_WIDTH = 13;
+			break;
+		case SZ_16K :
+			NF_PG_SZ_WIDTH = 14;
 			break;
 		default :
 		{
