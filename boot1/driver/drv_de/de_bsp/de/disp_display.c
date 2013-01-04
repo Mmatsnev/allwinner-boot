@@ -191,13 +191,13 @@ __s32 BSP_disp_print_reg(__bool b_force_on, __u32 id)
             break;
         case DISP_REG_LCDC0:
             base = gdisp.init_para.base_lcdc0;
-            size = 0x800;
+            size = 0x3f0;
             sprintf(str, "lcdc0:\n");
             break;
-
+            
         case DISP_REG_LCDC1:
             base = gdisp.init_para.base_lcdc1;
-            size = 0x800;
+            size = 0x3f0;
             sprintf(str, "lcdc1:\n");
             break;
 
@@ -261,6 +261,12 @@ __s32 BSP_disp_print_reg(__bool b_force_on, __u32 id)
             sprintf(str, "drc1:\n");
             break;
 
+        case DISP_REG_DSI:
+            base = gdisp.init_para.base_dsi0;
+            size = 0xf0;
+            sprintf(str, "dsi:\n");
+            break;
+            
         default:
             return DIS_FAIL;
     }

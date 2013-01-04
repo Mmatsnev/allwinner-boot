@@ -34,6 +34,13 @@ extern __s32 LCD_GPIO_set_attr(__u32 sel,__u32 io_index, __bool b_output);
 extern __s32 LCD_GPIO_read(__u32 sel,__u32 io_index);
 extern __s32 LCD_GPIO_write(__u32 sel,__u32 io_index, __u32 data);
 
+extern __s32 dsi_dcs_wr(__u32 sel,__u8 cmd,__u8* para_p,__u32 para_num);
+extern __s32 dsi_dcs_wr_0para(__u32 sel,__u8 cmd);
+extern __s32 dsi_dcs_wr_1para(__u32 sel,__u8 cmd,__u8 para);
+extern __s32 dsi_dcs_wr_2para(__u32 sel,__u8 cmd,__u8 para1,__u8 para2);
+extern __s32 dsi_dcs_wr_3para(__u32 sel,__u8 cmd,__u8 para1,__u8 para2,__u8 para3);
+extern __s32 dsi_dcs_wr_4para(__u32 sel,__u8 cmd,__u8 para1,__u8 para2,__u8 para3,__u8 para4);
+extern __s32 dsi_dcs_wr_5para(__u32 sel,__u8 cmd,__u8 para1,__u8 para2,__u8 para3,__u8 para4,__u8 para5);
 extern __s32 lcd_iic_write(__u8 slave_addr, __u8 sub_addr, __u8 value);
 extern __s32 lcd_iic_read(__u8 slave_addr, __u8 sub_addr, __u8* value);
 

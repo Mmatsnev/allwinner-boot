@@ -702,6 +702,11 @@ __s32 OSAL_CCMU_MclkOnOff(__hdle hMclk, __s32 bOnOff)
         value = sys_get_wvalue(0x01c20064) & (~(0x1<<13));
         sys_put_wvalue(0x01c20064, value | (bOnOff<<13));
     }
+    else if(hMclk == AHB_CLK_MIPIDSI)
+    {
+             value = sys_get_wvalue(0x01c20060) & (~(0x1<<1));
+             sys_put_wvalue(0x01c20060, value | (bOnOff<<1));
+     }
     else if(hMclk == AHB_CLK_HDMI)
     {
         value = sys_get_wvalue(0x01c20064) & (~(0x1<<11));
