@@ -114,7 +114,7 @@ int standby_axp_store_int_status(void)
 	    int_reg ++;
 	}
 
-	standby_int_enable[0] = 0x22;
+	standby_int_enable[0] = 0x2C;
 	standby_int_enable[1] = 0x0;
 	standby_int_enable[2] = 0x3;
 	standby_int_enable[3] = 0x0;
@@ -273,4 +273,40 @@ int standby_axp_probe_key(void)
 
 	return reg_value;
 }
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int standby_axp_probe_usb(void)
+{
+	u8  reg_value;
+
+	if(standby_axp_i2c_read(AXP22_ADDR, BOOT_POWER22_INTSTS3, &reg_value))
+    {
+        return -1;
+    }
+    reg_value &= 0x03;
+	if(reg_value)
+	{
+		if(standby_axp_i2c_write(AXP22_ADDR, BOOT_POWER22_INTSTS3, reg_value))
+	    {
+	        return -1;
+	    }
+	}
+
+	return reg_value;
+}
+
 

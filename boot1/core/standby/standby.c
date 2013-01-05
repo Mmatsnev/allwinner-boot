@@ -29,14 +29,13 @@ static int eGon2_mod_enter_standby(void);
 static int eGon2_mod_exit_standby(void);
 static int eGon2_early_standby_mode(void);
 
-//static int standby_flag = 0;
+static int standby_flag = 0;
+
 int eGon2_standby_mode(void)
 {
 	int status;
 
-	axp_set_vbus_vol_limit();
-	axp_set_vbus_cur_limit();
-	axp_set_suspend_chgcur();
+	//axp_set_suspend_chgcur();
 
 	eGon2_store_sp();
 	eGon2_set_sp();
@@ -65,44 +64,64 @@ int eGon2_standby_mode(void)
 */
 int eGon2_early_standby_mode(void)
 {
-	__s32 key_status;
+	__s32 key_status, usb_status;
 	__s32 status;
 
 	//检查是否有按键按下
 	key_status = standby_axp_probe_key();
 	if(key_status & 0x01)			//长按键的情况下，不管电源是否移除，直接进入系统
 	{
+		if(standby_flag)
+		{
+			eGon2_mod_exit_standby();
+		}
 		return 3;
 	}
 	//检查外部电源是否存在
 	if(standby_axp_probe_dcin_exist() <= 0)
 	{
+		if(standby_flag)
+		{
+			eGon2_mod_exit_standby();
+		}
 		return 4;
 	}
 	if(key_status & 0x02)			//短按电压按键的情况下，显示充电动画
 	{
+		if(standby_flag)
+		{
+			eGon2_mod_exit_standby();
+		}
 		return 2;
 	}
 	eGon2_mod_enter_standby();      //控制模块进入standby
+	//检查是否有USB电源插入
+	usb_status = standby_axp_probe_usb();
+	if(usb_status > 0)
+	{
+		return 8;
+	}
 	status = -1;
 	eGon2_enter_standby();
-	//standby_serial_putc('2');
 	do
 	{
-		//standby_serial_putc('3');
 		//开始循环检查是否开始唤醒
 		asm("wfi");
-		//standby_serial_putc('4');
 		status = eGon2_standby_detect();
-		//standby_serial_putc('5');
 	}
 	while(status <= 0);
-	//standby_serial_putc('6');
 	//发现需要唤醒，退出standby
 	eGon2_exit_standby();
-	//standby_serial_putc('a');
 	//退出模块的standby
-	eGon2_mod_exit_standby();
+	if((status != 8) && (status != 9))
+	{
+		eGon2_mod_exit_standby();
+		standby_flag = 0;
+	}
+	else
+	{
+		standby_flag = 1;
+	}
 
 	return status;
 }
@@ -205,7 +224,7 @@ static int eGon2_standby_detect(void)
 	{
 		return 3;
 	}
-	if(power_int_status[0] & 0x22)			//外部电源移除
+	if(power_int_status[0] & 0x24)			//外部电源移除
 	{
 		if(standby_axp_probe_dcin_exist() <= 0)
 		{
@@ -216,10 +235,10 @@ static int eGon2_standby_detect(void)
 //	{
 //		return 5;
 //	}
-//	if(power_int_status[0] & 0x08)			//usb火牛接入
-//	{
-//		return 8;
-//	}
+	if(power_int_status[0] & 0x08)			//usb火牛接入
+	{
+		return 8;
+	}
 //	if(power_int_status[0] & 0x04)			//usb火牛移除
 //	{
 //		return 9;

@@ -1562,10 +1562,18 @@ int axp221_probe_rest_battery_capacity(void)
 *
 ************************************************************************************************************
 */
-int axp221_clear_int_status(void)
+int axp221_int_query(__u8 *addr)
 {
 	int   i;
 	__u8  int_reg = BOOT_POWER22_INTSTS1;
+
+	for(i=0;i<5;i++)
+	{
+	    if(axp_i2c_read(AXP22_ADDR, BOOT_POWER22_INTSTS1 + i, addr + i))
+	    {
+	        return -1;
+	    }
+	}
 
 	for(i=0;i<5;i++)
 	{
@@ -1573,6 +1581,70 @@ int axp221_clear_int_status(void)
 	    {
 	        return -1;
 	    }
+	}
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp221_int_enable_read(__u8 *addr)
+{
+	int   i;
+	__u8  int_reg = BOOT_POWER22_INTEN1;
+
+	for(i=0;i<5;i++)
+	{
+		if(axp_i2c_read(AXP22_ADDR, int_reg, addr + i))
+	    {
+	        return -1;
+	    }
+	    int_reg ++;
+	}
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp221_int_enable_write(__u8 *addr)
+{
+	int   i;
+	__u8  int_reg = BOOT_POWER22_INTEN1;
+
+	for(i=0;i<5;i++)
+	{
+		if(axp_i2c_write(AXP22_ADDR, int_reg, addr[i]))
+	    {
+	        return -1;
+	    }
+	    int_reg ++;
 	}
 
 	return 0;

@@ -24,6 +24,7 @@
 int power_step_level = BATTERY_RATIO_DEFAULT;
 int pmu_suspend_chgcur, pmu_runtime_chgcur;
 int limit_vol = 0, limit_cur = 0;
+int limit_pcvol = 0, limit_pccur = 0;
 /*
 ************************************************************************************************************
 *
@@ -94,7 +95,6 @@ int power_init(int set_vol)
 #endif
 	if(!axp_probe())
 	{
-		axp221_clear_int_status();
 		if(!axp_probe_power_supply_condition())
 		{
 			if(!axp_set_dcdc3(dcdc3_vol))
@@ -825,9 +825,12 @@ int  axp_set_charge_control(void)
 *
 ************************************************************************************************************
 */
-int axp_set_vbus_cur_limit(void)
+int axp_set_vbus_limit_dc(void)
 {
-	return axp221_set_vbus_cur_limit(limit_cur);
+	axp221_set_vbus_vol_limit(limit_vol);
+	axp221_set_vbus_cur_limit(limit_cur);
+
+	return 0;
 }
 /*
 ************************************************************************************************************
@@ -845,10 +848,14 @@ int axp_set_vbus_cur_limit(void)
 *
 ************************************************************************************************************
 */
-int axp_set_vbus_vol_limit(void)
+int axp_set_vbus_limit_pc(void)
 {
-	return axp221_set_vbus_vol_limit(limit_vol);
+	axp221_set_vbus_vol_limit(limit_pcvol);
+	axp221_set_vbus_cur_limit(limit_pccur);
+
+	return 0;
 }
+
 /*
 ************************************************************************************************************
 *
@@ -874,6 +881,8 @@ int axp_set_all_limit(void)
 	eGon2_script_parser_fetch("pmu_para", "pmu_usbcur_limit", &usbcur_limit, 1);
 	eGon2_script_parser_fetch("pmu_para", "pmu_usbvol", &limit_vol, 1);
 	eGon2_script_parser_fetch("pmu_para", "pmu_usbcur", &limit_cur, 1);
+	eGon2_script_parser_fetch("pmu_para", "pmu_usbvol_pc", &limit_pcvol, 1);
+	eGon2_script_parser_fetch("pmu_para", "pmu_usbcur_pc", &limit_pccur, 1);
 #ifdef DEBUG
 	eGon2_printf("usbvol_limit = %d, limit_vol = %d\n", usbvol_limit, limit_vol);
 	eGon2_printf("usbcur_limit = %d, limit_cur = %d\n", usbcur_limit, limit_cur);
@@ -886,11 +895,9 @@ int axp_set_all_limit(void)
 	if(!usbcur_limit)
 	{
 		limit_cur = 0;
-
 	}
 
-	axp_set_vbus_vol_limit();
-	axp_set_vbus_cur_limit();
+	axp_set_vbus_limit_pc();
 
 	return 0;
 }
@@ -974,4 +981,81 @@ int axp_set_runtime_chgcur(void)
 {
 	return axp221_set_chgcur(pmu_runtime_chgcur);
 }
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+static __u8 power_int_value[8];
 
+int axp_int_enable(__u8 *value)
+{
+	__u8  standby_int_enable[8];
+
+	axp221_int_enable_read(power_int_value);
+	axp221_int_enable_write(value);
+	//打开小cpu的中断使能
+	*(volatile unsigned int *)(0x01f00c00 + 0x10) |= 1;
+	*(volatile unsigned int *)(0x01f00c00 + 0x40) |= 1;
+
+	return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp_int_disable(void)
+{
+	*(volatile unsigned int *)(0x01f00c00 + 0x10) |= 1;
+	*(volatile unsigned int *)(0x01f00c00 + 0x40) &= ~1;
+
+	return axp221_int_enable_write(power_int_value);
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+int axp_int_query(__u8 *addr)
+{
+	int ret;
+
+	ret = axp221_int_query(addr);
+	*(volatile unsigned int *)(0x01f00c00 + 0x10) |= 1;
+
+	return ret;
+}

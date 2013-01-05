@@ -33,5 +33,7 @@
 #define BOOT_LOGO_MEM_BASE            (0x46400000)
 #define BOOT_LOGO_MEM_SIZE            (SZ_16M)
 
+#define BOOT_USB_DETECT_DELAY_TIME    (1000)
+
 #endif   //__INCLUDE_H__
 

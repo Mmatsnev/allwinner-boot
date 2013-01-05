@@ -179,20 +179,16 @@ void eGon2_start( void )
     eGon2_printf("fs mount ok\n");
 	//º”‘ÿ≈‰÷√Œƒº˛
 //	script_buf = (void *)SCRIPT_BASE;
-//	hfile = FS_fopen("c:\\script.bin", "r");
-//	if(!hfile)
-//	{
-//		hfile = FS_fopen("c:\\script0.bin", "r");
-//	}
-//	if(hfile)
-//	{
-//		__u32 length;
-//
-//		length = FS_filelen(hfile);
-//		FS_fread(script_buf, length, 1, hfile);
-//		FS_fclose(hfile);
-//		eGon2_script_parser_init((char *)script_buf);
-//	}
+	hfile = FS_fopen("c:\\script.bin", "r");
+	if(hfile)
+	{
+		__u32 length;
+
+		length = FS_filelen(hfile);
+		FS_fread((void *)SCRIPT_BASE, length, 1, hfile);
+		FS_fclose(hfile);
+		eGon2_script_parser_init((char *)SCRIPT_BASE);
+	}
 //	else
 //	{
 //		eGon2_printf("unable to open script file, check it carefully\n");
@@ -222,10 +218,6 @@ void eGon2_start( void )
 //	{
 //		eGon2_force_to_debug();
 //	}
-
-	*(volatile __u32 *)(0x1c20000 + 0x60)  &= ~(1 << 6);
-	*(volatile __u32 *)(0x1c20000 + 0x2C0) &= ~(1 << 6);
-
     {
      	char  *str_pointer_array[1];
      	char  str_array0[32] = "c:\\boot.axf";

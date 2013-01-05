@@ -19,62 +19,71 @@
 **********************************************************************************************************************
 */
 #include "include.h"
-#include "types.h"
 
-int usbvol_limit = 0;
-int usbcur_limit = 0;
-int usbpc_cur = 0, usbpc_vol = 4400;
-int usbdc_cur = 0, usbdc_vol = 4400;
+extern  volatile __u32  boot_standby_action;
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+static void power_int_irq(void *p_arg)
+{
+	__u8 power_int_status[8];
+	__u32 dcin, bat_exist;
+//	int i;
 
-/*
-************************************************************************************************************
-*
-*                                             function
-*
-*    函数名称：
-*
-*    参数列表：
-*
-*    返回值  ：
-*
-*    说明    ：
-*
-*
-************************************************************************************************************
-*/
-int power_set_limit(void)
-{
-	return (usbvol_limit && usbcur_limit);
-}
-/*
-************************************************************************************************************
-*
-*                                             function
-*
-*    函数名称：
-*
-*    参数列表：
-*
-*    返回值  ：
-*
-*    说明    ：
-*
-*
-************************************************************************************************************
-*/
-int power_set_init(void)
-{
-	wBoot_script_parser_fetch("pmu_para", "pmu_usbvol_limit", &usbvol_limit, 1);
-	wBoot_script_parser_fetch("pmu_para", "pmu_usbcur_limit", &usbcur_limit, 1);
-	wBoot_script_parser_fetch("pmu_para", "pmu_usbvol", &usbdc_vol, 1);
-	wBoot_script_parser_fetch("pmu_para", "pmu_usbcur", &usbdc_cur, 1);
-	wBoot_script_parser_fetch("pmu_para", "pmu_usbvol_pc", &usbpc_vol, 1);
-	wBoot_script_parser_fetch("pmu_para", "pmu_usbcur_pc", &usbpc_cur, 1);
-	__inf("pmu_usbvol_limit = %d, pmu_usbcur_limit = %d\n", usbvol_limit, usbcur_limit);
-	__inf("usbdc_vol = %d, usbdc_cur = %d\n", usbdc_vol, usbdc_cur);
-	__inf("usbpc_vol = %d, usbpc_cur = %d\n", usbpc_vol, usbpc_cur);
+	wBoot_power_int_query(power_int_status);
+//	for(i=0;i<5;i++)
+//	{
+//		__inf("int status %d %x\n", i, power_int_status[i]);
+//	}
+	if(power_int_status[0] & 0x48)	//dc插入或者usb插入中断
+	{
+		wBoot_power_get_dcin_battery_exist(&dcin, &bat_exist);
+		if(dcin)
+		{
+			__inf("power found\n");
+			boot_standby_action &= ~0x10;
+			boot_standby_action |= 4;
+		}
+	}
+	if(power_int_status[0] & 0x8)   //usb 插入中断，启动usb检测
+	{
+		__inf("usb in\n");
+		boot_standby_action |= 8;
+		usb_detect_enter();
+	}
+	if(power_int_status[0] & 0x4)
+	{
+		__inf("usb out\n");
+		boot_standby_action &= ~0x04;
+		boot_standby_action |= 0x10;
+		usb_detect_exit();
+	}
+	if(power_int_status[2] & 0x2)	//短按键
+	{
+		__inf("short key\n");
+		boot_standby_action |= 2;
 
-	return 0;
+	}
+	if(power_int_status[2] & 0x1)	//长按键
+	{
+		__inf("long key\n");
+		boot_standby_action |= 1;
+	}
+
+	return;
 }
 /*
 ************************************************************************************************************
@@ -92,17 +101,21 @@ int power_set_init(void)
 *
 ************************************************************************************************************
 */
-void power_set_usbpc(void)
+void power_limit_detect_enter(void)
 {
-	__inf("set pc\n");
-	if(usbvol_limit)
-	{
-		wBoot_power_vol_limit(usbpc_vol);
-	}
-	if(usbcur_limit)
-	{
-		wBoot_power_cur_limit(usbpc_cur);
-	}
+	__u8  power_int_enable[8];
+
+	power_int_enable[0] = 0x4C;  //dc in, usb in/out
+	power_int_enable[1] = 0;
+	power_int_enable[2] = 3;
+	power_int_enable[4] = 0;
+	power_int_enable[5] = 0;
+
+	__inf("power_limit_detect_enter\n");
+
+	wBoot_power_int_enable(power_int_enable);
+	wBoot_InsINT_Func(AW_IRQ_NMI, (int *)power_int_irq, 0);
+	wBoot_EnableInt(AW_IRQ_NMI);
 }
 /*
 ************************************************************************************************************
@@ -120,15 +133,10 @@ void power_set_usbpc(void)
 *
 ************************************************************************************************************
 */
-void power_set_usbdc(void)
+void power_limit_detect_exit(void)
 {
-	__inf("set pc\n");
-	if(usbvol_limit)
-	{
-		wBoot_power_vol_limit(usbdc_vol);
-	}
-	if(usbcur_limit)
-	{
-		wBoot_power_cur_limit(usbdc_cur);
-	}
+	usb_detect_exit();
+	wBoot_power_int_disable();
+	wBoot_DisableInt(AW_IRQ_NMI);
 }
+

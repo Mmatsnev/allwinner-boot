@@ -509,37 +509,18 @@ __u32 usb_run(void)
 *
 ************************************************************************************************************
 */
-extern int power_ops_int_status;
-
-#if 0
-static void timer_test_usbdc(void *p_arg)
-{
-	if(power_ops_int_status & 0x08)
-	{
-		__inf("usb set pc\n");
-		power_ops_int_status &= ~0x08;
-	}
-	else
-	{
-		usb_clock_exit();
-		wBoot_DisableInt(awxx_usb[0].irq_no);
-		power_set_usbdc();
-	}
-	usb_working = 0;
-
-	return ;
-}
-#else
 static void timer_test_usbdc(void *p_arg)
 {
 	usb_clock_exit();
 	wBoot_DisableInt(awxx_usb[0].irq_no);
-	power_set_usbdc();
 	usb_working = 0;
+
+	//打开火牛限流
+	__inf("timer irq ,set dc\n");
+	wBoot_power_limit_todc();
 
 	return ;
 }
-#endif
 /*
 ************************************************************************************************************
 *
@@ -564,17 +545,20 @@ static void usb_detect_irq_handler(void *p_arg)
 	temp = usb_get_bus_interrupt_status(pusb);
 	usb_clear_bus_interrupt_status(pusb, temp);
 
+	__inf("usb irq %x\n", temp);
+
 	if(temp & 0x04)
 	{
 		usb_clock_exit();
 		wBoot_DisableInt(awxx_usb[0].irq_no);
-
-		power_ops_int_status |= 0x08;
 		wBoot_timer_stop(tmr_hd);
 		wBoot_timer_release(tmr_hd);
 		tmr_hd = NULL;
-		power_set_usbpc();
 		usb_working = 0;
+
+		//打开usb限流
+		__inf("usb irq ,set pc\n");
+		wBoot_power_limit_topc();
 	}
 
 	return;
@@ -598,7 +582,7 @@ static void usb_detect_irq_handler(void *p_arg)
 __u32 usb_detect_enter(void)
 {
 	awxx_usb[0].index = 0;
-	awxx_usb[0].reg_base = 	0x01c19000;
+	awxx_usb[0].reg_base = 0x01c19000;
 	awxx_usb[0].irq_no = 103;
 	awxx_usb[0].drq_no = 0x04;
 
@@ -616,14 +600,13 @@ __u32 usb_detect_enter(void)
 		}
 		else
 		{
-			wBoot_timer_start(tmr_hd, 400, 0);
+			wBoot_timer_start(tmr_hd, BOOT_USB_DETECT_DELAY_TIME, 0);
 		}
 		wBoot_InsINT_Func(awxx_usb[0].irq_no, (int *)usb_detect_irq_handler, 0);
 		wBoot_EnableInt(awxx_usb[0].irq_no);
 		usb_init(&awxx_usb[0]);
 		usb_soft_connect(&awxx_usb[0]);
 	}
-
 
 	return 0;
 }

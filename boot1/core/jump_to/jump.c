@@ -41,7 +41,7 @@ void eGon2_jump_to(__u32 addr)
 {
     eGon2_printf("eGon2_jump_to\n");
 	axp_set_next_poweron_status(0x0e);
-	axp_set_runtime_chgcur();
+	axp_set_vbus_limit_dc();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     //eGon2_twi_exit();           //关闭TWI设备
@@ -80,7 +80,7 @@ void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 ke
     void (*kernel_entry)(int zero, int arch, uint params);
 
 	axp_set_next_poweron_status(0x0e);
-	axp_set_runtime_chgcur();
+	axp_set_vbus_limit_dc();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     //eGon2_twi_exit();           //关闭TWI设备
@@ -119,7 +119,7 @@ void eGon2_jump_Fel( void )
 {
     eGon2_printf("eGon2_jump_Fel\n");
 	axp_set_next_poweron_status(0);
-	axp_set_runtime_chgcur();
+	axp_set_vbus_limit_dc();
 	eGon2_timer_exit();			//关闭timer
     eGon2_key_exit();           //关闭按键
     //eGon2_twi_exit();           //关闭TWI设备
@@ -160,6 +160,7 @@ void eGon2_jump_Fel( void )
 void eGon2_simple_jump_Fel( void )
 {
     eGon2_printf("eGon2_simple_jump_Fel\n");
+    axp_set_vbus_limit_dc();
 	eGon2_timer_exit();	   //关闭timer
     eGon2_key_exit();      //关闭按键
     //eGon2_twi_exit();      //关闭TWI设备
@@ -199,10 +200,8 @@ void eGon2_simple_jump_Fel( void )
 */
 void eGon2_power_off(void)
 {
-	axp_set_vbus_vol_limit();
-	axp_set_vbus_cur_limit();
 	axp_set_next_poweron_status(0);
-	axp_set_suspend_chgcur();
+	axp_set_vbus_limit_dc();
 	eGon2_block_device_exit();
 	axp_set_hardware_poweroff_vol();
 	axp_set_power_off();

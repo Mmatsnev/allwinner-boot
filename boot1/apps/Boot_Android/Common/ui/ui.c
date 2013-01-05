@@ -429,46 +429,57 @@ __s32 ShowBatteryCharge_exit(__u32 pic_hd)
     return 0;
 }
 
-
-__s32 ShowBatteryCharge_degrade(__u32 pic_hd, int step_time)
+int ShowBatteryCharge_reset(__u32 pic_hd)
 {
 	bat_charge_show *battery_info = NULL;
-	int  alpha_step, i;
-	int  aplha, delay_time;
 
 	if(!pic_hd)
     {
         return -1;
     }
-//    if(step_time <= 0)
-//    {
-//    	step_time = 10;
-//    }
-//    else if(step_time > 10)
-//    {
-//    	step_time = 10;
-//    }
+
+	battery_info = (bat_charge_show *)pic_hd;
+
+    battery_info->layer_para->alpha_en = 1;
+    battery_info->layer_para->alpha_val = 255;
+    wBoot_timer_delay(50);
+    De_SetLayerPara(board_res.layer_hd, battery_info->layer_para);
+}
+
+__s32 ShowBatteryCharge_degrade(__u32 pic_hd, int step_time)
+{
+	bat_charge_show *battery_info = NULL;
+	int  alpha_step;
+	int  alpha, delay_time;
+	//int  i;
+
+	if(!pic_hd)
+    {
+        return -1;
+    }
+
     battery_info = (bat_charge_show *)pic_hd;
 	alpha_step = 5;
 	delay_time = 50;
-	aplha = battery_info->layer_para->alpha_val;
+	alpha = battery_info->layer_para->alpha_val;
 
-	for(i=0xff;i>0;i -= alpha_step)
+	battery_info->layer_para->alpha_en = 1;
+	alpha -= alpha_step;
+	if(alpha > 0)
 	{
-		battery_info->layer_para->alpha_en = 1;
-		aplha -= alpha_step;
-		if(aplha > 0)
-		{
-			De_SetLayerPara(board_res.layer_hd, battery_info->layer_para);
-			wBoot_timer_delay(delay_time);
-			battery_info->layer_para->alpha_val = aplha;
-
-		}
-		else
-		{
-			break;
-		}
+		De_SetLayerPara(board_res.layer_hd, battery_info->layer_para);
+		wBoot_timer_delay(delay_time);
+		battery_info->layer_para->alpha_val = alpha;
 	}
+	else
+	{
+		return -1;
+	}
+//	else
+//	{
+//		break;
+//	}
+//	}
 
 	return 0;
 }

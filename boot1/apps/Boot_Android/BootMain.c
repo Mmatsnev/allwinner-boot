@@ -23,6 +23,7 @@
 #include "Board.h"
 #include "common_res.h"
 #include "boot_img.h"
+#include <math.h>
 
 boot1_private_head_t  boot1_priv_para;
 boot_hardware_res     board_res;
@@ -181,35 +182,14 @@ int BootMain(int argc, char **argv)
 		}
 	}
 #endif
-//	check_private_part(boot1_priv_para.uart_port);
-//	check_private_part(11);
 //	__inf("init to usb pc\n");
 	//power_set_usbpc();
-    //申请内存，填充第一个启动脚本
-//    global_info = (boot_global_info_t *)wBoot_malloc(sizeof(boot_global_info_t));
-//    if(!global_info)
-//    {
-//        __inf("unable to malloc memory for bootini\n");
-//
-//        return -1;
-//    }
-//    //填充启动脚本
-//    memset(global_info, 0, sizeof(boot_global_info_t));
-//    ret = script_patch("c:\\boot.ini", global_info, 0);
-//    if(ret < 0)
-//    {
-//        __inf("unable to parser boot.ini\n");
-//
-//        goto jump_to_fel;
-//    }
     //初始化显示设备
     //BoardInit_Display(global_info->display_device, global_info->display_mode);
     BoardInit_Display(0, 0);
     //开始准备系统数据
-    //__inf("de init ok\n");
     //检测电压状态
     if(check_power_status())
-    //if(0)
     {
     	ret = -1;
     }
@@ -222,11 +202,8 @@ int BootMain(int argc, char **argv)
     		ret = -2;
     	}
     }
-    //BoardExit(logo_status, ret);
 	BoardExit(0, ret);
 
-	//power_int_rel();
-	//usb_detect_exit();
     if(!ret)
     {
         BootOS(para_addr, kernal_addr);
@@ -250,7 +227,6 @@ jump_to_parameters_fail:
 
 jump_to_power_off:
     __inf("try to power off\n");
-    wBoot_timer_delay(50);
     wBoot_power_set_off();
 
 	return 0;
