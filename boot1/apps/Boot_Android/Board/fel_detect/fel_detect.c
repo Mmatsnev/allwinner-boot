@@ -223,7 +223,6 @@ __s32 check_power_status(void)
 			}
 		}
 		while(counter --);
-		bat_exist = 1;
 		if(bat_exist <= 0)
 		{
 			__inf("no battery exist\n");
