@@ -37,12 +37,13 @@ extern const boot0_file_head_t  BT0_head;
 
 __u32 odt_status;
 
-static void move_RW( void );
+//static void move_RW( void );
 static void clear_ZI( void );
 static void timer_init(void);
 static void print_version(void);
 static __u32 check_odt(int ms);
 static void bias_calibration(void);
+//void dram_para_display(void);
 /*******************************************************************************
 *函数名称: Boot0_C_part
 *函数原型：void Boot0_C_part( void )
@@ -57,14 +58,14 @@ void Boot0_C_part( void )
 	__s32 dram_size;
 	int   ddr_aotu_scan = 0;
 
-	move_RW( );
+//	move_RW( );
 	clear_ZI( );
 
 	bias_calibration();
 
     timer_init();
     UART_open( BT0_head.prvt_head.uart_port, (void *)BT0_head.prvt_head.uart_ctrl, 24*1000*1000 );
-	odt_status = check_odt(5);
+	//odt_status = check_odt(5);
     if( BT0_head.prvt_head.enable_jtag )
     {
 		jtag_init( (normal_gpio_cfg *)BT0_head.prvt_head.jtag_gpio );
@@ -72,7 +73,7 @@ void Boot0_C_part( void )
 	msg("HELLO! BOOT0 is starting!\n");
 	print_version();
 
-	mmu_system_init(EGON2_DRAM_BASE, 4 * 1024, EGON2_MMU_BASE);
+	mmu_system_init(EGON2_DRAM_BASE, 1 * 1024, EGON2_MMU_BASE);
 	mmu_enable();
 
 	//dram_size = init_DRAM(BT0_head.boot_head.platform[7]);                                // 初始化DRAM
@@ -94,7 +95,9 @@ void Boot0_C_part( void )
 		}
 	}
 #endif
+//	dram_para_display();
 	dram_size = init_DRAM(ddr_aotu_scan, (void *)BT0_head.prvt_head.dram_para);
+	//mdfs_save_value();
 	if(dram_size)
 	{
 		msg("dram size =%d\n", dram_size);
@@ -245,49 +248,49 @@ static void print_version(void)
 	return;
 }
 
-static void move_RW( void )
-{
-	__u8    *psrc8;
-	__u8    *pdst8;
-	__u32   *psrc32;
-	__u32   *pdst32;
-	__u32   size;
-	__u32   N;
-
-	extern unsigned char Load$$Boot0_RW_ZI$$Base;
-	extern unsigned char Image$$Boot0_RW_ZI$$Base;
-	extern unsigned char Image$$Boot0_RW_ZI$$Length;
-
-	size = (__u32) &Image$$Boot0_RW_ZI$$Length;
-	psrc32  = (__u32 *)&Load$$Boot0_RW_ZI$$Base;
-	pdst32  = (__u32 *)&Image$$Boot0_RW_ZI$$Base;
-
-	N = size >> 4;
-	while( N-- > 0 )
-	{
-		*pdst32++ = *psrc32++;
-		*pdst32++ = *psrc32++;
-		*pdst32++ = *psrc32++;
-		*pdst32++ = *psrc32++;
-	}
-
-	N = size & ( ( 1 << 4 ) - 1 );
-	psrc8 = (__u8 *)psrc32;
-	pdst8 = (__u8 *)pdst32;
-	while( N--)
-	{
-		*pdst8++ = *psrc8++;
-	}
-}
+//static void move_RW( void )
+//{
+//	__u8    *psrc8;
+//	__u8    *pdst8;
+//	__u32   *psrc32;
+//	__u32   *pdst32;
+//	__u32   size;
+//	__u32   N;
+//
+//	extern unsigned char Load$$Boot0_RW_ZI$$Base;
+//	extern unsigned char Image$$Boot0_RW_ZI$$Base;
+//	extern unsigned char Image$$Boot0_RW_ZI$$Length;
+//
+//	size = (__u32) &Image$$Boot0_RW_ZI$$Length;
+//	psrc32  = (__u32 *)&Load$$Boot0_RW_ZI$$Base;
+//	pdst32  = (__u32 *)&Image$$Boot0_RW_ZI$$Base;
+//
+//	N = size >> 4;
+//	while( N-- > 0 )
+//	{
+//		*pdst32++ = *psrc32++;
+//		*pdst32++ = *psrc32++;
+//		*pdst32++ = *psrc32++;
+//		*pdst32++ = *psrc32++;
+//	}
+//
+//	N = size & ( ( 1 << 4 ) - 1 );
+//	psrc8 = (__u8 *)psrc32;
+//	pdst8 = (__u8 *)pdst32;
+//	while( N--)
+//	{
+//		*pdst8++ = *psrc8++;
+//	}
+//}
 
 
 
 static void clear_ZI( void )
 {
-	__u8  *p8;
+//	__u8  *p8;
 	__u32 *p32;
 	__u32 size;
-	__u32 N;
+//	__u32 N;
 
 	extern unsigned char Image$$Boot0_RW_ZI$$ZI$$Base;
 	extern unsigned char Image$$Boot0_RW_ZI$$ZI$$Length;
@@ -295,21 +298,22 @@ static void clear_ZI( void )
 	size = (__u32)  &Image$$Boot0_RW_ZI$$ZI$$Length;
 	p32  = (__u32 *)&Image$$Boot0_RW_ZI$$ZI$$Base;
 
-	N = size >> 4;
-	while( N-- > 0 )
-	{
-		*p32++ = 0;
-		*p32++ = 0;
-		*p32++ = 0;
-		*p32++ = 0;
-	}
-
-	N = size & ( ( 1 << 4 ) - 1 );
-	p8 = (__u8 *)p32;
-	while( N--)
-	{
-		*p8++ = 0;
-	}
+	memset(p32, 0, size);
+//	N = size >> 4;
+//	while( N-- > 0 )
+//	{
+//		*p32++ = 0;
+//		*p32++ = 0;
+//		*p32++ = 0;
+//		*p32++ = 0;
+//	}
+//
+//	N = size & ( ( 1 << 4 ) - 1 );
+//	p8 = (__u8 *)p32;
+//	while( N--)
+//	{
+//		*p8++ = 0;
+//	}
 }
 
 static void bias_calibration(void)
@@ -335,4 +339,47 @@ void disbale_cpus(void)
 	//disable cpus module assert
 	*(volatile unsigned int *)(0x01f01400 + 0xb0) = 0;
 }
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+void eGon2_timer_delay(__u32 ms)
+{
+	__u32 t1, t2;
+
+	t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+	t2 = t1 + ms;
+	do
+	{
+		t1 = *(volatile unsigned int *)(0x01c20C00 + 0x84);
+	}
+	while(t2 >= t1);
+
+	return ;
+}
+
+//void dram_para_display(void)
+//{
+//	int i;
+//	__u32 *value = (void *)BT0_head.prvt_head.dram_para;
+//
+//	for(i=0;i<30;i++)
+//	{
+//		msg("para %d value %x\n", i, value[i]);
+//	}
+//
+//	return ;
+//}
 

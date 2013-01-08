@@ -590,11 +590,10 @@ int axp221_set_dcdc3(int set_vol)
 	reg_value = ((set_vol - 600)/20);
 	if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_DC3OUT_VOL, reg_value))
 	{
-		eGon2_printf("sunxi pmu error : unable to set dcdc1\n");
+		eGon2_printf("sunxi pmu error : unable to set dcdc3\n");
 
 		return -1;
 	}
-	axp_i2c_read(AXP22_ADDR, BOOT_POWER22_DC3OUT_VOL, &reg_dump);
 
 	return 0;
 }

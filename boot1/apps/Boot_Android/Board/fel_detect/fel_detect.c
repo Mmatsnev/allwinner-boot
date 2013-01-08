@@ -22,6 +22,8 @@
 #include "common_res.h"
 
 #define   BAT_VOL_ACTIVE     (10)
+//#define   FORCE_BOOT_STANDBY
+#undef    FORCE_BOOT_STANDBY
 
 volatile __u32  boot_standby_action = 0;
 __u32  pic_layer_para;
@@ -187,6 +189,9 @@ __s32 check_power_status(void)
 	status = -1;
 	status = wBoot_power_check_startup();
 	__inf("startup status = %d\n", status);
+#ifdef FORCE_BOOT_STANDBY
+	status = 0;
+#endif
 	if(status)
 	{
 		return 0;
@@ -223,6 +228,9 @@ __s32 check_power_status(void)
 			}
 		}
 		while(counter --);
+#ifdef FORCE_BOOT_STANDBY
+		bat_exist = 1;
+#endif
 		if(bat_exist <= 0)
 		{
 			__inf("no battery exist\n");

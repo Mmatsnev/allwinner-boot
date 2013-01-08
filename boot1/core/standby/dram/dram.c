@@ -34,7 +34,8 @@ int dram_power_save_process(void)
 //8x8; dram = 19.7mA; sys = 157.8mA
 	//ITM reset
 	mctl_write_w(0 + SDR_PIR, 0x11);
-	mctl_write_w(0x1000 + SDR_PIR, 0x11);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+		mctl_write_w(0x1000 + SDR_PIR, 0x11);
 
 	//turn off SCLK
 	reg_val = mctl_read_w(SDR_COM_CCR);
@@ -156,11 +157,14 @@ int dram_power_up_process(void)
 	mctl_write_w(0 + SDR_DX1DLLCR,0x80000000);
 	mctl_write_w(0 + SDR_DX2DLLCR,0x80000000);
 	mctl_write_w(0 + SDR_DX3DLLCR,0x80000000);
-	mctl_write_w(0x1000 + SDR_ACDLLCR,0x80000000);
-	mctl_write_w(0x1000 + SDR_DX0DLLCR,0x80000000);
-	mctl_write_w(0x1000 + SDR_DX1DLLCR,0x80000000);
-	mctl_write_w(0x1000 + SDR_DX2DLLCR,0x80000000);
-	mctl_write_w(0x1000 + SDR_DX3DLLCR,0x80000000);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+	{
+		mctl_write_w(0x1000 + SDR_ACDLLCR,0x80000000);
+		mctl_write_w(0x1000 + SDR_DX0DLLCR,0x80000000);
+		mctl_write_w(0x1000 + SDR_DX1DLLCR,0x80000000);
+		mctl_write_w(0x1000 + SDR_DX2DLLCR,0x80000000);
+		mctl_write_w(0x1000 + SDR_DX3DLLCR,0x80000000);
+	}
 
 	standby_timer_delay(1);
 
@@ -170,11 +174,14 @@ int dram_power_up_process(void)
 	mctl_write_w(0 + SDR_DX1DLLCR,0x0);
 	mctl_write_w(0 + SDR_DX2DLLCR,0x0);
 	mctl_write_w(0 + SDR_DX3DLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_ACDLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_DX0DLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_DX1DLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_DX2DLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_DX3DLLCR,0x0);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+	{
+		mctl_write_w(0x1000 + SDR_ACDLLCR,0x0);
+		mctl_write_w(0x1000 + SDR_DX0DLLCR,0x0);
+		mctl_write_w(0x1000 + SDR_DX1DLLCR,0x0);
+		mctl_write_w(0x1000 + SDR_DX2DLLCR,0x0);
+		mctl_write_w(0x1000 + SDR_DX3DLLCR,0x0);
+	}
 
 	standby_timer_delay(1);
 
@@ -184,19 +191,25 @@ int dram_power_up_process(void)
 	mctl_write_w(0 + SDR_DX1DLLCR,0x40000000);
 	mctl_write_w(0 + SDR_DX2DLLCR,0x40000000);
 	mctl_write_w(0 + SDR_DX3DLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_ACDLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_DX0DLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_DX1DLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_DX2DLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_DX3DLLCR,0x40000000);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+	{
+		mctl_write_w(0x1000 + SDR_ACDLLCR,0x40000000);
+		mctl_write_w(0x1000 + SDR_DX0DLLCR,0x40000000);
+		mctl_write_w(0x1000 + SDR_DX1DLLCR,0x40000000);
+		mctl_write_w(0x1000 + SDR_DX2DLLCR,0x40000000);
+		mctl_write_w(0x1000 + SDR_DX3DLLCR,0x40000000);
+	}
 
 	//ITM reset release
 	mctl_write_w(0 + SDR_PIR, 0x01);
-	mctl_write_w(0x1000 + SDR_PIR, 0x01);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+		mctl_write_w(0x1000 + SDR_PIR, 0x01);
 //8x8; dram = 20.3mA; sys = 102.9mA
 	//turn on SCLK
 	reg_val = mctl_read_w(SDR_COM_CCR);
-	reg_val |= (0x7<<0);
+	reg_val |= (0x5<<0);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+		reg_val |= (0x7<<0);
 	mctl_write_w(SDR_COM_CCR, reg_val);
 
 //8x8; dram = 20.3mA; sys = 156.4mA
@@ -224,7 +237,7 @@ int dram_enter_self_refresh(void)
 
 	}
 
-	//PLL5 enable
+	//PLL5 disable
 	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
   	reg_val &= ~(0x1U<<31);
   	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
@@ -241,11 +254,15 @@ int dram_enter_self_refresh(void)
 	mctl_write_w(0 + SDR_DX2DLLCR,0xC0000000);
 	mctl_write_w(0 + SDR_DX3DLLCR,0xC0000000);
 
-	mctl_write_w(0x1000 + SDR_ACDLLCR,0xC0000000);
-	mctl_write_w(0x1000 + SDR_DX0DLLCR,0xC0000000);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+	{
+		mctl_write_w(0x1000 + SDR_ACDLLCR,0xC0000000);
+		mctl_write_w(0x1000 + SDR_DX0DLLCR,0xC0000000);
 		mctl_write_w(0x1000 + SDR_DX1DLLCR,0xC0000000);
 		mctl_write_w(0x1000 + SDR_DX2DLLCR,0xC0000000);
 		mctl_write_w(0x1000 + SDR_DX3DLLCR,0xC0000000);
+	}
+
 
 	return 0;
 }
@@ -253,6 +270,7 @@ int dram_enter_self_refresh(void)
 int dram_exit_self_refresh(void)
 {
 	unsigned int reg_val;
+	__dram_para_t  *dram_parameters = (__dram_para_t *)BOOT_STANDBY_DRAM_PARA_ADDR;
 
 	//reset dll
 	mctl_write_w(0 + SDR_ACDLLCR,0x80000000);
@@ -260,11 +278,15 @@ int dram_exit_self_refresh(void)
 	mctl_write_w(0 + SDR_DX1DLLCR,0x80000000);
 	mctl_write_w(0 + SDR_DX2DLLCR,0x80000000);
 	mctl_write_w(0 + SDR_DX3DLLCR,0x80000000);
-	mctl_write_w(0X1000 + SDR_ACDLLCR,0x80000000);
-	mctl_write_w(0X1000 + SDR_DX0DLLCR,0x80000000);
-	mctl_write_w(0X1000 + SDR_DX1DLLCR,0x80000000);
-	mctl_write_w(0X1000 + SDR_DX2DLLCR,0x80000000);
-	mctl_write_w(0X1000 + SDR_DX3DLLCR,0x80000000);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+	{
+		mctl_write_w(0X1000 + SDR_ACDLLCR,0x80000000);
+		mctl_write_w(0X1000 + SDR_DX0DLLCR,0x80000000);
+		mctl_write_w(0X1000 + SDR_DX1DLLCR,0x80000000);
+		mctl_write_w(0X1000 + SDR_DX2DLLCR,0x80000000);
+		mctl_write_w(0X1000 + SDR_DX3DLLCR,0x80000000);
+	}
+
 
 	standby_timer_delay(0x200);
 
@@ -274,11 +296,15 @@ int dram_exit_self_refresh(void)
 	mctl_write_w(0 + SDR_DX1DLLCR,0x0);
 	mctl_write_w(0 + SDR_DX2DLLCR,0x0);
 	mctl_write_w(0 + SDR_DX3DLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_ACDLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_DX0DLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_DX1DLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_DX2DLLCR,0x0);
-	mctl_write_w(0x1000 + SDR_DX3DLLCR,0x0);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+	{
+		mctl_write_w(0x1000 + SDR_ACDLLCR,0x0);
+		mctl_write_w(0x1000 + SDR_DX0DLLCR,0x0);
+		mctl_write_w(0x1000 + SDR_DX1DLLCR,0x0);
+		mctl_write_w(0x1000 + SDR_DX2DLLCR,0x0);
+		mctl_write_w(0x1000 + SDR_DX3DLLCR,0x0);
+	}
+
 
 	standby_timer_delay(0x200);
 
@@ -288,19 +314,23 @@ int dram_exit_self_refresh(void)
 	mctl_write_w(0 + SDR_DX1DLLCR,0x40000000);
 	mctl_write_w(0 + SDR_DX2DLLCR,0x40000000);
 	mctl_write_w(0 + SDR_DX3DLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_ACDLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_DX0DLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_DX1DLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_DX2DLLCR,0x40000000);
-	mctl_write_w(0x1000 + SDR_DX3DLLCR,0x40000000);
+	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
+	{
+		mctl_write_w(0x1000 + SDR_ACDLLCR,0x40000000);
+		mctl_write_w(0x1000 + SDR_DX0DLLCR,0x40000000);
+		mctl_write_w(0x1000 + SDR_DX1DLLCR,0x40000000);
+		mctl_write_w(0x1000 + SDR_DX2DLLCR,0x40000000);
+		mctl_write_w(0x1000 + SDR_DX3DLLCR,0x40000000);
+	}
+
 
 	standby_timer_delay(0x200);
 
 	//	//config PLL5 DRAM CLOCK: PLL5 = (24*N*K)/M
 	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
 	reg_val &= ~((0x3<<0) | (0x3<<4) | (0x1F<<8));
-	reg_val |= ((0x1<<0) | (0x1<<4));	//K = M = 2;
-	reg_val |= ((240/24-1)<<0x8);//N
+	reg_val |= ((0x0<<0) | (0x1<<4));	//K = 2  M = 1;
+	reg_val |= ((dram_parameters->dram_clk/24-1)<<0x8);//N
 	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
 
   	//PLL5 enable

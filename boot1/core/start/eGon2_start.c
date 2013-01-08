@@ -26,6 +26,9 @@ static void  print_version(void);
 static __s32 reserved_init(void);
 static __s32 reserved_exit(void);
 static int script_relocation(void);
+static void dram_para_set(void);
+//static void dram_para0_transfer(void);
+//static void dram_para_transfer(void);
 
 __u32 timer_hd;
 static int  eGon2_storage_type_set(void);
@@ -115,6 +118,8 @@ void eGon2_start( void )
 	default_clock = eGon2_clock_set_ext(BT1_head.prvt_head.core_para.user_set_clock, BT1_head.prvt_head.core_para.user_set_core_vol);
 	eGon2_printf("set dcdc2=%d, clock=%d successed\n", BT1_head.prvt_head.core_para.user_set_core_vol, default_clock);
 #endif
+//	dram_para0_transfer();
+
     eGon2_clock_set_pll6();
     eGon2_clock_set_mbus();
 	eGon2_printf("power finish\n");
@@ -189,6 +194,8 @@ void eGon2_start( void )
 		FS_fclose(hfile);
 		eGon2_script_parser_init((char *)SCRIPT_BASE);
 	}
+	dram_para_set();
+//	dram_para_transfer();
 //	else
 //	{
 //		eGon2_printf("unable to open script file, check it carefully\n");
@@ -355,5 +362,223 @@ static int script_relocation(void)
 	}
 
     return 0;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+//static void dram_para0_transfer(void)
+//{
+//	char *dest_addr = (char *)SCRIPT_BASE + SZ_64K - 1024;
+//
+//	eGon2_printf("dest addr = %x\n", (__u32)dest_addr);
+//	memcpy(dest_addr, BT1_head.prvt_head.script_buf + 1024, 512);
+//
+//	{
+//		int j;
+//		int *addr = (int *)dest_addr;
+//
+//		for(j=0;j<512/4;j++)
+//		{
+//			if(!(j&0x07))
+//			{
+//				eGon2_printf("\n");
+//			}
+//			eGon2_printf("%x\n", addr[j]);
+//		}
+//	}
+//
+//	return;
+//}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+//static void dram_para_transfer(void)
+//{
+//	__u32 value;
+//
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_clk", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_type", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_zq", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_odt_en", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_para1", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_para2", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_mr0", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_mr1", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_mr2", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_mr3", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//
+//
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr0", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr1", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr2", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr3", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr4", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr5", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr6", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr7", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr8", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr9", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr10", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr11", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr12", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//	if(!eGon2_script_parser_fetch("dram_para", "dram_tpr13", &value, 1))
+//	{
+//		eGon2_printf("%x\n", value);
+//	}
+//
+//	return;
+//}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
+static void dram_para_set(void)
+{
+//	char *dest_addr = (char *)SCRIPT_BASE + SZ_64K - 2048;
+//
+//	eGon2_printf("dest addr = %x\n", (__u32)dest_addr);
+//	memcpy(dest_addr, BT1_head.prvt_head.script_buf, 512);
+	__u32 value;
+	int   i;
+	__u32 *addr = (__u32 *)BT1_head.prvt_head.script_buf;
+
+	__inf("dram_para_set start\n");
+	eGon2_script_parser_patch("dram_para", "dram_clk", addr[0]);
+	eGon2_script_parser_patch("dram_para", "dram_type", addr[1]);
+	eGon2_script_parser_patch("dram_para", "dram_zq", addr[2]);
+	eGon2_script_parser_patch("dram_para", "dram_odt_en", addr[3]);
+
+	eGon2_script_parser_patch("dram_para", "dram_para1", addr[4]);
+	eGon2_script_parser_patch("dram_para", "dram_para2", addr[5]);
+
+	eGon2_script_parser_patch("dram_para", "dram_mr0", addr[6]);
+	eGon2_script_parser_patch("dram_para", "dram_mr1", addr[7]);
+	eGon2_script_parser_patch("dram_para", "dram_mr2", addr[8]);
+	eGon2_script_parser_patch("dram_para", "dram_mr3", addr[9]);
+
+	eGon2_script_parser_patch("dram_para", "dram_tpr0", addr[10]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr1", addr[11]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr2", addr[12]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr3", addr[13]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr4", addr[14]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr5", addr[15]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr6", addr[16]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr7", addr[17]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr8", addr[18]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr9", addr[19]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr10", addr[20]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr11", addr[21]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr12", addr[22]);
+	eGon2_script_parser_patch("dram_para", "dram_tpr13", addr[23]);
+	__inf("dram_para_set end\n");
+
+	return;
 }
 
