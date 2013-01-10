@@ -465,12 +465,27 @@ unsigned int mctl_sys_init(__dram_para_t *dram_para)
 {
 	unsigned int reg_val;
 
+	//release DRAMC register reset
+  	reg_val = mctl_read_w(CCM_AHB1_RST_REG0);
+  	reg_val &= ~(0x1<<14);
+  	mctl_write_w(CCM_AHB1_RST_REG0, reg_val);
+
+  	//DRAMC AHB clock off
+  	reg_val = mctl_read_w(CCM_AHB1_GATE0_CTRL);
+  	reg_val &= ~(0x1<<14);
+  	mctl_write_w(CCM_AHB1_GATE0_CTRL, reg_val);
+
 	//PLL5 disable
 	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
   	reg_val &= ~(0x1U<<31);
   	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
 
-	//config PLL5 DRAM CLOCK: PLL5 = (24*N*K)/M
+  	//PLL5 configuration update(validate PLL5)
+  	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+  	reg_val |= 0x1U<<20;
+  	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+
+  	//config PLL5 DRAM CLOCK: PLL5 = (24*N*K)/M
 	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
 	reg_val &= ~((0x3<<0) | (0x3<<4) | (0x1F<<8));
 	reg_val |= ((0x0<<0) | (0x1<<4));	//K = 2  M = 1;
