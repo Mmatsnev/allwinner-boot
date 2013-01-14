@@ -59,9 +59,13 @@ __u8  *get_page_buf( void )
 //	memcpy( &(boot0_buf->prvt_head.dram_para), boot0_dram_para_p, sizeof(boot_dram_para_t) );
 //}
 
-void set_dram_para(void *dram_addr )
+void set_dram_para(void *dram_addr , __u32 dram_size)
 {
+	__dram_para_t  *dram_para = (__dram_para_t *)dram_addr;
 	boot1_file_head_t  *boot1_buf = (boot1_file_head_t *)BOOT1_BASE;
+
+	dram_para->dram_para1 &= 0xffff0000;
+	dram_para->dram_para1 |= (dram_size & 0xffff);
 	memcpy((void *)boot1_buf->prvt_head.script_buf, dram_addr, 32 * sizeof(int));
 
 	return;

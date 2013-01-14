@@ -918,11 +918,11 @@ unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para)
 	}
 
 	//send NOP command to active CKE
-	reg_val = 0x83000000;
+	reg_val = 0x80000000;
 	mctl_write_w(ch_id + SDR_MCMD, reg_val);
 
-	while((mctl_read_w(ch_id + SDR_MCMD) & 0x80000000) && (time--))
-		continue;
+	//while((mctl_read_w(ch_id + SDR_MCMD) & 0x80000000) && (time--))
+	//	continue;
 
    //set PHY genereral configuration register
    reg_val = 0x01042202;	//modify 12/3
@@ -1257,7 +1257,7 @@ if((para->dram_mr1 & 0x244) != 0){
 		reg_val = 0x970040;
 	else								//LPDDR2
 		reg_val = 0xd70040;
-	reg_val |= ((0x10<<8) | (0x1<<16));
+	//reg_val |= ((0x10<<8) | (0x1<<16));
 	mctl_write_w(ch_id + SDR_MCFG, reg_val);
 
 	//DFI update configuration register

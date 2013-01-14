@@ -115,6 +115,32 @@ void eGon2_jump_to_android_linux(__s32 zero, __s32 mod_id, __u32 paddr, __u32 ke
 *
 ************************************************************************************************************
 */
+void  system_reset(void)
+{
+	__u32 reg_val;
+
+	//set flag
+	*(volatile unsigned int *)(0x01f00000 + 0x108) = 0x5AA5A55A;
+	//enable watchdog
+	*(volatile unsigned int *)(0x01C20C00 + 0xB4 ) = 0x01;
+	*(volatile unsigned int *)(0x01C20C00 + 0xB8 ) = 0x01;
+}
+/*
+************************************************************************************************************
+*
+*                                             function
+*
+*    函数名称：
+*
+*    参数列表：
+*
+*    返回值  ：
+*
+*    说明    ：
+*
+*
+************************************************************************************************************
+*/
 void eGon2_jump_Fel( void )
 {
     eGon2_printf("eGon2_jump_Fel\n");
@@ -137,7 +163,8 @@ void eGon2_jump_Fel( void )
 
     	for(timedly = 0; timedly < 5000; timedly ++);
     }
-	jump_to( FEL_BASE );
+	//jump_to( FEL_BASE );
+	system_reset();
 
 	return ;
 }
@@ -177,7 +204,8 @@ void eGon2_simple_jump_Fel( void )
 
     	for(timedly = 0; timedly < 5000; timedly ++);
     }
-	jump_to( FEL_BASE );
+	//jump_to( FEL_BASE );
+	system_reset();
 
 	return ;
 }

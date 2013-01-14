@@ -73,6 +73,18 @@ void Boot0_C_part( void )
 	msg("HELLO! BOOT0 is starting!\n");
 	print_version();
 
+	{
+		__u32 reg_val;
+
+		reg_val = *(volatile unsigned int *)(0x01f00000 + 0x108);
+		*(volatile unsigned int *)(0x01f00000 + 0x108) = 0;
+		msg("reg_val=%x\n", reg_val);
+		if(reg_val == 0x5AA5A55A)
+		{
+			msg("eraly jump fel\n");
+			jump_to( FEL_BASE );
+		}
+	}
 	mmu_system_init(EGON2_DRAM_BASE, 1 * 1024, EGON2_MMU_BASE);
 	mmu_enable();
 
@@ -97,7 +109,7 @@ void Boot0_C_part( void )
 #endif
 //	dram_para_display();
 	dram_size = init_DRAM(ddr_aotu_scan, (void *)BT0_head.prvt_head.dram_para);
-	//mdfs_save_value();
+	mdfs_save_value();
 	if(dram_size)
 	{
 		msg("dram size =%d\n", dram_size);
@@ -143,7 +155,7 @@ void Boot0_C_part( void )
 		//跳转boot1之前，把dram的大小写进去
 		//set_dram_size(dram_size );
 		//跳转之前，把所有的dram参数写到boot1中
-		set_dram_para((void *)&BT0_head.prvt_head.dram_para);
+		set_dram_para((void *)&BT0_head.prvt_head.dram_para, dram_size);
 		msg("Succeed in loading Boot1.\n"
 		    "Jump to Boot1.\n");
 		jump_to( BOOT1_BASE );                    // 如果载入Boot1成功，跳转到Boot1处执行
@@ -167,7 +179,7 @@ void Boot0_C_part( void )
 *******************************************************************************/
 void set_pll( void )
 {
-	__u32 reg_val, i;
+	__u32 reg_val;
 
 	//切换到24M，设置AXI分频为2
 	CCMU_REG_AXI_MOD = 0x00010001;
