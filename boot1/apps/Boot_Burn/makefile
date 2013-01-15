@@ -33,6 +33,7 @@ OBJS=$(SRCCS:.c=.o) $(SRCSS:.S=.o)
 all:$(LOCALTARGET)
 	$(LOAD) $(LDFLAGS) $(LOCALTARGET) $(LTARGET)
 	cp $(LTARGET) $(TARGET0)
+	cp $(LTARGET) $(TARGET1)
 	-rm $(OBJS) $(LTARGET)
 	@echo ----------------------------
 	@echo target make finish
