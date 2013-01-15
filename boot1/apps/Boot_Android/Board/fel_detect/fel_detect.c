@@ -142,6 +142,8 @@ __s32 check_power_status(void)
 	__s32 status;
 	__s32 power_start;
 
+	//this is used to clear key pending
+	wBoot_power_get_key();
 	status = wBoot_power_get_level();
 	if(status == BATTERY_RATIO_TOO_LOW_WITHOUT_DCIN)
 	{

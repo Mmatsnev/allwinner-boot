@@ -270,9 +270,6 @@
 	#define CCM_AXI_GATE_CTRL		(CCM_BASE+0x05c)
 #endif
 
-#ifndef CCM_DRAM_GATING
-	#define CCM_DRAM_GATING			(CCM_BASE+0x100)
-#endif
 
 #define mctl_read_w(n)   		(*((volatile unsigned int *)(n)))
 #define mctl_write_w(n,c) 		(*((volatile unsigned int *)(n)) = (c))

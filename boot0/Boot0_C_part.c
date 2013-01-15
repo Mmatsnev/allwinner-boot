@@ -109,7 +109,7 @@ void Boot0_C_part( void )
 #endif
 //	dram_para_display();
 	dram_size = init_DRAM(ddr_aotu_scan, (void *)BT0_head.prvt_head.dram_para);
-	mdfs_save_value();
+	//mdfs_save_value();
 	if(dram_size)
 	{
 		msg("dram size =%d\n", dram_size);
@@ -196,6 +196,11 @@ void set_pll( void )
 #endif
 	//设置CPU:AXI:AHB:APB分频 4:2:2:1
 	CCMU_REG_AHB1_APB1 = 0x02 << 12;
+	//设置ATP分频为2
+	reg_val = CCMU_REG_AXI_MOD;
+	reg_val &= ~(3 << 8);
+	reg_val |=  (1 << 8);
+	CCMU_REG_AXI_MOD = reg_val;
 	//切换到PLL1
 	reg_val = CCMU_REG_AXI_MOD;
 	reg_val &= ~(3 << 16);

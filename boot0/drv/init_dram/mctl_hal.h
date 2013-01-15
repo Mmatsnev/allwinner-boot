@@ -44,7 +44,7 @@ extern __dram_para_t *dram_para;
 
 extern unsigned int DRAMC_init(__dram_para_t *para);
 extern unsigned int DRAMC_init_auto(__dram_para_t *para);
-static unsigned int mctl_sys_init(__dram_para_t *dram_para);
+static unsigned int mctl_sys_init(void);
 static unsigned int mctl_reset_release(void);
 static unsigned int mctl_dll_init(unsigned int ch_index, __dram_para_t *para);
 static unsigned int mctl_channel_init(unsigned int ch_index, __dram_para_t *para);
