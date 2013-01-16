@@ -192,9 +192,9 @@ __s32 check_power_status(void)
 	status = wBoot_power_check_startup();
 	__inf("startup status = %d\n", status);
 #ifdef FORCE_BOOT_STANDBY
-	status = 0;
+	status = 1;
 #endif
-	if(status)
+	if(status <= 0)
 	{
 		return 0;
 	}
@@ -249,6 +249,12 @@ __s32 check_power_status(void)
 			this_bat_cal = 100;
 		}
 		//Æô¶¯ÖÐ¶Ï¼ì²â
+		if(status == 2)	//only vbus exist
+		{
+			usb_detect_enter();
+			wBoot_timer_delay(BOOT_USB_DETECT_DELAY_TIME + 200);
+			usb_detect_exit();
+		}
 		power_limit_detect_enter();
 
 		if(this_bat_cal == 100)

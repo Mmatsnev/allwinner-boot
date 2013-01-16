@@ -82,44 +82,38 @@ static __s32 check_key_to_fel(void)
 {
 	int ret;
 	int fel_key_mode;
+	int fel_key_max, fel_key_min;
+
+	eGon2_printf("key\n");
+    eGon2_key_get_value();
+    eGon2_timer_delay(10);
 
 	fel_key_mode = 0;
-	ret = eGon2_script_parser_fetch("fel_key", "fel_key_type", &fel_key_mode, 1);
-    if((!ret) && (fel_key_mode))
+	ret = eGon2_script_parser_fetch("fel_key", "fel_key_max", &fel_key_max, 1);
+    if(ret)
     {
-    	eGon2_printf("fel key old mode\n");
-		fel_key_mode = 1;
+    	eGon2_printf("fel key max not found, try old mode\n");
+    	fel_key_mode = 1;
+    }
+    else
+    {
+		ret = eGon2_script_parser_fetch("fel_key", "fel_key_min", &fel_key_min, 1);
+	    if(ret)
+	    {
+	    	eGon2_printf("fel key min not found, try old mode\n");
+	    	fel_key_mode = 1;
+	    }
 	}
 
 	if(!fel_key_mode)
 	{
 		int key_value;
-		int fel_key_max, fel_key_min;
-
-		eGon2_printf("key\n");
-	    eGon2_key_get_value();
-	    eGon2_timer_delay(10);
 
 	    key_value = eGon2_key_get_value();  		//读取按键信息
 	    if(key_value < 0)             				//没有按键按下
 	    {
 	        eGon2_printf("no key found\n");
 	        return -1;
-	    }
-		ret = eGon2_script_parser_fetch("fel_key", "fel_key_max", &fel_key_max, 1);
-	    if(ret)
-	    {
-	    	eGon2_printf("fel key max not found\n");
-
-	    	return key_value;
-	    }
-
-		ret = eGon2_script_parser_fetch("fel_key", "fel_key_min", &fel_key_min, 1);
-	    if(ret)
-	    {
-	    	eGon2_printf("fel key min not found\n");
-
-	    	return key_value;
 	    }
 
 		if((key_value <= fel_key_max) && (key_value >= fel_key_min))
@@ -138,10 +132,6 @@ static __s32 check_key_to_fel(void)
 	    __s32 count, time_tick;
 	    __s32 value_old, value_new, value_cnt;
 	    __s32 new_key, new_key_flag;
-
-		eGon2_printf("key\n");
-	    eGon2_key_get_value();
-	    eGon2_timer_delay(10);
 
 	    time_tick = 0;
 	    count = 0;

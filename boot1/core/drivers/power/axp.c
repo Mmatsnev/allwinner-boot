@@ -226,7 +226,7 @@ int axp_get_power_vol_level(void)
 */
 int axp_probe_startup_cause(void)
 {
-	int buffer_value;
+	int buffer_value, status;
 	int poweron_reason, next_action;
 	int ret;
 
@@ -239,26 +239,39 @@ int axp_probe_startup_cause(void)
     if(buffer_value == 0x0e)		//表示前一次是在系统状态，下一次应该也进入系统
     {
     	eGon2_printf("pre sys mode\n");
-    	return -1;
+    	return 0;
     }
     else if(buffer_value == 0x0f)      //表示前一次是在boot standby状态，下一次也应该进入boot standby
 	{
 		eGon2_printf("pre boot mode\n");
-		return 0;
-	}
+		//获取当前电源的状态
+    	status = axp221_probe_power_status();
+    	if(status <= 0)
+    	{
+    		return 0;
+    	}
+    	else if(status == 2)	//only vbus exist
+    	{
+    		return 2;
+    	}
+    	else if(status == 3)	//dc exist(dont care wether vbus exist)
+    	{
+    		return 3;
+    	}
+    }
 	//获取 开机原因，是按键触发，或者插入电压触发
 	poweron_reason = axp221_probe_poweron_cause();
 	if(poweron_reason == AXP_POWER_ON_BY_POWER_KEY)
 	{
 		eGon2_printf("key trigger\n");
 		next_action = 0x0e;
-		ret = 1;
+		ret = 0;
 	}
 	else if(poweron_reason == AXP_POWER_ON_BY_POWER_TRIGGER)
 	{
 		eGon2_printf("power trigger\n");
 		next_action = 0x0f;
-    	ret = 0;
+    	ret = 1;
 	}
 	//把开机原因写入寄存器
 	axp221_set_next_poweron_status(next_action);
