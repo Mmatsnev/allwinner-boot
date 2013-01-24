@@ -37,7 +37,7 @@
     	IMPORT   Boot0_C_part
     	IMPORT   set_pll
     	IMPORT   disbale_cpus
-
+	IMPORT   config_pll1_para
 
 		PRESERVE8
 
@@ -78,6 +78,8 @@ initialize
 ;// set SP for C language
 	ldr sp, =BOOT0_STACK_BOTTOM
 
+;// set pll para
+	bl  config_pll1_para
 ;// set stack
 	bl  set_pll
 ;// disable cpus

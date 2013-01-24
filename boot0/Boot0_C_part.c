@@ -109,7 +109,7 @@ void Boot0_C_part( void )
 #endif
 //	dram_para_display();
 	dram_size = init_DRAM(ddr_aotu_scan, (void *)BT0_head.prvt_head.dram_para);
-	//mdfs_save_value();
+	mdfs_save_value();
 	if(dram_size)
 	{
 		msg("dram size =%d\n", dram_size);
@@ -385,6 +385,24 @@ void eGon2_timer_delay(__u32 ms)
 	while(t2 >= t1);
 
 	return ;
+}
+
+void config_pll1_para(void)
+{
+	volatile unsigned int value;
+	
+	//by sunny at 2013-1-20 17:53:21.
+	value = *(volatile unsigned int *)(0x1c20250);
+	value &= ~(1 << 26);
+	value |= (1 << 26);
+	value &= ~(0x7 << 23);
+	value |= (0x7 << 23);
+	*(volatile unsigned int *)(0x1c20250) = value;
+	
+	value = *(volatile unsigned int *)(0x1c20220);
+	value &= ~(0xf << 24);
+	value |= (0xf << 24);
+	*(volatile unsigned int *)(0x1c20220) = value;
 }
 
 //void dram_para_display(void)

@@ -21,17 +21,15 @@
 
 int dram_power_save_process(void)
 {
-	unsigned int reg_val;
-
-	//mctl_deep_sleep_entry();
+	u32 reg_val;
+	unsigned int time = 0xffffff;
+	
 	mctl_self_refresh_entry(0);
-	//printk("enter self refresh\n");
-	//if(MCTL_CHANNEL_NUM == 2)
 	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
 	{
 		mctl_self_refresh_entry(1);
 	}
-//8x8; dram = 19.7mA; sys = 157.8mA
+	
 	//ITM reset
 	mctl_write_w(0 + SDR_PIR, 0x11);
 	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
@@ -47,24 +45,50 @@ int dram_power_save_process(void)
 	reg_val |= (0x3<<3);
 	mctl_write_w(SDR_COM_CCR, reg_val);
 //8x8; dram = 20.3mA; sys = 83.4mA
+	
+	mctl_write_w(0 + SDR_ACDLLCR, 0xC0000000);
+	mctl_write_w(0 + SDR_DX0DLLCR,0xC0000000);
+	mctl_write_w(0 + SDR_DX1DLLCR,0xC0000000);
+	mctl_write_w(0 + SDR_DX2DLLCR,0xC0000000);
+	mctl_write_w(0 + SDR_DX3DLLCR,0xC0000000);
+
+	mctl_write_w(0x1000 + SDR_ACDLLCR, 0xC0000000);
+	mctl_write_w(0x1000 + SDR_DX0DLLCR,0xC0000000);
+	mctl_write_w(0x1000 + SDR_DX1DLLCR,0xC0000000);
+	mctl_write_w(0x1000 + SDR_DX2DLLCR,0xC0000000);
+	mctl_write_w(0x1000 + SDR_DX3DLLCR,0xC0000000);	
+	
 	//gate off DRAMC AHB clk
 	reg_val = mctl_read_w(CCM_AHB1_GATE0_CTRL);
 	reg_val &=~(0x1<<14);
 	mctl_write_w(CCM_AHB1_GATE0_CTRL, reg_val);
+	
+	//8x8; dram = 20.7mA; sys = 80.3mA
+	//turn off PLL5
+	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+	reg_val &= ~(0x1U<<31);
+	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+
+	//PLL5 configuration update(validate PLL5)
+	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+	reg_val |= 0x1U<<20;
+	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+
+	time = 0xffffff;
+	while((mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1U<<20)) && (time--)){};
 
 	//gate off DRAMC MDFS clk
 	reg_val = mctl_read_w(CCM_MDFS_CLK_CTRL);
 	reg_val &= ~(0x1U<<31);
 	mctl_write_w(CCM_MDFS_CLK_CTRL, reg_val);
-//8x8; dram = 20.7mA; sys = 80.3mA
-	//turn off PLL5
-//	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
-//	reg_val &= ~(0x1U<<31);
-//	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
-//
-//	//PLL5 configuration update(validate PLL5)
-//	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
-//	reg_val |= 0x1U<<20;
+	
+	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+  	reg_val |= 0x1U<<16;
+  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+  	
+  	time = 0xffffff;
+  	while((mctl_read_w(CCM_DRAMCLK_CFG_CTRL) & (0x1<<16)) && (time--)){};
+  	
 //	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
 //
 //	while(mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1U<<20));
@@ -105,33 +129,59 @@ int dram_power_up_process(void)
 //
 //	mctl_deep_sleep_exit(&parameters);
 
-	//make sure to turn off pll5
+//	standby_timer_delay(10);
+	unsigned int time = 0xffffff;
+//	//make sure to turn off pll5
 //	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
 //	reg_val &= ~(0x1U<<31);
 //	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
-//
-//	//config PLL5 DRAM CLOCK: PLL5 = (24*N*K)/M
-//	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
-//	reg_val &= ~((0x3<<0) | (0x3<<4) | (0x1F<<8));
-//	reg_val |= ((0x0<<0) | (0x1<<4));	//K = M = 2;
-//	reg_val |= (((dram_parameters->dram_clk)/24-1)<<0x8);//N
-//	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
-//
-//	//PLL5 enable
-//	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
-//	reg_val |= 0x1U<<31;
-//	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
-//
-//	//PLL5 configuration update(validate PLL5)
-//	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
-//	reg_val |= 0x1U<<20;
-//	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
-//
-//	while(mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1U<<20));
-//
-//	while(!(mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1U<<28)));
+
+	//config PLL5 DRAM CLOCK: PLL5 = (24*N*K)/M
+	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+	reg_val &= ~((0x3<<0) | (0x3<<4) | (0x1F<<8));
+	reg_val |= ((0x0<<0) | (0x1<<4));	//K = M = 2;
+	reg_val |= (((dram_parameters->dram_clk)/24-1)<<0x8);//N
+	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+	
+	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+  	reg_val &= ~(0xf<<8);
+  	reg_val |= 0x1<<8;
+  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+
+  	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+  	reg_val |= 0x1U<<16;
+  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+  	
+  	time = 0xffffff;
+  	while((mctl_read_w(CCM_DRAMCLK_CFG_CTRL) & (0x1<<16)) && (time--)){};
+
+	//PLL5 enable
+	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+	reg_val |= 0x1U<<31;
+	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+
+	//PLL5 configuration update(validate PLL5)
+	reg_val = mctl_read_w(CCM_PLL5_DDR_CTRL);
+	reg_val |= 0x1U<<20;
+	mctl_write_w(CCM_PLL5_DDR_CTRL, reg_val);
+
+	time = 0xffffff;
+	while((mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1U<<20)) && (time--)){};
+
+	while((!(mctl_read_w(CCM_PLL5_DDR_CTRL) & (0x1U<<28))) && (time--)){};
 //8x8; dram = 20.5mA; sys = 80.3mA
 	standby_timer_delay(10);
+	
+	 reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+  	reg_val |= (0x1U<<31);
+  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+  	
+  	reg_val = mctl_read_w(CCM_DRAMCLK_CFG_CTRL);
+  	reg_val |= 0x1U<<16;
+  	mctl_write_w(CCM_DRAMCLK_CFG_CTRL, reg_val);
+  	
+  	time = 0xffffff;
+  	while((mctl_read_w(CCM_DRAMCLK_CFG_CTRL) & (0x1<<16)) && (time--)){};  	
 
 	//Setup mdfs clk = PLL6 600M / 3 = 200M
 	reg_val = mctl_read_w(CCM_MDFS_CLK_CTRL);
@@ -212,14 +262,12 @@ int dram_power_up_process(void)
 		reg_val |= (0x7<<0);
 	mctl_write_w(SDR_COM_CCR, reg_val);
 
-//8x8; dram = 20.3mA; sys = 156.4mA
-//	mctl_power_up_process();
 	mctl_self_refresh_exit(0);
-	//if(MCTL_CHANNEL_NUM == 2)
 	if(mctl_read_w(SDR_COM_CR) & (0x1<<19))
 	{
 		mctl_self_refresh_exit(1);
 	}
+	
 
 	return 0;
 }
