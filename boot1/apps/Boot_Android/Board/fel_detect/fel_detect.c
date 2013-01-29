@@ -249,7 +249,7 @@ __s32 check_power_status(void)
 			this_bat_cal = 100;
 		}
 		//Æô¶¯ÖÐ¶Ï¼ì²â
-		if(status == 2)	//only vbus exist
+		//if(status == 2)	//only vbus exist
 		{
 			usb_detect_enter();
 			wBoot_timer_delay(BOOT_USB_DETECT_DELAY_TIME + 200);
