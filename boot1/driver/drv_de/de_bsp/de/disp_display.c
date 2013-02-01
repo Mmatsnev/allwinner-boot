@@ -68,7 +68,7 @@ __s32 BSP_disp_init(__disp_bsp_init_para * para)
 //    Image_init(1);
     Disp_lcdc_init(0);
     //Disp_lcdc_init(1);
-//    Display_Hdmi_Init();
+    Display_Hdmi_Init();
 
     iep_init(0);
     //iep_init(1);

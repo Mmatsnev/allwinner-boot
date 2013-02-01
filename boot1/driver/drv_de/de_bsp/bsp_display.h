@@ -85,6 +85,8 @@ typedef unsigned int __hdle;
 #include "string.h"
 #include "../osal/osal_de.h"
 #include "iep/iep.h"
+#include "hdmi/hdmi_hal.h"
+
 #define   sprintf		wlibc_sprintf
 
 #endif
