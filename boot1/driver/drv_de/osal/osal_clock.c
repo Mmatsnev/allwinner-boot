@@ -239,32 +239,74 @@ __s32 OSAL_CCMU_SetSrcFreq(__u32 nSclkNo, __u32 nFreq)
 {
     //__inf("OSAL_CCMU_SetSrcFreq,%d,%d\n", nSclkNo, nFreq);
     __u32 reg_val;
-    nFreq /= 3000000;
+    __u32 index;
+    
+    index = nFreq/3000000;
 
-    if(nFreq == 234)  //702M
+    if(index == 234)  //702M
     {
         reg_val = ((4-1)<<0) | ((117-1)<<8);
     }
     else
     {
-        reg_val = (PllxTbl[nFreq-1].FactorM<<0) | (PllxTbl[nFreq-1].FactorN<<8);
+        reg_val = (PllxTbl[index-1].FactorM<<0) | (PllxTbl[index-1].FactorN<<8);
     }
 
     if(nSclkNo == SYS_CLK_PLL3)
     {
-        sys_put_wvalue(0x01c20010,0x81000000 | reg_val);
+        if(nFreq == 297000000)
+        {
+            sys_put_wvalue(0x01c20010,0x82000000 | reg_val);
+        }else if(nFreq == 270000000)
+        {
+            sys_put_wvalue(0x01c20010,0x80000000 | reg_val);
+        }
+        else
+        {
+            sys_put_wvalue(0x01c20010,0x81000000 | reg_val);
+        }
     }
     else if(nSclkNo == SYS_CLK_PLL7)
     {
-        sys_put_wvalue(0x01c20030,0x81000000 | reg_val);
+        if(nFreq == 297000000)
+        {
+            sys_put_wvalue(0x01c20030,0x82000000 | reg_val);
+        }else if(nFreq == 270000000)
+        {
+            sys_put_wvalue(0x01c20030,0x80000000 | reg_val);
+        }
+        else
+        {
+            sys_put_wvalue(0x01c20030,0x81000000 | reg_val);
+        }
     }
     else if(nSclkNo == SYS_CLK_PLL9)
     {
-        sys_put_wvalue(0x01c20044,0x81000000 | reg_val);
+        if(nFreq == 297000000)
+        {
+            sys_put_wvalue(0x01c20044,0x82000000 | reg_val);
+        }else if(nFreq == 270000000)
+        {
+            sys_put_wvalue(0x01c20044,0x80000000 | reg_val);
+        }
+        else
+        {
+            sys_put_wvalue(0x01c20044,0x81000000 | reg_val);
+        }
     }
     else if(nSclkNo == SYS_CLK_PLL10)
     {
-        sys_put_wvalue(0x01c20048,0x81000000 | reg_val);
+        if(nFreq == 297000000)
+        {
+            sys_put_wvalue(0x01c20048,0x82000000 | reg_val);
+        }else if(nFreq == 270000000)
+        {
+            sys_put_wvalue(0x01c20048,0x80000000 | reg_val);
+        }
+        else
+        {
+            sys_put_wvalue(0x01c20048,0x81000000 | reg_val);
+        }
     }
     return 0;
 }
