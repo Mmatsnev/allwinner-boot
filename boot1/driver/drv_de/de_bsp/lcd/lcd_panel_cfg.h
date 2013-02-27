@@ -4,7 +4,7 @@
 
 #include "../bsp_display.h"
 
-
+#if 1
 static void LCD_power_on(__u32 sel);
 static void LCD_power_off(__u32 sel);
 static void LCD_bl_open(__u32 sel);
@@ -12,7 +12,7 @@ static void LCD_bl_close(__u32 sel);
 
 void LCD_get_panel_funs_0(__lcd_panel_fun_t * fun);
 void LCD_get_panel_funs_1(__lcd_panel_fun_t * fun);
-
+#endif
 extern void LCD_OPEN_FUNC(__u32 sel, LCD_FUNC func, __u32 delay/*ms*/);
 extern void LCD_CLOSE_FUNC(__u32 sel, LCD_FUNC func, __u32 delay/*ms*/);
 extern void LCD_get_reg_bases(__reg_bases_t *para);

@@ -318,6 +318,8 @@ typedef enum//only for debug!!!
     DISP_REG_DRC0 = 15,
     DISP_REG_DRC1 = 16,
     DISP_REG_DSI = 17,
+    DISP_REG_DSI_DPHY = 18,
+    DISP_REG_HDMI = 19,
 }__disp_reg_index_t;
 
 
@@ -550,6 +552,14 @@ typedef struct
 }__disp_dsi_dphy_timing_t;
 
 
+typedef struct
+{
+	__u32   lcd_gamma_tbl[256];
+	__u32	lcd_cmap_tbl[2][3][4];
+    __u32   lcd_bright_curve_tbl[256];
+}__panel_extend_para_t;
+
+
 
 typedef struct
 {
@@ -561,7 +571,7 @@ typedef struct
 	__lcd_hv_syuv_fdly_t	lcd_hv_syuv_fdly;
 
 	__lcd_lvds_if_t   		lcd_lvds_if;
-	__lcd_lvds_colordepth_t	lcd_lvds_colordepth; //color depth
+	__lcd_lvds_colordepth_t	lcd_lvds_colordepth; //color depth, 0:8bit; 1:6bit
 	__lcd_lvds_mode_t   	lcd_lvds_mode;
 	__u32   				lcd_lvds_io_polarity;
 
@@ -581,10 +591,13 @@ typedef struct
     __u32                  lcd_edp_tx_ic;   //0:anx9804;  1:anx6345
     __u32                  lcd_edp_tx_rate; //1(1.62G); 2(2.7G); 3(5.4G)
     __u32                  lcd_edp_tx_lane; //  1/2/4lane
+    __u32                  lcd_edp_colordepth; //color depth, 0:8bit; 1:6bit
 
 	__u32   lcd_dclk_freq;
-	__u32   lcd_x;
-	__u32   lcd_y;
+	__u32   lcd_x; //horizontal resolution
+	__u32   lcd_y; //vertical resolution
+    __u32   lcd_width; //width of lcd in mm
+    __u32   lcd_height;//height of lcd in mm
 
 	__u32  	lcd_pwm_freq;
 	__u32  	lcd_pwm_pol;
@@ -599,13 +612,14 @@ typedef struct
 	__u32   lcd_vspw;
 	__u32   lcd_hspw;
 
-	__u32   lcd_io_phase;
+	__u32   lcd_hv_clk_phase;
+    __u32   lcd_hv_sync_polarity;
 
 	__u32   lcd_frm;
 	__u32   lcd_gamma_en;
-	__u32   lcd_gamma_tbl[256];
-	__u32 	lcd_cmap;
-	__u32	lcd_cmap_tbl[2][3][4];
+	__u32 	lcd_cmap_en;
+    __u32   lcd_bright_curve_en;
+    __panel_extend_para_t lcd_extend_para;
 
 	__u32   tcon_index; //not need to config for user
 	__u32	lcd_fresh_mode;//not need to config for user
@@ -652,7 +666,7 @@ typedef struct lcd_flow
 
 typedef struct
 {
-    void (*cfg_panel_info)(__panel_para_t * info);
+    void (*cfg_panel_info)(__panel_extend_para_t * info);
     __s32 (*cfg_open_flow)(__u32 sel);
     __s32 (*cfg_close_flow)(__u32 sel);
     __s32 (*lcd_user_defined_func)(__u32 sel, __u32 para1, __u32 para2, __u32 para3);

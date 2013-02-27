@@ -385,13 +385,6 @@ __s32 tcon0_cfg_mode_tri(__u32 sel, __panel_para_t * panel)
 
 __s32 tcon0_cfg(__u32 sel, __panel_para_t * panel)
 {
-	__u32 vsync_phase,hsync_phase,dclk_phase,de_phase;
-
-    vsync_phase = (panel->lcd_io_phase>>0x0)&0x1;
-    hsync_phase = (panel->lcd_io_phase>>0x4)&0x1;
-    dclk_phase  = (panel->lcd_io_phase>>0x8)&0x1;
-    de_phase    = (panel->lcd_io_phase>>0xc)&0x1;
-
     if((panel->lcd_if == LCD_IF_HV) || (panel->lcd_if == LCD_IF_EDP))
 	{
 		lcd_dev[sel]->tcon0_ctl.bits.tcon0_if = 0;
@@ -435,14 +428,37 @@ __s32 tcon0_cfg(__u32 sel, __panel_para_t * panel)
 	}
 
 	tcon0_frm(sel,panel->lcd_frm);
-    tcon_gamma(sel,panel->lcd_gamma_en,panel->lcd_gamma_tbl);
-	tcon_cmap(sel,panel->lcd_cmap,panel->lcd_cmap_tbl);
+    tcon_gamma(sel,panel->lcd_gamma_en,panel->lcd_extend_para.lcd_gamma_tbl);
+	tcon_cmap(sel,panel->lcd_cmap_en,panel->lcd_extend_para.lcd_cmap_tbl);
 
 	lcd_dev[sel]->tcon0_ctl.bits.rb_swap = panel->lcd_rb_swap;
 	lcd_dev[sel]->tcon0_io_tri.bits.rgb_endian = panel->lcd_rgb_endian;
 	lcd_dev[sel]->tcon_volume_ctl.bits.safe_period_mode = 3;
 	lcd_dev[sel]->tcon_volume_ctl.bits.safe_period_fifo_num = panel->lcd_dclk_freq*15;
-	lcd_dev[sel]->tcon0_io_pol.dwval = ((vsync_phase<<0) | (hsync_phase<<1) | (dclk_phase<<2) | (de_phase<<3))<<24;
+	lcd_dev[sel]->tcon0_io_pol.bits.sync_inv = panel->lcd_hv_sync_polarity;
+	switch(panel->lcd_hv_clk_phase)
+	{
+		case 0:
+			lcd_dev[sel]->tcon0_io_pol.bits.clk_inv = 0;
+			lcd_dev[sel]->tcon0_io_pol.bits.dclk_sel = 0;
+			break;
+		case 1:
+			lcd_dev[sel]->tcon0_io_pol.bits.clk_inv = 0;
+			lcd_dev[sel]->tcon0_io_pol.bits.dclk_sel = 2;
+			break;
+		case 2:
+			lcd_dev[sel]->tcon0_io_pol.bits.clk_inv = 1;
+			lcd_dev[sel]->tcon0_io_pol.bits.dclk_sel = 0;
+			break;
+		case 3:
+			lcd_dev[sel]->tcon0_io_pol.bits.clk_inv = 1;
+			lcd_dev[sel]->tcon0_io_pol.bits.dclk_sel = 2;
+			break;
+		default:
+			lcd_dev[sel]->tcon0_io_pol.bits.clk_inv = 0;
+			lcd_dev[sel]->tcon0_io_pol.bits.dclk_sel = 0;
+			break;
+	}
 
 	if(panel->lcd_fresh_mode == 1)
 	{
@@ -461,6 +477,12 @@ __s32 tcon0_cfg(__u32 sel, __panel_para_t * panel)
 	lcd_dev[sel]->tcon0_io_tri.bits.data_output_tri_en = 0;
 	return 0;
 }
+
+__s32 tcon0_tri_busy(__u32 sel)
+{
+	return lcd_dev[sel]->tcon0_cpu_ctl.bits.trigger_start;
+}
+
 
 __s32 tcon0_tri_start(__u32 sel)
 {
@@ -611,23 +633,34 @@ __s32 tcon1_close(__u32 sel)
 }
 
 __disp_timing_t tv_timing_tbl[30]	= {
-	//	   clk,    x,   y,    ht, hfp, hsa, hbp,   vt, vfp, vsa, vbp, hsp, vsp, int
-	{ 13500000,  720,  480,  858,  19,  62,  57,  525,   4,   3,  15,   0,   0,   1},	//DISP_TV_MOD_480I
-	{ 13500000,  720,  576,  864,  12,  63,  69,  625,   2,   3,  19,   0,   0,   1},	//DISP_TV_MOD_576I
-	{ 27000000,  720,  480,  858,  16,  62,  60,  525,   9,   6,  30,   0,   0,   0},	//DISP_TV_MOD_480P
-	{ 27000000,  720,  576,  864,  12,  64,  68,  625,   5,   5,  39,   0,   0,   0},	//DISP_TV_MOD_576P
-	{ 74250000, 1280,  720, 1980, 440,  40, 220,  750,   5,   5,  20,   1,   1,   0},	//DISP_TV_MOD_720P_50HZ
-	{ 74250000, 1280,  720, 1650, 110,  40, 220,  750,   5,   5,  20,   1,   1,   0},	//DISP_TV_MOD_720P_60HZ
-	{ 74250000, 1920, 1080, 2640, 528,  44, 148, 1125,   2,   5,  15,   1,   1,   1},	//DISP_TV_MOD_1080I_50HZ
-	{ 74250000, 1920, 1080, 2200,  88,  44, 148, 1125,   2,   5,  15,   1,   1,   1},	//DISP_TV_MOD_1080I_60HZ
-	{ 74250000, 1920, 1080, 2750, 638,  44, 148, 1125,   4,   5,  36,   1,   1,   0},	//DISP_TV_MOD_1080P_24HZ
-	{148500000, 1920, 1080, 2640, 528,  44, 148, 1125,   4,   5,  36,   1,   1,   0},	//DISP_TV_MOD_1080P_50HZ
-	{148500000, 1920, 1080, 2200,  88,  44, 148, 1125,   4,   5,  36,   1,   1,   0},	//DISP_TV_MOD_1080P_60HZ
-//DISP_TV_MOD_1080P_24HZ_3D_FP:
-//DISP_TV_MOD_720P_50HZ_3D_FP:
-//DISP_TV_MOD_720P_60HZ_3D_FP:
+	//	   clk,    x,   y,    ht, hfp, hsa, hbp,   vt, vfp, vsa, vbp, hsp, vsp,  int, act_space, trd
+	{ 13500000,  720,  480,  858,  19,  62,  57,  525,   4,   3,  15,   0,   0,   1,  0, 0},	//DISP_TV_MOD_480I
+	{ 13500000,  720,  576,  864,  12,  63,  69,  625,   2,   3,  19,   0,   0,   1,  0, 0},	//DISP_TV_MOD_576I
+	{ 27000000,  720,  480,  858,  16,  62,  60,  525,   9,   6,  30,   0,   0,   0,  0, 0},	//DISP_TV_MOD_480P
+	{ 27000000,  720,  576,  864,  12,  64,  68,  625,   5,   5,  39,   0,   0,   0,  0, 0},	//DISP_TV_MOD_576P
+	{ 74250000, 1280,  720, 1980, 440,  40, 220,  750,   5,   5,  20,   1,   1,   0,  0, 0},	//DISP_TV_MOD_720P_50HZ
+	{ 74250000, 1280,  720, 1650, 110,  40, 220,  750,   5,   5,  20,   1,   1,   0,  0, 0},	//DISP_TV_MOD_720P_60HZ
+	{ 74250000, 1920, 1080, 2640, 528,  44, 148, 1125,   2,   5,  15,   1,   1,   1,  0, 0},	//DISP_TV_MOD_1080I_50HZ
+	{ 74250000, 1920, 1080, 2200,  88,  44, 148, 1125,   2,   5,  15,   1,   1,   1,  0, 0},	//DISP_TV_MOD_1080I_60HZ
+	{ 74250000, 1920, 1080, 2750, 638,  44, 148, 1125,   4,   5,  36,   1,   1,   0,  0, 0},	//DISP_TV_MOD_1080P_24HZ
+	{148500000, 1920, 1080, 2640, 528,  44, 148, 1125,   4,   5,  36,   1,   1,   0,  0, 0},	//DISP_TV_MOD_1080P_50HZ
+	{148500000, 1920, 1080, 2200,  88,  44, 148, 1125,   4,   5,  36,   1,   1,   0,  0, 0},	//DISP_TV_MOD_1080P_60HZ
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},	//DISP_TV_MOD_PAL
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},	//DISP_TV_MOD_PAL_SVIDEO
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},	//reserve
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},	//DISP_TV_MOD_NTSC
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},	//DISP_TV_MOD_NTSC_SVIDEO
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},	//reserve
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},	//DISP_TV_MOD_PAL_M
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},	//DISP_TV_MOD_PAL_M_SVIDEO
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},   //reserve
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},   //DISP_TV_MOD_PAL_NC
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},   //DISP_TV_MOD_PAL_NC_SVIDEO
+    {000000000, 0000, 0000, 0000,  00,  00, 000, 0000,   0,   0,  00,   0,   0,   0,  0, 0},   //reserve
+    {148500000, 1920, 2160, 2750, 638,  44, 148, 1125,   4,   5,  36,   1,   1,   0, 45, 1},	//DISP_TV_MOD_1080P_24HZ_3D_FP
+    {148500000, 1280, 1440, 1980, 440,  40, 220,  750,   5,   5,  20,   1,   1,   0, 30, 1},	//DISP_TV_MOD_720P_50HZ_3D_FP
+    {148500000, 1280, 1440, 1650, 110,  40, 220,  750,   5,   5,  20,   1,   1,   0, 30 ,1},	//DISP_TV_MOD_720P_60HZ_3D_FP
 };
-
 
 __s32 tcon1_cfg(__u32 sel,__disp_timing_t* timing)
 {
@@ -636,18 +669,22 @@ __s32 tcon1_cfg(__u32 sel,__disp_timing_t* timing)
 	lcd_dev[sel]->tcon1_basic0.bits.x = timing->hor_pixels-1;
 	lcd_dev[sel]->tcon1_basic0.bits.y = timing->ver_pixels/(timing->interlace+1)-1;
 	lcd_dev[sel]->tcon1_basic1.bits.ls_xo = timing->hor_pixels-1;
-	lcd_dev[sel]->tcon1_basic1.bits.ls_yo = timing->ver_pixels/(timing->interlace+1)-1;
+	lcd_dev[sel]->tcon1_basic1.bits.ls_yo = timing->ver_pixels/(timing->interlace+1) + (timing->trd_mode? timing->vactive_space:0)-1;
 	lcd_dev[sel]->tcon1_basic2.bits.xo = timing->hor_pixels-1;
-	lcd_dev[sel]->tcon1_basic2.bits.yo = timing->ver_pixels/(timing->interlace+1)-1;
+	lcd_dev[sel]->tcon1_basic2.bits.yo = timing->ver_pixels/(timing->interlace+1) + (timing->trd_mode? timing->vactive_space:0)-1;
 	lcd_dev[sel]->tcon1_basic3.bits.ht = timing->hor_total_time-1;
 	lcd_dev[sel]->tcon1_basic3.bits.hbp = timing->hor_sync_time+timing->hor_back_time-1;
-	lcd_dev[sel]->tcon1_basic4.bits.vt = timing->ver_total_time*(2-timing->interlace);
+	lcd_dev[sel]->tcon1_basic4.bits.vt = timing->ver_total_time*(2-timing->interlace)*(timing->trd_mode? 2:1);
 	lcd_dev[sel]->tcon1_basic4.bits.vbp = timing->ver_sync_time+timing->ver_back_porch-1;
 	lcd_dev[sel]->tcon1_basic5.bits.hspw = timing->hor_sync_time-1;
 	lcd_dev[sel]->tcon1_basic5.bits.vspw = timing->ver_sync_time-1;
 	lcd_dev[sel]->tcon1_io_pol.bits.io0_inv = timing->ver_sync_polarity;
 	lcd_dev[sel]->tcon1_io_pol.bits.io1_inv = timing->hor_sync_polarity;
 	lcd_dev[sel]->tcon1_ctl.bits.interlace_en = timing->interlace;
+    lcd_dev[sel]->tcon_fill_start0.bits.fill_begin = (timing->ver_total_time + 1) << 12;
+    lcd_dev[sel]->tcon_fill_end0.bits.fill_end = (timing->ver_total_time + timing->vactive_space) << 12;
+    lcd_dev[sel]->tcon_fill_data0.bits.fill_value = 0;
+    lcd_dev[sel]->tcon_fill_ctl.bits.tcon1_fill_en = timing->trd_mode? 1:0;
 	start_delay = timing->ver_total_time - timing->ver_pixels - 5;
 	start_delay = (start_delay > 31)? 31:start_delay;
 	lcd_dev[sel]->tcon1_ctl.bits.start_delay = start_delay;
