@@ -105,56 +105,55 @@ typedef struct _boot_dram_para_t
     __u32           dram_rank_num;
     __u32           dram_chip_density;
     __u32           dram_io_width;
-    __u32		    dram_bus_width;
+    __u32           dram_bus_width;
     __u32           dram_cas;
     __u32           dram_zq;
     __u32           dram_odt_en;
-    __u32 			dram_size;
+    __u32           dram_size;
     __u32           dram_tpr0;
     __u32           dram_tpr1;
     __u32           dram_tpr2;
     __u32           dram_tpr3;
     __u32           dram_tpr4;
     __u32           dram_tpr5;
-    __u32 			dram_emr1;
+    __u32           dram_emr1;
     __u32           dram_emr2;
     __u32           dram_emr3;
 }boot_dram_para_t;
 
 typedef struct __DRAM_PARA
 {
-	//normal configuration
-	unsigned int        dram_clk;
-	unsigned int        dram_type;		//dram_type			DDR2: 2				DDR3: 3				LPDDR2: 6	DDR3L: 31
-    unsigned int        dram_zq;
-    unsigned int		dram_odt_en;
+//normal configuration
+unsigned int		dram_clk;
+unsigned int		dram_type; //dram_type DDR2: 2 DDR3: 3 LPDDR2: 6: DDR3L: 31
+unsigned int		dram_zq;
+unsigned int		dram_odt_en;
 
-	//control configuration
-	unsigned int		dram_para1;
-    unsigned int		dram_para2;
+//control configuration
+unsigned int		dram_para1;
+unsigned int		dram_para2;
 
-	//timing configuration
-	unsigned int		dram_mr0;
-    unsigned int		dram_mr1;
-    unsigned int		dram_mr2;
-    unsigned int		dram_mr3;
-    unsigned int		dram_tpr0;
-    unsigned int		dram_tpr1;
-    unsigned int		dram_tpr2;
-    unsigned int		dram_tpr3;
-    unsigned int		dram_tpr4;
-    unsigned int		dram_tpr5;
-   	unsigned int		dram_tpr6;
+//timing configuration
+unsigned int		dram_mr0;
+unsigned int		dram_mr1;
+unsigned int		dram_mr2;
+unsigned int		dram_mr3;
+unsigned int		dram_tpr0;
+unsigned int		dram_tpr1;
+unsigned int		dram_tpr2;
+unsigned int		dram_tpr3;
+unsigned int		dram_tpr4;
+unsigned int		dram_tpr5;
+unsigned int		dram_tpr6;
 
-    //reserved for future use
-    unsigned int		dram_tpr7;
-    unsigned int		dram_tpr8;
-    unsigned int		dram_tpr9;
-    unsigned int		dram_tpr10;
-    unsigned int		dram_tpr11;
-    unsigned int		dram_tpr12;
-    unsigned int		dram_tpr13;
-
+//reserved for future use
+unsigned int		dram_tpr7;
+unsigned int		dram_tpr8;
+unsigned int		dram_tpr9;
+unsigned int		dram_tpr10;
+unsigned int		dram_tpr11;
+unsigned int		dram_tpr12;
+unsigned int		dram_tpr13;
 }__dram_para_t;
 /******************************************************************************/
 /*                              file head of Boot                             */

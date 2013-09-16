@@ -9,23 +9,23 @@
 //              2012/02/06      Berg Xing       0.10    Initial version
 //              2012/02/24      Berg Xing       0.20    Support 2 channel
 //              2012/02/27      Berg Xing       0.30    modify mode register access
-//				2012/03/01		Berg Xing       0.40    add LPDDR2
-//				2012/03/10		Berg Xing       0.50    add mctl_dll_init() function
-//				2012/04/26		Berg Xing       0.60    add deep sleep
-//				2012/06/19		Berg Xing       0.70    add 2T mode
-//				2012/11/07		CPL				0.80	FPGA version based on berg's code
-//				2012/11/14		CPL				0.90	add SID and regulate the parameters order
-//				2012/11/21		CPL				0.91	modify parameters error
-//				2012/11/25		CPL				0.92	modify for IC test
-//				2012/11/27		CPL				0.93	add master configuration
-//				2012/11/28		CPL				0.94	modify for boot and burn interface compatible
-//				2012/11/29		CPL				0.95	modify lock parameters configuration
-//				2012/12/3		CPL				0.96	add dll&pll delay and simple test ; add voltage adjust
-//				2012/12/6		CPL				0.97	add write odt enable function
-//				2012/12/8		CPL				0.98	add read odt enable & adjust dll phase
-//				2012/12/10		CPL				0.99	extend DLL & PLL delay
-//				2012/12/30		CPL				1.00	auto detect [A31 & A31s] DDR3 & LPDDR2
-//				2013/01/24		CPL				1.01	add delay after turn on SCLK
+//		2012/03/01	Berg Xing       0.40    add LPDDR2
+//		2012/03/10	Berg Xing       0.50    add mctl_dll_init() function
+//		2012/04/26	Berg Xing       0.60    add deep sleep
+//		2012/06/19	Berg Xing       0.70    add 2T mode
+//		2012/11/07	CPL		0.80	FPGA version based on berg's code
+//		2012/11/14	CPL		0.90	add SID and regulate the parameters order
+//		2012/11/21	CPL		0.91	modify parameters error
+//		2012/11/25	CPL		0.92	modify for IC test
+//		2012/11/27	CPL		0.93	add master configuration
+//		2012/11/28	CPL		0.94	modify for boot and burn interface compatible
+//		2012/11/29	CPL		0.95	modify lock parameters configuration
+//		2012/12/3	CPL		0.96	add dll&pll delay and simple test ; add voltage adjust
+//		2012/12/6	CPL		0.97	add write odt enable function
+//		2012/12/8	CPL		0.98	add read odt enable & adjust dll phase
+//		2012/12/10	CPL		0.99	extend DLL & PLL delay
+//		2012/12/30	CPL		1.00	auto detect [A31 & A31s] DDR3 & LPDDR2
+//		2013/01/24	CPL		1.01	add delay after turn on SCLK
 //*****************************************************************************
 #include "mctl_reg.h"
 #include "mctl_hal.h"
@@ -65,7 +65,7 @@ int p2wi_init(void)
 
 	/* config io */
 	rval = mctl_read_w(0x1f02c00 + 0x00);
-	rval &= ~0x77;
+	rval &= ~0x77; /* PL0-PL1 R_TWI SCK,SDA */
 	rval |= 0x33;
 	mctl_write_w(0x1f02c00 + 0x00, rval);
 
@@ -122,10 +122,10 @@ int p2wi_write(unsigned int addr, unsigned int val)
 
 	return 0;
 }
+#define AW1636_IC_ID_REG		(0x3)
 #define AW1636_DCDC2_VOL_CTRL	(0x22)
 #define AW1636_DCDC3_VOL_CTRL	(0x23)
 #define AW1636_DCDC4_VOL_CTRL	(0x24)
-#define AW1636_IC_ID_REG		(0x3)
 #define AW1636_DCDC5_VOL_CTRL	(0x25)
 int set_ddr_voltage(__dram_para_t *dram_para)
 {
